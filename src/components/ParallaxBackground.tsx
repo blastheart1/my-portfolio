@@ -6,12 +6,12 @@ import './parallax.css';
 export default function ParallaxBackground() {
   const starLayers = useRef<HTMLDivElement[]>([]);
   const [isDark, setIsDark] = useState(false);
-  const [mounted, setMounted] = useState(false); // new
+  const [mounted, setMounted] = useState(false);
 
   // Client-side only
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains('dark'));
-    setMounted(true); // now safe to render stars
+    setMounted(true);
   }, []);
 
   // Scroll effect
@@ -63,13 +63,28 @@ export default function ParallaxBackground() {
 
   return (
     <>
-      <div className="stars-layer fixed inset-0 -z-10" ref={(el) => el && (starLayers.current[0] = el)}>
+      <div
+        className="stars-layer fixed inset-0 -z-10"
+        ref={(el) => {
+          if (el) starLayers.current[0] = el;
+        }}
+      >
         {createStars(50)}
       </div>
-      <div className="stars-layer fixed inset-0 -z-10" ref={(el) => el && (starLayers.current[1] = el)}>
+      <div
+        className="stars-layer fixed inset-0 -z-10"
+        ref={(el) => {
+          if (el) starLayers.current[1] = el;
+        }}
+      >
         {createStars(30)}
       </div>
-      <div className="stars-layer fixed inset-0 -z-10" ref={(el) => el && (starLayers.current[2] = el)}>
+      <div
+        className="stars-layer fixed inset-0 -z-10"
+        ref={(el) => {
+          if (el) starLayers.current[2] = el;
+        }}
+      >
         {createStars(20)}
       </div>
     </>
