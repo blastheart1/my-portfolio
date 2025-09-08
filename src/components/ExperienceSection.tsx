@@ -58,23 +58,22 @@ export default function ExperienceSection() {
         {/* Initial Experiences */}
         {experiences.map((exp, idx) => (
           <motion.div
-  key={exp.year + exp.role}
-  className="mb-12 flex flex-col sm:flex-row sm:items-start relative"
-  initial={{ opacity: 0, x: -30 }}
-  animate={{ opacity: 1, x: 0 }}
-  transition={{ delay: idx * 0.1, type: "spring", stiffness: 70, damping: 20 }}
->
-  <div className="sm:absolute sm:-left-36 sm:w-32 text-right text-sm font-medium text-gray-500 dark:text-gray-400 mb-1 sm:mb-0">
-    {exp.year}
-  </div>
-
-  <div className="flex-1 sm:ml-6">
-    <div className="w-4 h-4 bg-[#0033A0] rounded-full mt-1.5 sm:-left-2 sm:absolute"></div>
-    <h3 className="text-lg font-bold">{exp.role}</h3>
-    <p className="text-sm text-gray-700 dark:text-gray-300">{exp.company}</p>
-    <p className="mt-1 text-gray-600 dark:text-gray-400">{exp.description}</p>
-  </div>
-</motion.div>
+            key={exp.year + exp.role}
+            className="mb-12 flex items-start relative"
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: idx * 0.1, type: "spring", stiffness: 70, damping: 20 }}
+          >
+            <div className="absolute -left-36 w-32 text-right text-sm font-medium text-gray-500 dark:text-gray-400 break-words">
+              {exp.year}
+            </div>
+            <div className="w-4 h-4 bg-[#0033A0] rounded-full mt-1.5 -left-2 absolute"></div>
+            <div className="ml-6">
+              <h3 className="text-lg font-bold">{exp.role}</h3>
+              <p className="text-sm text-gray-700 dark:text-gray-300">{exp.company}</p>
+              <p className="mt-1 text-gray-600 dark:text-gray-400">{exp.description}</p>
+            </div>
+          </motion.div>
         ))}
 
         {/* Additional Experiences */}
@@ -98,7 +97,7 @@ export default function ExperienceSection() {
                   transition: { type: "spring", stiffness: 70, damping: 20 },
                 }}
               >
-                <div className="absolute -left-36 w-32 text-right text-sm font-medium text-gray-500 dark:text-gray-400">
+                <div className="absolute -left-36 w-32 text-right text-sm font-medium text-gray-500 dark:text-gray-400 break-words">
                   {exp.year}
                 </div>
                 <div className="w-4 h-4 bg-[#0033A0] rounded-full mt-1.5 -left-2 absolute"></div>
