@@ -3,6 +3,16 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 
+// Extend the Window interface to include Calendly
+declare global {
+  interface Window {
+    Calendly?: {
+      showPopupWidget: (url: string) => void;
+      closePopupWidget?: () => void;
+    };
+  }
+}
+
 export default function HeroSection() {
   return (
     <section className="flex flex-col lg:flex-row items-center justify-center px-6 py-16 gap-12 max-w-5xl mx-auto">
@@ -33,17 +43,18 @@ export default function HeroSection() {
           <span className="font-semibold">scalable systems</span> – building future-ready applications that deliver results.
         </motion.p>
 
-        <motion.a
-          href="tel:09173316448"
-          className="inline-block mt-6 px-6 py-3 rounded-xl bg-[#0033A0] text-white font-medium shadow-lg"
-          initial={{ opacity: 0, y: 20, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          whileHover={{ scale: 1.05, y: -2 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 130, damping: 20, delay: 0.1 }}
-        >
-          Schedule a Call
-        </motion.a>
+        <motion.button
+  onClick={() => window.Calendly?.showPopupWidget('https://calendly.com/antonioluis-santos1/30min')}
+  className="inline-block mt-6 px-6 py-3 rounded-xl bg-[#0033A0] text-white font-medium shadow-lg"
+  initial={{ opacity: 0, y: 20, scale: 0.9 }}
+  animate={{ opacity: 1, y: 0, scale: 1 }}
+  whileHover={{ scale: 1.05, y: -2 }}
+  whileTap={{ scale: 0.95 }}
+  transition={{ type: "spring", stiffness: 130, damping: 20, delay: 0.1 }}
+>
+  Schedule a Call
+</motion.button>
+
       </div>
 
       {/* Profile Image */}
