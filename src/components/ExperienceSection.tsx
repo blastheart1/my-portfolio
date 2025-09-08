@@ -82,7 +82,7 @@ export default function ExperienceSection() {
                 }}
               >
                 {/* Year */}
-                <div className="w-27 pl-9 text-left text-sm font-medium text-gray-500 dark:text-gray-400 break-words">
+                <div className="w-27 pl-4 text-left text-sm font-medium text-gray-500 dark:text-gray-400 break-words">
     {exp.year}
   </div>
 
@@ -108,7 +108,7 @@ export default function ExperienceSection() {
       <motion.div 
         className="flex justify-center mt-6"
         layout
-        transition={{ type: "spring", stiffness: 100, damping: 20 }}
+        transition={{ type: "spring", stiffness: 130, damping: 20, delay: 0.1 }}
       >
         <motion.button
           onClick={toggleShowMore}
@@ -122,7 +122,7 @@ export default function ExperienceSection() {
             type: "spring", 
             stiffness: 180, 
             damping: 12,
-            layout: { type: "spring", stiffness: 100, damping: 20 }
+            layout: { type: "spring", stiffness: 130, damping: 20, delay: 0.1 }
           }}
         >
           {showMore ? "Hide Milestones" : "Uncover More Milestones"}
