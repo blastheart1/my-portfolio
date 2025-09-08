@@ -1,0 +1,51 @@
+html, body {
+  height: 200%;
+  margin: 0;
+  overflow-x: hidden;
+  background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+  font-family: Lato, sans-serif;
+}
+
+
+.container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow-x: hidden;
+}
+
+.stars-layer {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  top: calc(100% * var(--randY));
+  left: calc(100% * var(--randX));
+  opacity: var(--randOpacity);
+}
+
+/* Randomize star positions using CSS variables */
+.stars-layer div {
+  --randX: calc(var(--i) * 0.01 * 100%);
+  --randY: calc(var(--i) * 0.01 * 100%);
+  --randOpacity: calc(0.3 + var(--i) * 0.01);
+}
+
+.title {
+  position: relative;
+  top: 50vh;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-size: 3rem;
+}
