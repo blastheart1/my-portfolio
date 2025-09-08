@@ -59,16 +59,18 @@ yarn dev
 Open http://localhost:3000
  to view your portfolio.
 
-###Deployment
+---
+
+### Deployment
 
 You can deploy your portfolio easily using Vercel:
 vercel
 Follow the prompts, and your portfolio will be live in minutes.
 
-###Customization
+### Customization
 Update your personal info, projects, and links in the project files.
 Change color themes and styling using TailwindCSS classes.
 
-###License
+### License
 This project is licensed under the MIT License.
 Feel free to modify and use it for your own portfolio.
