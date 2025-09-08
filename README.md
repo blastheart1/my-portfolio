@@ -41,3 +41,34 @@ Clone the repository:
 ```bash
 git clone https://github.com/yourusername/my-portfolio.git
 cd my-portfolio
+
+nstall dependencies:
+
+npm install
+# or
+yarn install
+
+
+Run the development server:
+
+npm run dev
+# or
+yarn dev
+
+
+Open http://localhost:3000
+ to view your portfolio.
+
+###Deployment
+
+You can deploy your portfolio easily using Vercel:
+vercel
+Follow the prompts, and your portfolio will be live in minutes.
+
+###Customization
+Update your personal info, projects, and links in the project files.
+Change color themes and styling using TailwindCSS classes.
+
+###License
+This project is licensed under the MIT License.
+Feel free to modify and use it for your own portfolio.
