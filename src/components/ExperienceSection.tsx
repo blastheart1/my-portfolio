@@ -49,76 +49,85 @@ export default function ExperienceSection() {
   const toggleShowMore = () => setShowMore((prev) => !prev);
 
   return (
-    <section id="experience" className="px-6 py-24 max-w-4xl mx-auto">
-      <h2 className="text-3xl font-semibold text-center mb-12">
+    <section id="experience" className="px-6 py-24 max-w-4xl mx-auto relative">
+      <motion.h2
+        className="text-3xl font-bold text-center mb-12"
+        initial={{ opacity: 0, y: -20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+      >
         Experience
-      </h2>
+      </motion.h2>
 
-      <div className="relative border-l-2 border-gray-300 dark:border-gray-600 ml-12">
-        {/* Initial Experiences */}
-        {experiences.map((exp, idx) => (
-          <motion.div
-            key={exp.year + exp.role}
-            className="mb-12 flex items-start relative"
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: idx * 0.1, type: "spring", stiffness: 70, damping: 20 }}
-          >
-            <div className="absolute -left-36 w-32 text-right text-sm font-medium text-gray-500 dark:text-gray-400 break-words">
-              {exp.year}
-            </div>
-            <div className="w-4 h-4 bg-[#0033A0] rounded-full mt-1.5 -left-2 absolute"></div>
-            <div className="ml-6">
-              <h3 className="text-lg font-bold">{exp.role}</h3>
-              <p className="text-sm text-gray-700 dark:text-gray-300">{exp.company}</p>
-              <p className="mt-1 text-gray-600 dark:text-gray-400">{exp.description}</p>
-            </div>
-          </motion.div>
-        ))}
+      {/* Container for timeline items */}
+      <div className="relative">
+        {/* Vertical timeline line */}
+        <div className="absolute top-0 bottom-0 left-[calc(6rem+1rem)] w-0.5 bg-gray-300 dark:bg-gray-600"></div>
 
-        {/* Additional Experiences */}
-        <AnimatePresence>
-          {showMore &&
-            additionalExperiences.map((exp, idx) => (
+        <div className="flex flex-col space-y-12">
+          <AnimatePresence>
+            {[...experiences, ...(showMore ? additionalExperiences : [])].map((exp, idx) => (
               <motion.div
                 key={exp.year + exp.role}
-                className="mb-12 flex items-start relative"
-                initial={{ opacity: 0, y: -20, height: 0 }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                  height: "auto",
-                  transition: { type: "spring", stiffness: 90, damping: 20 },
-                }}
-                exit={{
-                  opacity: 0,
-                  y: -20,
-                  height: 0,
-                  transition: { type: "spring", stiffness: 70, damping: 20 },
+                className="flex items-start"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ 
+                  delay: idx < experiences.length ? idx * 0.1 : (idx - experiences.length) * 0.15,
+                  type: "spring", 
+                  stiffness: 120, 
+                  damping: 15 
                 }}
               >
-                <div className="absolute -left-36 w-32 text-right text-sm font-medium text-gray-500 dark:text-gray-400 break-words">
-                  {exp.year}
+                {/* Year */}
+                <div className="w-27 pl-9 text-left text-sm font-medium text-gray-500 dark:text-gray-400 break-words">
+    {exp.year}
+  </div>
+
+
+                {/* Dot and spacer */}
+                <div className="relative w-3 flex flex-col items-center">
+                  {/* Dot */}
+                  <div className="w-5 h-5 bg-[#0033A0] rounded-full border-2 border-white dark:border-gray-900 z-10"></div>
                 </div>
-                <div className="w-4 h-4 bg-[#0033A0] rounded-full mt-1.5 -left-2 absolute"></div>
-                <div className="ml-6">
+
+                {/* Content */}
+                <div className="ml-6 flex-1">
                   <h3 className="text-lg font-bold">{exp.role}</h3>
                   <p className="text-sm text-gray-700 dark:text-gray-300">{exp.company}</p>
                   <p className="mt-1 text-gray-600 dark:text-gray-400">{exp.description}</p>
                 </div>
               </motion.div>
             ))}
-        </AnimatePresence>
+          </AnimatePresence>
+        </div>
       </div>
 
-      <div className="flex justify-center mt-6">
-        <button
+      <motion.div 
+        className="flex justify-center mt-6"
+        layout
+        transition={{ type: "spring", stiffness: 100, damping: 20 }}
+      >
+        <motion.button
           onClick={toggleShowMore}
-          className="px-6 py-2 bg-[#0033A0] text-white rounded-xl font-medium hover:opacity-90 transition"
+          className="px-6 py-2 bg-[#0033A0] text-white rounded-xl font-medium shadow-lg"
+          initial={{ opacity: 0, y: 20, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          whileHover={{ scale: 1.05, y: -2 }}
+          whileTap={{ scale: 0.95 }}
+          layout
+          transition={{ 
+            type: "spring", 
+            stiffness: 180, 
+            damping: 12,
+            layout: { type: "spring", stiffness: 100, damping: 20 }
+          }}
         >
           {showMore ? "Hide Milestones" : "Uncover More Milestones"}
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     </section>
   );
 }

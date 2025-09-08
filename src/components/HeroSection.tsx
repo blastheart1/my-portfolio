@@ -50,7 +50,12 @@ export default function HeroSection() {
   animate={{ opacity: 1, y: 0, scale: 1 }}
   whileHover={{ scale: 1.05, y: -2 }}
   whileTap={{ scale: 0.95 }}
-  transition={{ type: "spring", stiffness: 130, damping: 20, delay: 0.1 }}
+  transition={{ 
+    type: "spring", 
+    stiffness: 180, 
+    damping: 12,
+    delay: 0.1 
+  }}
 >
   Schedule a Call
 </motion.button>
