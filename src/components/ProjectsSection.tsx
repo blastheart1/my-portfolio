@@ -11,7 +11,15 @@ const projects = [
     description:
       "Built an online Pilates clinic platform for scheduling sessions, managing content, and providing virtual consultations. Integrated headless CMS and automation tools for streamlined client management.",
     tech: ["Next.js", "React", "Tailwind CSS", "Sanity CMS", "Zapier", "Vercel"],
-    link: "https://github.com/blastheart1/PWB_1.0",
+    link: "https://pilates-w-bee.vercel.app/",
+  },
+  
+  {
+    title: "Authorize.Net Sandbox Platform",
+    description:
+      "Developed a sandbox platform to practice PHP and Authorize.Net integrations while ensuring secure transaction flows and compliance best practices. Users can simulate transactions, test payment logic, and monitor sandbox logs. Highlights secure API integration, PHP backend development, and payment compliance.",
+    tech: ["PHP", "Authorize.Net API", "MySQL", "Tailwind CSS", "Vercel"],
+    link: "https://github.com/blastheart1/authorize-net-sandbox",
   },
   {
     title: "AI-powered Knowledge Hub",
@@ -19,13 +27,6 @@ const projects = [
       "A web app where users upload documents and the system uses embeddings (OpenAI / local LLMs) to make them searchable in natural language. Highlights full-stack, AI integration, database work, authentication, and modern UI.",
     tech: ["Next.js", "FastAPI", "PostgreSQL", "OpenAI", "Tailwind CSS"],
     link: "",
-  },
-  {
-    title: "Authorize.Net Sandbox Platform",
-    description:
-      "Developed a sandbox platform to practice PHP and Authorize.Net integrations while ensuring secure transaction flows and compliance best practices. Users can simulate transactions, test payment logic, and monitor sandbox logs. Highlights secure API integration, PHP backend development, and payment compliance.",
-    tech: ["PHP", "Authorize.Net API", "MySQL", "Tailwind CSS", "Vercel"],
-    link: "https://github.com/blastheart1/authorize-net-sandbox",
   },
 ];
 
