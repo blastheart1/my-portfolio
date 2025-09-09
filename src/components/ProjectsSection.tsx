@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import StackBadge from "./StackBadge";
 
@@ -8,25 +9,61 @@ const projects = [
   {
     title: "Pilates With Bee",
     description:
-      "Online Pilates clinic platform built for scheduling, content, and consultations.",
-    tech: ["Next.js", "Tailwind CSS", "React", "Sanity", "Zapier"],
-    link: "https://github.com/blastheart1/Pilates-With-Bee",
+      "Built an online Pilates clinic platform for scheduling sessions, managing content, and providing virtual consultations. Integrated headless CMS and automation tools for streamlined client management.",
+    tech: ["Next.js", "React", "Tailwind CSS", "Sanity CMS", "Zapier", "Vercel"],
+    link: "https://github.com/blastheart1/PWB_1.0",
   },
   {
     title: "AI-powered Knowledge Hub",
     description:
       "A web app where users upload documents and the system uses embeddings (OpenAI / local LLMs) to make them searchable in natural language. Highlights full-stack, AI integration, database work, authentication, and modern UI.",
     tech: ["Next.js", "FastAPI", "PostgreSQL", "OpenAI", "Tailwind CSS"],
-    link: "#",
+    link: "",
   },
   {
-    title: "Personal Finance Dashboard",
+    title: "Authorize.Net Sandbox Platform",
     description:
-      "Pulls transactions from dummy bank APIs, allowing users to categorize spending, set budgets, and visualize insights. Highlights API integration, secure auth, data visualization, and complex logic.",
-    tech: ["React", "Node.js", "PostgreSQL", "OAuth", "Tailwind CSS"],
-    link: "#",
+      "Developed a sandbox platform to practice PHP and Authorize.Net integrations while ensuring secure transaction flows and compliance best practices. Users can simulate transactions, test payment logic, and monitor sandbox logs. Highlights secure API integration, PHP backend development, and payment compliance.",
+    tech: ["PHP", "Authorize.Net API", "MySQL", "Tailwind CSS", "Vercel"],
+    link: "https://github.com/blastheart1/authorize-net-sandbox",
   },
 ];
+
+function ProjectDescription({ description }: { description: string }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const handleToggle = (event: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setExpanded((prev) => !prev);
+  };
+
+  return (
+    <div className="flex flex-col">
+      <AnimatePresence initial={false}>
+        <motion.p
+          key={expanded ? "expanded" : "collapsed"}
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 100, damping: 20 }}
+          className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed overflow-hidden ${
+            !expanded ? "line-clamp-3" : ""
+          }`}
+        >
+          {description}
+        </motion.p>
+      </AnimatePresence>
+
+      <span
+        className="text-blue-600 text-sm mt-1 cursor-pointer hover:underline"
+        onClick={handleToggle}
+      >
+        {expanded ? "See less" : "See more"}
+      </span>
+    </div>
+  );
+}
 
 export default function ProjectsSection() {
   return (
@@ -59,19 +96,21 @@ export default function ProjectsSection() {
                 <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                   {project.title}
                 </h3>
-                <p className="text-sm text-gray-700 dark:text-gray-300 flex-1 leading-relaxed">
-                  {project.description}
-                </p>
+
+                <ProjectDescription description={project.description} />
+
                 <div className="flex flex-wrap gap-3 mt-4">
                   {project.tech.map((tech) => (
                     <StackBadge key={tech} name={tech} />
                   ))}
                 </div>
               </CardContent>
-              <span className="mt-6 text-[#0033A0] dark:text-white font-medium group-hover:underline self-start">
-  View Project
-</span>
 
+              {project.link && (
+                <span className="mt-6 text-[#0033A0] dark:text-white font-medium group-hover:underline self-start">
+                  View Project
+                </span>
+              )}
             </Card>
           </motion.a>
         ))}
