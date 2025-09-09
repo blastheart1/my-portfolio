@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Download } from "lucide-react";
 
 export default function AboutSection() {
+  const [showTooltip, setShowTooltip] = useState(false);
+
   return (
     <section id="about" className="py-0 max-w-4xl mx-auto px-6 text-center">
       <motion.h2
@@ -58,7 +61,7 @@ export default function AboutSection() {
 
       {/* Download Resume Button */}
       <motion.div
-        className="flex justify-center mt-8 relative group"
+        className="flex justify-center mt-8 relative"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.8 }}
@@ -69,29 +72,20 @@ export default function AboutSection() {
           target="_blank"
           rel="noopener noreferrer"
           className="p-3 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+          onMouseEnter={() => setShowTooltip(true)}
+          onMouseLeave={() => setShowTooltip(false)}
+          onTouchStart={() => setShowTooltip((prev) => !prev)} // toggle tooltip on mobile tap
         >
           <Download className="w-6 h-6 text-gray-800 dark:text-gray-200" />
         </a>
 
-        {/* Tooltip */}
         <span
-          className="
+          className={`
             absolute -bottom-10 left-1/2 transform -translate-x-1/2 
             px-3 py-1 text-sm text-white bg-black dark:bg-gray-800 rounded 
-            opacity-0 group-hover:opacity-100 transition 
-            sm:opacity-0 sm:group-hover:opacity-100 
-            block sm:hidden
-          "
-        >
-          Download Resume
-        </span>
-        <span
-          className="
-            absolute -bottom-10 left-1/2 transform -translate-x-1/2 
-            px-3 py-1 text-sm text-white bg-black dark:bg-gray-800 rounded 
-            opacity-0 group-hover:opacity-100 transition 
-            hidden sm:block
-          "
+            transition-opacity
+            ${showTooltip ? "opacity-100" : "opacity-0"}
+          `}
         >
           Download Resume
         </span>
