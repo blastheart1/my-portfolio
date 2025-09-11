@@ -13,7 +13,12 @@ const projects = [
     tech: ["Next.js", "React", "Tailwind CSS", "Sanity CMS", "Zapier", "Vercel"],
     link: "https://pilates-w-bee.vercel.app/",
   },
-  
+  {
+  "title": "AI Expense Tracker",
+  "description": "A web app that helps users log and manage expenses, with AI automatically categorizing transactions and providing spending insights. Highlights full-stack development, AI integration, real-time charts, modern UI, and budget tracking features.",
+  "tech": ["Next.js", "TypeScript", "Chart.js", "OpenAI", "Tailwind CSS"],
+  "link": "https://ai-expense-tracker-nu-lime.vercel.app"
+},
   {
     title: "Authorize.Net Sandbox Platform",
     description:
@@ -21,13 +26,7 @@ const projects = [
     tech: ["PHP", "Authorize.Net API", "MySQL", "Tailwind CSS", "Vercel"],
     link: "https://github.com/blastheart1/authorize-net-sandbox",
   },
-  {
-    title: "AI-powered Knowledge Hub",
-    description:
-      "A web app where users upload documents and the system uses embeddings (OpenAI / local LLMs) to make them searchable in natural language. Highlights full-stack, AI integration, database work, authentication, and modern UI.",
-    tech: ["Next.js", "FastAPI", "PostgreSQL", "OpenAI", "Tailwind CSS"],
-    link: "",
-  },
+  
 ];
 
 function ProjectDescription({ description }: { description: string }) {
