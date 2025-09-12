@@ -20,12 +20,13 @@ const projects = [
   "link": "https://ai-expense-tracker-nu-lime.vercel.app"
 },
   {
-    title: "Authorize.Net Sandbox Platform",
-    description:
-      "Developed a sandbox platform to practice PHP and Authorize.Net integrations while ensuring secure transaction flows and compliance best practices. Users can simulate transactions, test payment logic, and monitor sandbox logs. Highlights secure API integration, PHP backend development, and payment compliance.",
-    tech: ["PHP", "Authorize.Net API", "MySQL", "Tailwind CSS", "Vercel"],
-    link: "https://github.com/blastheart1/authorize-net-sandbox",
-  },
+  title: "AI Chat with LM Studio",
+  description:
+    "Full-stack AI chat with local LLM, unlimited tokens, and global access via ngrok. Features real-time chat, system prompts, voice input/output, and conversation history, all wrapped in a sleek modern UI.",
+  tech: ["Next.js", "TypeScript", "Tailwind CSS", "LM Studio", "React", "Sonner", "ngrok"],
+  link: "https://luis-ai-model-chat.vercel.app",
+},
+
   
 ];
 
