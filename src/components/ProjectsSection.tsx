@@ -14,11 +14,12 @@ const projects = [
     link: "https://pilates-w-bee.vercel.app/",
   },
   {
-  "title": "AI Expense Tracker",
-  "description": "A web app that helps users log and manage expenses, with AI automatically categorizing transactions and providing spending insights. Highlights full-stack development, AI integration, real-time charts, modern UI, and budget tracking features.",
-  "tech": ["Next.js", "TypeScript", "Chart.js", "OpenAI", "Tailwind CSS"],
-  "link": "https://ai-expense-tracker-nu-lime.vercel.app"
+  "title": "ResumeAI",
+  "description": "A web app that analyzes resumes against job descriptions using AI, providing skill matching, missing keywords, and actionable recommendations. Highlights full-stack development, AI integration, interactive UI, and real-time insights.",
+  "tech": ["React", "TypeScript", "Python", "OpenAI", "Tailwind CSS", "Framer Motion", "Vercel", "Render"],
+  "link": "https://resume-ai-frontend-orpin.vercel.app"
 },
+
   {
   title: "AI Chat with LM Studio",
   description:
