@@ -48,5 +48,12 @@ export interface ThemeContextType {
 
 // Extend the global Window interface
 declare global {
-  interface Window extends CalendlyWindow {}
+  interface Window {
+    Calendly?: {
+      showPopupWidget: (url: string) => void;
+      closePopupWidget?: () => void;
+    };
+    calendlyLoaded?: boolean;
+    calendlyError?: boolean;
+  }
 }

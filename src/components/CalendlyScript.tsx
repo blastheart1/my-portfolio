@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { CalendlyWindow } from '@/types/global';
 
 export default function CalendlyScript() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -57,8 +58,8 @@ export default function CalendlyScript() {
   // Expose loading state globally for other components
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      (window as any).calendlyLoaded = isLoaded;
-      (window as any).calendlyError = hasError;
+      (window as Window & CalendlyWindow).calendlyLoaded = isLoaded;
+      (window as Window & CalendlyWindow).calendlyError = hasError;
     }
   }, [isLoaded, hasError]);
 

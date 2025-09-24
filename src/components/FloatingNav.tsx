@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Home, User, Briefcase, Code, FolderOpen, DollarSign, Mail } from "lucide-react";
+import { Menu, Home, User, Code, FolderOpen, DollarSign, Mail } from "lucide-react";
 
 const navItems = [
   { id: "home", label: "Home", icon: Home },
