@@ -39,11 +39,12 @@ export const metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' }
+      { url: '/code-light.ico', type: 'image/x-icon', media: '(prefers-color-scheme: light)' },
+      { url: '/code-dark.ico', type: 'image/x-icon', media: '(prefers-color-scheme: dark)' },
+      { url: '/code-light.ico', type: 'image/x-icon' }
     ],
-    shortcut: '/favicon.ico',
-    apple: '/favicon.ico',
+    shortcut: '/code-light.ico',
+    apple: '/code-light.ico',
   },
   manifest: '/site.webmanifest',
   viewport: 'width=device-width, initial-scale=1',
