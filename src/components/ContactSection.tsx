@@ -38,7 +38,8 @@ export default function ContactSection() {
           href="https://www.linkedin.com/in/alasantos01/"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-white bg-[#0033A0] p-3 rounded-full hover:opacity-90 transition"
+          className="text-white bg-[#0033A0] p-3 rounded-full hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#0033A0] transition"
+          aria-label="Connect with Antonio Luis Santos on LinkedIn"
         >
           <FaLinkedin className="text-xl" />
         </a>
@@ -46,13 +47,15 @@ export default function ContactSection() {
           href="https://www.instagram.com/0xlv1s_/"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-white bg-[#0033A0] p-3 rounded-full hover:opacity-90 transition"
+          className="text-white bg-[#0033A0] p-3 rounded-full hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#0033A0] transition"
+          aria-label="Follow Antonio Luis Santos on Instagram"
         >
           <FaInstagram className="text-xl" />
         </a>
         <a
           href="mailto:antonioluis.santos1@gmail.com"
-          className="text-white bg-[#0033A0] p-3 rounded-full hover:opacity-90 transition"
+          className="text-white bg-[#0033A0] p-3 rounded-full hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#0033A0] transition"
+          aria-label="Send email to Antonio Luis Santos"
         >
           <FaEnvelope className="text-xl" />
         </a>

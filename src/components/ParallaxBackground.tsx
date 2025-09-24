@@ -40,7 +40,7 @@ export default function ParallaxBackground() {
     Array.from({ length: count }).map(() => {
       const top = Math.random() * 100;
       const left = Math.random() * 100;
-      const size = Math.random() * 2 + 1;
+      const size = Math.random() * 4 + 1;
       const opacity = Math.random() * 0.5 + 0.5;
 
       return (

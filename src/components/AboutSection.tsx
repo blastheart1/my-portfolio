@@ -71,10 +71,11 @@ export default function AboutSection() {
           download
           target="_blank"
           rel="noopener noreferrer"
-          className="p-3 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+          className="p-3 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-[#0033A0] focus:ring-offset-2 transition"
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
           onTouchStart={() => setShowTooltip((prev) => !prev)} // toggle tooltip on mobile tap
+          aria-label="Download Antonio Luis Santos resume"
         >
           <Download className="w-6 h-6 text-gray-800 dark:text-gray-200" />
         </a>
