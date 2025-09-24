@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, X, Bot, Globe, Zap } from "lucide-react";
+import { Check, X, Globe, Zap } from "lucide-react";
 
 interface ServiceFeature {
   name: string;
@@ -16,7 +16,6 @@ interface ServiceTier {
   priceUSD: number;
   features: ServiceFeature[];
   support: string;
-  chatbot: string;
   icon: React.ReactNode;
   popular?: boolean;
 }
@@ -40,7 +39,6 @@ const services: ServiceTier[] = [
       { name: "Custom Backend Development", included: false },
     ],
     support: "7-Day Standard Support",
-    chatbot: "Smart Support Chatbot (+₱7,000)",
   },
   {
     name: "Professional",
@@ -61,14 +59,13 @@ const services: ServiceTier[] = [
       { name: "Custom Backend Development", included: false },
     ],
     support: "14-Day Enhanced Support",
-    chatbot: "24/7 E-commerce Chatbot (+₱15,000)",
   },
   {
     name: "Enterprise",
     description: "Complete solution for large organizations and complex projects",
     pricePHP: 100000,
     priceUSD: 2999,
-    icon: <Bot className="w-6 h-6" />,
+    icon: <Zap className="w-6 h-6" />,
     features: [
       { name: "Fully Responsive, Tailored Website", included: true },
       { name: "Unlimited Pages & Layouts", included: true },
@@ -81,7 +78,6 @@ const services: ServiceTier[] = [
       { name: "Custom Backend & API Integrations", included: true },
     ],
     support: "30-Day Priority Support",
-    chatbot: "Advanced AI Chatbot (Included)",
   },
 ];
 
@@ -100,7 +96,7 @@ export default function ServicesSection() {
         </h2>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           Choose the perfect package for your business needs. All plans include modern design, 
-          mobile optimization, and AI-powered chatbot integration.
+          mobile optimization, and professional support.
         </p>
       </motion.div>
 
@@ -195,17 +191,6 @@ export default function ServicesSection() {
                       </p>
                     </div>
                     
-                    <div className="bg-blue-50 dark:bg-blue-950/20 p-2 rounded">
-                      <div className="flex items-center gap-1 mb-1">
-                        <Bot className="w-3 h-3 text-blue-600" />
-                        <span className="text-xs font-medium text-blue-800 dark:text-blue-200">
-                          AI Chatbot
-                        </span>
-                      </div>
-                      <p className="text-xs text-blue-700 dark:text-blue-300">
-                        {service.chatbot}
-                      </p>
-                    </div>
                   </div>
 
                 </CardContent>

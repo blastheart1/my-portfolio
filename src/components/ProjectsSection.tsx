@@ -7,12 +7,14 @@ import StackBadge from "./StackBadge";
 
 const projects = [
   {
-    title: "Pilates With Bee",
+    title: "Advanced AI Chatbot",
     description:
-      "Built an online Pilates clinic platform for scheduling sessions, managing content, and providing virtual consultations. Integrated headless CMS and automation tools for streamlined client management.",
-    tech: ["Next.js", "React", "Tailwind CSS", "Sanity CMS", "Zapier", "Vercel"],
-    link: "https://pilates-w-bee.vercel.app/",
+      "Built an AI-powered chatbot for my developer portfolio using TensorFlow.js and the OpenAI API. Designed with React and TypeScript for a responsive experience, styled with Tailwind CSS, and enhanced with Framer Motion animations to deliver an engaging conversational interface.",
+    tech: ["React", "TypeScript", "TensorFlow.js", "OpenAI API", "Tailwind CSS", "Framer Motion"],
+    link: "https://luis-chatbot.vercel.app/"
   },
+  
+
   {
   "title": "ResumeAI",
   "description": "A web app that analyzes resumes against job descriptions using AI, providing skill matching, missing keywords, and actionable recommendations. Highlights full-stack development, AI integration, interactive UI, and real-time insights.",
@@ -20,12 +22,10 @@ const projects = [
   "link": "https://resume-ai-frontend-orpin.vercel.app"
 },
 
-  {
-  title: "AI Chat with LM Studio",
-  description:
-    "Full-stack AI chat with local LLM, unlimited tokens, and global access via ngrok. Features real-time chat, system prompts, voice input/output, and conversation history, all wrapped in a sleek modern UI.",
-  tech: ["Next.js", "TypeScript", "Tailwind CSS", "LM Studio", "React", "Sonner", "ngrok"],
-  link: "https://luis-ai-model-chat.vercel.app",
+{ title: "Pilates With Bee", 
+  description: "Built an online Pilates clinic platform for scheduling sessions, managing content, and providing virtual consultations. Integrated headless CMS and automation tools for streamlined client management.", 
+  tech: ["Next.js", "React", "Tailwind CSS", "Sanity CMS", "Zapier", "Vercel"], 
+  link: "https://pilates-w-bee.vercel.app/" 
 },
 
   

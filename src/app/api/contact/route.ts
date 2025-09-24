@@ -26,9 +26,9 @@ export async function POST(request: NextRequest) {
 
     // Send email using Resend
     const { data, error } = await resend.emails.send({
-      from: ' Luis.Dev Contact Form <onboarding@resend.dev>', // You can change this to your domain
+      from: 'Portfolio Contact Form <onboarding@resend.dev>', // You can change this to your domain
       to: ['antonioluis.santos1@gmail.com'],
-      subject: `New Potential Client: ${subject}`,
+      subject: `Portfolio Contact: ${subject}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -37,31 +37,28 @@ export async function POST(request: NextRequest) {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>New Contact Form Submission</title>
         </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background-color: #ffffff; border: 1px solid #e9ecef; border-radius: 8px; overflow: hidden;">
-            <div style="background-color: #0033A0; color: white; padding: 20px; text-align: center;">
-              <h1 style="margin: 0; font-size: 24px;">New Contact Form Submission</h1>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+          <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h2 style="color: #0033A0; border-bottom: 2px solid #0033A0; padding-bottom: 10px; margin-top: 0;">
+              New Contact Form Submission
+            </h2>
+            
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #333; margin-top: 0;">Contact Details</h3>
+              <p style="margin: 10px 0;"><strong>Name:</strong> ${name}</p>
+              <p style="margin: 10px 0;"><strong>Email:</strong> <a href="mailto:${email}" style="color: #0033A0; text-decoration: none;">${email}</a></p>
+              <p style="margin: 10px 0;"><strong>Subject:</strong> ${subject}</p>
             </div>
             
-            <div style="padding: 30px;">
-              <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                <h3 style="color: #0033A0; margin-top: 0; margin-bottom: 15px;">Contact Details</h3>
-                <p style="margin: 8px 0;"><strong>Name:</strong> ${name}</p>
-                <p style="margin: 8px 0;"><strong>Email:</strong> <a href="mailto:${email}" style="color: #0033A0; text-decoration: none;">${email}</a></p>
-                <p style="margin: 8px 0;"><strong>Subject:</strong> ${subject}</p>
-              </div>
-              
-              <div style="background-color: #ffffff; padding: 20px; border: 1px solid #e9ecef; border-radius: 8px; margin-bottom: 20px;">
-                <h3 style="color: #0033A0; margin-top: 0; margin-bottom: 15px;">Message</h3>
-                <div style="white-space: pre-wrap; line-height: 1.6; background-color: #f8f9fa; padding: 15px; border-radius: 4px;">${message}</div>
-              </div>
-              
-              <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
-                <p style="margin: 0; color: #666; font-size: 14px;">
-                  This message was sent from your portfolio contact form<br>
-                  <strong>Time:</strong> ${new Date().toLocaleString()}
-                </p>
-              </div>
+            <div style="background-color: #ffffff; padding: 20px; border: 1px solid #e9ecef; border-radius: 8px;">
+              <h3 style="color: #333; margin-top: 0;">Message</h3>
+              <p style="white-space: pre-wrap; line-height: 1.6; margin: 0;">${message}</p>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background-color: #e3f2fd; border-radius: 8px;">
+              <p style="margin: 0; color: #666; font-size: 14px;">
+                This message was sent from your portfolio contact form at ${new Date().toLocaleString()}
+              </p>
             </div>
           </div>
         </body>
