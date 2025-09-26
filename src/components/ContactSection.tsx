@@ -170,7 +170,7 @@ export default function ContactSection() {
                   </Button>
                 </motion.div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6" role="form" aria-label="Contact form">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="name" className="block text-sm font-medium mb-2">
@@ -185,9 +185,11 @@ export default function ContactSection() {
                         placeholder="Your full name"
                         className={errors.name ? "border-red-500" : ""}
                         aria-describedby={errors.name ? "name-error" : undefined}
+                        aria-required="true"
+                        aria-invalid={errors.name ? "true" : "false"}
                       />
                       {errors.name && (
-                        <p id="name-error" className="text-red-500 text-sm mt-1">
+                        <p id="name-error" className="text-red-500 text-sm mt-1" role="alert">
                           {errors.name}
                         </p>
                       )}
@@ -206,9 +208,11 @@ export default function ContactSection() {
                         placeholder="your.email@example.com"
                         className={errors.email ? "border-red-500" : ""}
                         aria-describedby={errors.email ? "email-error" : undefined}
+                        aria-required="true"
+                        aria-invalid={errors.email ? "true" : "false"}
                       />
                       {errors.email && (
-                        <p id="email-error" className="text-red-500 text-sm mt-1">
+                        <p id="email-error" className="text-red-500 text-sm mt-1" role="alert">
                           {errors.email}
                         </p>
                       )}
@@ -228,9 +232,11 @@ export default function ContactSection() {
                       placeholder="What's this about?"
                       className={errors.subject ? "border-red-500" : ""}
                       aria-describedby={errors.subject ? "subject-error" : undefined}
+                      aria-required="true"
+                      aria-invalid={errors.subject ? "true" : "false"}
                     />
                     {errors.subject && (
-                      <p id="subject-error" className="text-red-500 text-sm mt-1">
+                      <p id="subject-error" className="text-red-500 text-sm mt-1" role="alert">
                         {errors.subject}
                       </p>
                     )}
@@ -249,9 +255,11 @@ export default function ContactSection() {
                       rows={5}
                       className={errors.message ? "border-red-500" : ""}
                       aria-describedby={errors.message ? "message-error" : undefined}
+                      aria-required="true"
+                      aria-invalid={errors.message ? "true" : "false"}
                     />
                     {errors.message && (
-                      <p id="message-error" className="text-red-500 text-sm mt-1">
+                      <p id="message-error" className="text-red-500 text-sm mt-1" role="alert">
                         {errors.message}
                       </p>
                     )}
@@ -261,19 +269,23 @@ export default function ContactSection() {
                     type="submit"
                     disabled={isSubmitting}
                     className="w-full bg-[#0033A0] hover:bg-[#002A8A] text-white"
+                    aria-describedby="submit-help"
                   >
                     {isSubmitting ? (
                       <>
-                        <FaSpinner className="animate-spin mr-2" />
-                        Sending Message...
+                        <FaSpinner className="animate-spin mr-2" aria-hidden="true" />
+                        <span>Sending Message...</span>
                       </>
                     ) : (
                       <>
-                        <FaEnvelope className="mr-2" />
-                        Send Message
+                        <FaEnvelope className="mr-2" aria-hidden="true" />
+                        <span>Send Message</span>
                       </>
                     )}
                   </Button>
+                  <p id="submit-help" className="text-xs text-gray-500 mt-2">
+                    All fields are required. Your message will be sent securely.
+                  </p>
                 </form>
               )}
             </CardContent>

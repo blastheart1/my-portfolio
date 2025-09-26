@@ -1,67 +1,50 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { CalendlyWindow } from '@/types/global';
+import { useEffect } from 'react';
 
 export default function CalendlyScript() {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
-
   useEffect(() => {
-    let link: HTMLLinkElement | null = null;
-    let script: HTMLScriptElement | null = null;
+    // Add Calendly CSS
+    const link = document.createElement('link');
+    link.href = 'https://assets.calendly.com/assets/external/widget.css';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
 
-    const loadCalendly = async () => {
-      try {
-        // Add Calendly CSS
-        link = document.createElement('link');
-        link.href = 'https://assets.calendly.com/assets/external/widget.css';
-        link.rel = 'stylesheet';
-        link.crossOrigin = 'anonymous';
-        document.head.appendChild(link);
+    // Add Calendly JS
+    const script = document.createElement('script');
+    script.src = 'https://assets.calendly.com/assets/external/widget.js';
+    script.type = 'text/javascript';
+    script.async = true;
+    document.body.appendChild(script);
 
-        // Add Calendly JS
-        script = document.createElement('script');
-        script.src = 'https://assets.calendly.com/assets/external/widget.js';
-        script.async = true;
-        script.crossOrigin = 'anonymous';
-        
-        script.onload = () => {
-          setIsLoaded(true);
-          setHasError(false);
-        };
-        
-        script.onerror = () => {
-          setHasError(true);
-          setIsLoaded(false);
-        };
-
-        document.body.appendChild(script);
-      } catch (error) {
-        console.error('Failed to load Calendly:', error);
-        setHasError(true);
+    // Initialize badge widget
+    const initScript = document.createElement('script');
+    initScript.type = 'text/javascript';
+    initScript.text = `
+      window.onload = function() { 
+        Calendly.initBadgeWidget({ 
+          url: 'https://calendly.com/antonioluis-santos1/30min', 
+          text: 'Schedule time with me', 
+          color: '#0069ff', 
+          textColor: '#ffffff', 
+          branding: true 
+        }); 
       }
-    };
-
-    loadCalendly();
+    `;
+    document.body.appendChild(initScript);
 
     // Cleanup when component unmounts
     return () => {
-      if (link && document.head.contains(link)) {
+      if (document.head.contains(link)) {
         document.head.removeChild(link);
       }
-      if (script && document.body.contains(script)) {
+      if (document.body.contains(script)) {
         document.body.removeChild(script);
+      }
+      if (document.body.contains(initScript)) {
+        document.body.removeChild(initScript);
       }
     };
   }, []);
-
-  // Expose loading state globally for other components
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      (window as Window & CalendlyWindow).calendlyLoaded = isLoaded;
-      (window as Window & CalendlyWindow).calendlyError = hasError;
-    }
-  }, [isLoaded, hasError]);
 
   return null; // This component renders nothing
 }

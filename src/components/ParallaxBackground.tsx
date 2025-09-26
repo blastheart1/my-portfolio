@@ -1,12 +1,26 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './parallax.css';
 
+interface Star {
+  id: number;
+  size: number;
+  x: number; // in vw
+  y: number; // resting y in vh
+  opacity: number;
+  layer: number; // for parallax effect
+}
+
+const NUM_STARS = 350;
+
+const randomBetween = (min: number, max: number) => Math.random() * (max - min) + min;
+
 export default function ParallaxBackground() {
-  const starLayers = useRef<HTMLDivElement[]>([]);
+  const [stars, setStars] = useState<Star[]>([]);
   const [isDark, setIsDark] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
 
   // Client-side only
   useEffect(() => {
@@ -14,16 +28,13 @@ export default function ParallaxBackground() {
     setMounted(true);
   }, []);
 
-  // Scroll effect
+  // Direct scroll effect for immediate response
   useEffect(() => {
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      starLayers.current.forEach((layer, index) => {
-        const speed = 0.1 + index * 0.2;
-        layer.style.transform = `translateY(${-scrollY * speed}px)`;
-      });
+      setScrollY(window.scrollY);
     };
-    window.addEventListener('scroll', handleScroll);
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -36,57 +47,59 @@ export default function ParallaxBackground() {
     return () => observer.disconnect();
   }, []);
 
-  const createStars = (count: number) =>
-    Array.from({ length: count }).map(() => {
-      const top = Math.random() * 100;
-      const left = Math.random() * 100;
-      const size = Math.random() * 4 + 1;
-      const opacity = Math.random() * 0.5 + 0.5;
-
-      return (
-        <div
-          key={Math.random()}
-          className="star"
-          style={{
-            top: `${top}%`,
-            left: `${left}%`,
-            width: `${size}px`,
-            height: `${size}px`,
-            opacity,
-            backgroundColor: isDark ? 'white' : 'black',
-          }}
-        />
-      );
-    });
+  // Generate stars with different layers for parallax
+  useEffect(() => {
+    const generatedStars: Star[] = [];
+    for (let i = 0; i < NUM_STARS; i++) {
+      const layer = Math.floor(Math.random() * 4); // 0, 1, 2, or 3 for different parallax layers
+      generatedStars.push({
+        id: i,
+        size: randomBetween(0.5, 3),
+        x: randomBetween(0, 100),
+        y: randomBetween(10, 90),
+        opacity: randomBetween(0.3, 0.9),
+        layer,
+      });
+    }
+    setStars(generatedStars);
+  }, []);
 
   if (!mounted) return null; // render nothing on server
 
   return (
-    <>
+    <div className="fixed inset-0 -z-10 overflow-hidden">
       <div
-        className="stars-layer fixed inset-0 -z-10"
-        ref={(el) => {
-          if (el) starLayers.current[0] = el;
-        }}
-      >
-        {createStars(50)}
-      </div>
-      <div
-        className="stars-layer fixed inset-0 -z-10"
-        ref={(el) => {
-          if (el) starLayers.current[1] = el;
-        }}
-      >
-        {createStars(30)}
-      </div>
-      <div
-        className="stars-layer fixed inset-0 -z-10"
-        ref={(el) => {
-          if (el) starLayers.current[2] = el;
-        }}
-      >
-        {createStars(20)}
-      </div>
-    </>
+        className={`absolute inset-0 transition-colors duration-700 ${
+          isDark
+            ? "bg-gradient-to-b from-black via-gray-900 to-gray-800"
+            : "bg-gradient-to-b from-white via-gray-100 to-gray-200"
+        }`}
+      />
+
+      {stars.map((star) => {
+        // Parallax with different speeds for each layer (reversed direction)
+        const parallaxSpeeds = [0.1, 0.3, 0.5, 0.7]; // Different speeds for depth effect
+        const parallaxOffset = -scrollY * parallaxSpeeds[star.layer]; // Negative for reverse direction
+        
+        return (
+          <div
+            key={star.id}
+            className={`absolute rounded-full ${isDark ? "bg-white" : "bg-black"}`}
+            style={{
+              width: star.size,
+              height: star.size,
+              left: `${star.x}vw`,
+              top: `${star.y}vh`,
+              opacity: star.opacity,
+              boxShadow: `0 0 ${star.size * 2}px ${isDark ? "white" : "black"}`,
+              zIndex: star.layer,
+              // Pure CSS transform for smooth 60fps parallax
+              transform: `translateY(${parallaxOffset}px)`,
+              willChange: 'transform',
+            }}
+          />
+        );
+      })}
+    </div>
   );
 }

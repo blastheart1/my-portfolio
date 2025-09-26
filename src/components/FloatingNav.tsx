@@ -45,9 +45,9 @@ export default function FloatingNav() {
 
   return (
     <>
-      {/* Floating Navigation Button */}
+      {/* Floating Navigation Button - Hidden on mobile */}
       <motion.button
-        className={`fixed top-6 left-6 z-50 bg-[#0033A0] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ${
+        className={`fixed top-6 left-6 z-50 bg-[#0033A0] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hidden md:block ${
           isOpen ? 'p-2' : 'p-3'
         }`}
         onClick={() => setIsOpen(!isOpen)}
@@ -69,11 +69,11 @@ export default function FloatingNav() {
         {!isOpen && <Menu className="w-5 h-5" />}
       </motion.button>
 
-      {/* Navigation Menu */}
+      {/* Navigation Menu - Hidden on mobile */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed top-6 left-6 z-40 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+            className="fixed top-6 left-6 z-40 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden hidden md:block"
             initial={{ opacity: 0, scale: 0.8, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: -20 }}
@@ -114,11 +114,11 @@ export default function FloatingNav() {
         )}
       </AnimatePresence>
 
-      {/* Backdrop */}
+      {/* Backdrop - Hidden on mobile */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 hidden md:block"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

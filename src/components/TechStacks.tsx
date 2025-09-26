@@ -6,7 +6,8 @@ import {
   SiReact, SiNextdotjs, SiTailwindcss, SiTypescript, SiJavascript,
   SiNodedotjs, SiExpress, SiPostgresql, SiPython, SiSanity,
   SiDocker, SiAmazon, SiVercel, SiGit, SiHtml5, SiCss3, SiPhp,
-  SiMysql, SiGithub, SiZapier, SiNetlify, SiGooglecloud
+  SiMysql, SiGithub, SiZapier, SiNetlify, SiGooglecloud,
+  SiTensorflow, SiFastapi, SiSupabase
 } from "react-icons/si";
 
 // Master stack data
@@ -14,28 +15,35 @@ const stacks = {
   Frontend: [
     { name: "React", icon: SiReact },
     { name: "Next.js", icon: SiNextdotjs },
-    { name: "TailwindCSS", icon: SiTailwindcss },
     { name: "TypeScript", icon: SiTypescript },
     { name: "JavaScript", icon: SiJavascript },
+    { name: "TailwindCSS", icon: SiTailwindcss },
     { name: "HTML5", icon: SiHtml5 },
     { name: "CSS3", icon: SiCss3 },
     { name: "Wix" }, // text-only fallback
   ],
   Backend: [
+    { name: "Python", icon: SiPython },
+    { name: "FastAPI", icon: SiFastapi },
     { name: "Node.js", icon: SiNodedotjs },
     { name: "Express", icon: SiExpress },
     { name: "PostgreSQL", icon: SiPostgresql },
-    { name: "Python", icon: SiPython },
+    { name: "Supabase", icon: SiSupabase },
     { name: "Sanity", icon: SiSanity },
-    { name: "Java" }, // text-only fallback
-    { name: "C++" }, // text-only fallback
     { name: "PHP", icon: SiPhp },
     { name: "MySQL", icon: SiMysql },
+    { name: "Java" }, // text-only fallback
+    { name: "C++" }, // text-only fallback
+  ],
+  "AI & ML": [
+    { name: "TensorFlow", icon: SiTensorflow },
+    { name: "Python", icon: SiPython },
   ],
   "DevOps & Cloud": [
     { name: "Docker", icon: SiDocker },
     { name: "AWS", icon: SiAmazon },
     { name: "Vercel", icon: SiVercel },
+    { name: "Supabase", icon: SiSupabase },
     { name: "Git", icon: SiGit },
     { name: "GitHub", icon: SiGithub },
     { name: "Postman"}, // closest matching icon
