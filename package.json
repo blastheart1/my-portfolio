@@ -16,6 +16,7 @@
     "framer-motion": "^12.23.22",
     "lucide-react": "^0.542.0",
     "next": "15.5.2",
+    "portfolio-chatbot": "github:blastheart1/portfolio-chatbot-tensorflow-openai#testing-branch",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-icons": "^5.5.0",
