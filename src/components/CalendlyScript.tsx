@@ -16,22 +16,6 @@ export default function CalendlyScript() {
     script.async = true;
     document.body.appendChild(script);
 
-    // Initialize badge widget
-    const initScript = document.createElement('script');
-    initScript.type = 'text/javascript';
-    initScript.text = `
-      window.onload = function() { 
-        Calendly.initBadgeWidget({ 
-          url: 'https://calendly.com/antonioluis-santos1/30min', 
-          text: 'Schedule time with me', 
-          color: '#0069ff', 
-          textColor: '#ffffff', 
-          branding: true 
-        }); 
-      }
-    `;
-    document.body.appendChild(initScript);
-
     // Cleanup when component unmounts
     return () => {
       if (document.head.contains(link)) {
@@ -39,9 +23,6 @@ export default function CalendlyScript() {
       }
       if (document.body.contains(script)) {
         document.body.removeChild(script);
-      }
-      if (document.body.contains(initScript)) {
-        document.body.removeChild(initScript);
       }
     };
   }, []);
