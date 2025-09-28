@@ -20,7 +20,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/blog?limit=3');
+      const response = await fetch('/api/blog');
       const data = await response.json();
       
       if (data.posts) {
