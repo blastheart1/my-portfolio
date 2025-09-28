@@ -11,7 +11,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showAll, setShowAll] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
 
   useEffect(() => {
     fetchPosts();
@@ -130,7 +130,6 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
         {posts.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-neutral-400 text-lg mb-6">No content available yet.</p>
-            <p className="text-neutral-500 text-sm mb-4">Posts count: {posts.length}</p>
             <button
               onClick={generateNewContent}
               disabled={loading}
@@ -141,31 +140,83 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
           </div>
         ) : (
         <>
-          <div className="mb-4 text-center">
-            <p className="text-neutral-500 text-sm">Posts count: {posts.length} | Show All: {showAll ? 'Yes' : 'No'}</p>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 items-center border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
-            {(showAll ? posts : posts.slice(0, 3)).map((post) => (
-              <BlogCard key={post.id} post={post} />
-            ))}
+          <div className="relative overflow-hidden">
+            <div 
+              className="flex transition-transform duration-500 ease-in-out"
+              style={{ 
+                transform: `translateX(-${currentPage * 100}%)`,
+                width: `${Math.ceil(posts.length / 3) * 100}%`
+              }}
+            >
+              {Array.from({ length: Math.ceil(posts.length / 3) }).map((_, pageIndex) => (
+                <div 
+                  key={pageIndex}
+                  className="w-full flex-shrink-0"
+                  style={{ width: `${100 / Math.ceil(posts.length / 3)}%` }}
+                >
+                  <div className="grid grid-cols-1 lg:grid-cols-3 items-center border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
+                    {posts.slice(pageIndex * 3, pageIndex * 3 + 3).map((post) => (
+                      <BlogCard key={post.id} post={post} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
           
-          {posts.length > 3 ? (
+          {posts.length > 3 && (
             <div className="mt-8 text-center">
-              <p className="text-neutral-500 text-sm mb-2">View All button should be visible (posts: {posts.length} &gt; 3)</p>
-              <button 
-                onClick={() => setShowAll(!showAll)}
-                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-[#ff0] text-black rounded-lg hover:bg-[#ff0]/90 transition-colors focus:outline-none focus:ring-2 focus:ring-[#ff0] focus:ring-offset-2 focus:ring-offset-neutral-900"
-              >
-                {showAll ? 'Show Less' : 'View All'}
-                <svg className="shrink-0 size-4" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d={showAll ? "M10 4L6 8L10 12" : "M6 12L10 8L6 4"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            </div>
-          ) : (
-            <div className="mt-8 text-center">
-              <p className="text-neutral-500 text-sm">View All button hidden (posts: {posts.length} ≤ 3)</p>
+              <p className="text-neutral-500 text-sm mb-4">Page {currentPage + 1} of {Math.ceil(posts.length / 3)}</p>
+              
+              <div className="flex items-center justify-center gap-4">
+                {/* Previous button */}
+                <button
+                  onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                  disabled={currentPage === 0}
+                  className={`p-2 rounded-full transition-all duration-300 ${
+                    currentPage === 0 
+                      ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
+                      : 'bg-neutral-700 text-[#ff0] hover:bg-neutral-600'
+                  }`}
+                  aria-label="Previous page"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+
+                {/* Pagination dots */}
+                <div className="flex gap-3">
+                  {Array.from({ length: Math.ceil(posts.length / 3) }).map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentPage(index)}
+                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                        currentPage === index 
+                          ? 'bg-[#ff0] scale-125' 
+                          : 'bg-neutral-600 hover:bg-neutral-500'
+                      }`}
+                      aria-label={`Go to page ${index + 1}`}
+                    />
+                  ))}
+                </div>
+
+                {/* Next button */}
+                <button
+                  onClick={() => setCurrentPage(Math.min(Math.ceil(posts.length / 3) - 1, currentPage + 1))}
+                  disabled={currentPage === Math.ceil(posts.length / 3) - 1}
+                  className={`p-2 rounded-full transition-all duration-300 ${
+                    currentPage === Math.ceil(posts.length / 3) - 1 
+                      ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
+                      : 'bg-neutral-700 text-[#ff0] hover:bg-neutral-600'
+                  }`}
+                  aria-label="Next page"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
             </div>
           )}
         </>
