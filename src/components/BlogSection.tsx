@@ -152,7 +152,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
           
           {posts.length > 3 ? (
             <div className="mt-8 text-center">
-              <p className="text-neutral-500 text-sm mb-2">View All button should be visible (posts: {posts.length} > 3)</p>
+              <p className="text-neutral-500 text-sm mb-2">View All button should be visible (posts: {posts.length} &gt; 3)</p>
               <button 
                 onClick={() => setShowAll(!showAll)}
                 className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-[#ff0] text-black rounded-lg hover:bg-[#ff0]/90 transition-colors focus:outline-none focus:ring-2 focus:ring-[#ff0] focus:ring-offset-2 focus:ring-offset-neutral-900"
