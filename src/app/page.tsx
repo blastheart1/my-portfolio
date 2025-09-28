@@ -19,6 +19,10 @@ const ContactSection = dynamic(() => import("@/components/ContactSection"), {
   loading: () => <div className="h-96 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0033A0]"></div></div>
 });
 
+const BlogSection = dynamic(() => import("@/components/BlogSection"), {
+  loading: () => <div className="h-96 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0033A0]"></div></div>
+});
+
 export default function Home() {
   return (
     <main className="relative z-0 bg-background text-foreground min-h-screen flex flex-col">
@@ -50,6 +54,12 @@ export default function Home() {
         <ScrollFadeEffect fadeStartPoint={0.9} fadeIntensity={1.6}>
           <section id="services">
             <ServicesSection />
+          </section>
+        </ScrollFadeEffect>
+        
+        <ScrollFadeEffect fadeStartPoint={0.95} fadeIntensity={1.7}>
+          <section id="blog">
+            <BlogSection />
           </section>
         </ScrollFadeEffect>
         

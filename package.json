@@ -6,16 +6,20 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "setup-blog": "node scripts/setup-blog.js"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
     "@tailwindcss/line-clamp": "^0.4.4",
+    "@vercel/postgres": "^0.10.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.22",
     "lucide-react": "^0.542.0",
     "next": "15.5.2",
+    "node-cron": "^4.2.1",
+    "openai": "^5.23.1",
     "portfolio-chatbot": "github:blastheart1/portfolio-chatbot-tensorflow-openai#testing-branch",
     "react": "19.1.0",
     "react-dom": "19.1.0",
