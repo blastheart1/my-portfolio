@@ -7,7 +7,8 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "setup-blog": "node scripts/setup-blog.js"
+    "setup-blog": "node scripts/setup-blog.js",
+    "setup-database": "node scripts/setup-database.js"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
