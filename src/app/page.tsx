@@ -19,7 +19,7 @@ const ContactSection = dynamic(() => import("@/components/ContactSection"), {
   loading: () => <div className="h-96 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0033A0]"></div></div>
 });
 
-const BlogSection = dynamic(() => import("@/components/BlogSectionMock"), {
+const BlogSection = dynamic(() => import("@/components/BlogSection"), {
   loading: () => <div className="h-96 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0033A0]"></div></div>
 });
 
