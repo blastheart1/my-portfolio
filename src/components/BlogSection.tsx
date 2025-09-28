@@ -138,20 +138,22 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
             </button>
           </div>
         ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 items-center border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
-          {posts.map((post) => (
-            <BlogCard key={post.id} post={post} />
-          ))}
-        </div>
-        
-        <div className="mt-8 text-center">
-          <button className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-[#ff0] text-black rounded-lg hover:bg-[#ff0]/90 transition-colors focus:outline-none focus:ring-2 focus:ring-[#ff0] focus:ring-offset-2 focus:ring-offset-neutral-900">
-            View all
-            <svg className="shrink-0 size-4" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-3 items-center border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
+            {posts.map((post) => (
+              <BlogCard key={post.id} post={post} />
+            ))}
+          </div>
+          
+          <div className="mt-8 text-center">
+            <button className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-[#ff0] text-black rounded-lg hover:bg-[#ff0]/90 transition-colors focus:outline-none focus:ring-2 focus:ring-[#ff0] focus:ring-offset-2 focus:ring-offset-neutral-900">
+              View all
+              <svg className="shrink-0 size-4" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </>
         )}
       </div>
     </section>
