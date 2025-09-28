@@ -32,4 +32,8 @@ export interface ContentGenerationResponse {
     percentage: number;
     description: string;
   };
+  sources?: {
+    title: string;
+    url: string;
+  }[];
 }
