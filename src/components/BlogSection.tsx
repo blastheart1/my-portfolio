@@ -12,6 +12,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     fetchPosts();
@@ -34,6 +35,18 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage === currentPage || isTransitioning) return;
+    
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentPage(newPage);
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 100);
+    }, 300);
   };
 
   const generateNewContent = async () => {
@@ -133,10 +146,33 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
           </div>
         ) : (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-3 items-center border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
-            {posts.slice(currentPage * 3, currentPage * 3 + 3).map((post) => (
-              <BlogCard key={post.id} post={post} />
-            ))}
+          <div className="relative h-[600px] overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-3 h-full border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
+              {[0, 1, 2].map((slotIndex) => {
+                const postIndex = currentPage * 3 + slotIndex;
+                const post = posts[postIndex];
+                
+                return (
+                  <div
+                    key={`${currentPage}-${slotIndex}`}
+                    className={`transition-opacity duration-300 ${
+                      isTransitioning ? 'opacity-0' : 'opacity-100'
+                    }`}
+                    style={{
+                      transitionDelay: `${slotIndex * 100}ms`
+                    }}
+                  >
+                    {post ? (
+                      <BlogCard post={post} />
+                    ) : (
+                      <div className="h-full bg-neutral-900 rounded-xl flex items-center justify-center">
+                        <p className="text-neutral-500 text-sm">No content</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
           
           {posts.length > 3 && (
@@ -146,10 +182,10 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
               <div className="flex items-center justify-center gap-4">
                 {/* Previous button */}
                 <button
-                  onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-                  disabled={currentPage === 0}
+                  onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
+                  disabled={currentPage === 0 || isTransitioning}
                   className={`p-2 rounded-full transition-all duration-300 ${
-                    currentPage === 0 
+                    currentPage === 0 || isTransitioning
                       ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
                       : 'bg-neutral-700 text-blue-500 hover:bg-neutral-600'
                   }`}
@@ -165,10 +201,13 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                   {Array.from({ length: Math.ceil(posts.length / 3) }).map((_, index) => (
                     <button
                       key={index}
-                      onClick={() => setCurrentPage(index)}
+                      onClick={() => handlePageChange(index)}
+                      disabled={isTransitioning}
                       className={`w-3 h-3 rounded-full transition-all duration-300 ${
                         currentPage === index 
                           ? 'bg-blue-500 scale-125' 
+                          : isTransitioning
+                          ? 'bg-neutral-600 cursor-not-allowed'
                           : 'bg-neutral-600 hover:bg-neutral-500'
                       }`}
                       aria-label={`Go to page ${index + 1}`}
@@ -178,10 +217,10 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
 
                 {/* Next button */}
                 <button
-                  onClick={() => setCurrentPage(Math.min(Math.ceil(posts.length / 3) - 1, currentPage + 1))}
-                  disabled={currentPage === Math.ceil(posts.length / 3) - 1}
+                  onClick={() => handlePageChange(Math.min(Math.ceil(posts.length / 3) - 1, currentPage + 1))}
+                  disabled={currentPage === Math.ceil(posts.length / 3) - 1 || isTransitioning}
                   className={`p-2 rounded-full transition-all duration-300 ${
-                    currentPage === Math.ceil(posts.length / 3) - 1 
+                    currentPage === Math.ceil(posts.length / 3) - 1 || isTransitioning
                       ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
                       : 'bg-neutral-700 text-blue-500 hover:bg-neutral-600'
                   }`}
@@ -286,16 +325,20 @@ function BlogCard({ post }: BlogCardProps) {
 
   return (
     <div className="group relative z-10 p-4 md:p-6 h-full flex flex-col bg-neutral-900 focus:outline-hidden first:rounded-t-xl last:rounded-b-xl lg:first:rounded-l-xl lg:first:rounded-tr-none lg:last:rounded-r-xl lg:last:rounded-bl-none before:absolute before:inset-0 before:bg-linear-to-b hover:before:from-transparent hover:before:via-transparent hover:before:to-blue-500/10 before:via-80% focus:before:from-transparent focus:before:via-transparent focus:before:to-blue-500/10 before:-z-1 last:before:rounded-b-xl lg:first:before:rounded-s-xl lg:last:before:rounded-e-xl lg:last:before:rounded-bl-none before:opacity-0 hover:before:opacity-100 focus:before:opacity-100">
-      <div className="mb-5">
+      {/* Fixed header with icon and title */}
+      <div className="flex-shrink-0 mb-4">
         {getIcon(post.topic)}
-        
-        <div className="mt-5">
-          <h3 className="mt-5 font-medium text-lg text-white">{post.title}</h3>
-          <p className="mt-1 text-neutral-400">{post.excerpt}</p>
+        <h3 className="mt-4 font-medium text-lg text-white">{post.title}</h3>
+      </div>
+      
+      {/* Scrollable content area */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide relative">
+        <div className="pr-2 pb-6">
+          <p className="text-neutral-400 leading-relaxed">{post.excerpt}</p>
           
           {/* Sources as badges */}
           {post.sources && post.sources.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               {post.sources.slice(0, 2).map((source, index) => (
                 <a
                   key={index}
@@ -316,12 +359,26 @@ function BlogCard({ post }: BlogCardProps) {
             </div>
           )}
         </div>
+        
+        {/* Scroll indicator - only show if content is scrollable */}
+        <div className="absolute bottom-0 left-0 right-2 h-8 bg-gradient-to-t from-neutral-900 via-neutral-900/80 to-transparent pointer-events-none">
+          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2">
+            <div className="flex items-center gap-1 text-xs text-neutral-400 bg-neutral-800/90 px-3 py-1 rounded-full backdrop-blur-sm">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+              <span>scroll for more</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <p className="mt-auto">
+      
+      {/* Fixed footer */}
+      <div className="flex-shrink-0 mt-4">
         <span className="font-medium text-sm text-blue-500 pb-1 border-b-2 border-neutral-700 group-hover:border-blue-500 group-focus:border-blue-500 transition focus:outline-hidden">
           {post.type === 'case-study' ? 'Case study' : 'Blog post'}
         </span>
-      </p>
+      </div>
     </div>
   );
 }
