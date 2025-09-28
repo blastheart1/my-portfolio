@@ -112,19 +112,12 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
     <section className={`py-16 px-4 ${className}`}>
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">
             Blog & Case Studies
           </h2>
-          <p className="text-neutral-400 text-lg mb-6">
+          <p className="text-neutral-400 text-lg">
             AI-generated insights on technology and software development
           </p>
-          <button
-            onClick={generateNewContent}
-            disabled={loading}
-            className="px-6 py-2 bg-[#ff0] text-black font-semibold rounded-lg hover:bg-[#ff0]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Generating...' : 'Generate New Content'}
-          </button>
         </div>
 
         {posts.length === 0 ? (
@@ -140,28 +133,10 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
           </div>
         ) : (
         <>
-          <div className="relative overflow-hidden">
-            <div 
-              className="flex transition-transform duration-500 ease-in-out"
-              style={{ 
-                transform: `translateX(-${currentPage * 100}%)`,
-                width: `${Math.ceil(posts.length / 3) * 100}%`
-              }}
-            >
-              {Array.from({ length: Math.ceil(posts.length / 3) }).map((_, pageIndex) => (
-                <div 
-                  key={pageIndex}
-                  className="w-full flex-shrink-0"
-                  style={{ width: `${100 / Math.ceil(posts.length / 3)}%` }}
-                >
-                  <div className="grid grid-cols-1 lg:grid-cols-3 items-center border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
-                    {posts.slice(pageIndex * 3, pageIndex * 3 + 3).map((post) => (
-                      <BlogCard key={post.id} post={post} />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 items-center border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
+            {posts.slice(currentPage * 3, currentPage * 3 + 3).map((post) => (
+              <BlogCard key={post.id} post={post} />
+            ))}
           </div>
           
           {posts.length > 3 && (
@@ -176,7 +151,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                   className={`p-2 rounded-full transition-all duration-300 ${
                     currentPage === 0 
                       ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
-                      : 'bg-neutral-700 text-[#ff0] hover:bg-neutral-600'
+                      : 'bg-neutral-700 text-blue-500 hover:bg-neutral-600'
                   }`}
                   aria-label="Previous page"
                 >
@@ -193,7 +168,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                       onClick={() => setCurrentPage(index)}
                       className={`w-3 h-3 rounded-full transition-all duration-300 ${
                         currentPage === index 
-                          ? 'bg-[#ff0] scale-125' 
+                          ? 'bg-blue-500 scale-125' 
                           : 'bg-neutral-600 hover:bg-neutral-500'
                       }`}
                       aria-label={`Go to page ${index + 1}`}
@@ -208,7 +183,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                   className={`p-2 rounded-full transition-all duration-300 ${
                     currentPage === Math.ceil(posts.length / 3) - 1 
                       ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
-                      : 'bg-neutral-700 text-[#ff0] hover:bg-neutral-600'
+                      : 'bg-neutral-700 text-blue-500 hover:bg-neutral-600'
                   }`}
                   aria-label="Next page"
                 >
@@ -310,7 +285,7 @@ function BlogCard({ post }: BlogCardProps) {
   };
 
   return (
-    <div className="group relative z-10 p-4 md:p-6 h-full flex flex-col bg-neutral-900 focus:outline-hidden first:rounded-t-xl last:rounded-b-xl lg:first:rounded-l-xl lg:first:rounded-tr-none lg:last:rounded-r-xl lg:last:rounded-bl-none before:absolute before:inset-0 before:bg-linear-to-b hover:before:from-transparent hover:before:via-transparent hover:before:to-[#ff0]/10 before:via-80% focus:before:from-transparent focus:before:via-transparent focus:before:to-[#ff0]/10 before:-z-1 last:before:rounded-b-xl lg:first:before:rounded-s-xl lg:last:before:rounded-e-xl lg:last:before:rounded-bl-none before:opacity-0 hover:before:opacity-100 focus:before:opacity-100">
+    <div className="group relative z-10 p-4 md:p-6 h-full flex flex-col bg-neutral-900 focus:outline-hidden first:rounded-t-xl last:rounded-b-xl lg:first:rounded-l-xl lg:first:rounded-tr-none lg:last:rounded-r-xl lg:last:rounded-bl-none before:absolute before:inset-0 before:bg-linear-to-b hover:before:from-transparent hover:before:via-transparent hover:before:to-blue-500/10 before:via-80% focus:before:from-transparent focus:before:via-transparent focus:before:to-blue-500/10 before:-z-1 last:before:rounded-b-xl lg:first:before:rounded-s-xl lg:last:before:rounded-e-xl lg:last:before:rounded-bl-none before:opacity-0 hover:before:opacity-100 focus:before:opacity-100">
       <div className="mb-5">
         {getIcon(post.topic)}
         
@@ -343,7 +318,7 @@ function BlogCard({ post }: BlogCardProps) {
         </div>
       </div>
       <p className="mt-auto">
-        <span className="font-medium text-sm text-[#ff0] pb-1 border-b-2 border-neutral-700 group-hover:border-[#ff0] group-focus:border-[#ff0] transition focus:outline-hidden">
+        <span className="font-medium text-sm text-blue-500 pb-1 border-b-2 border-neutral-700 group-hover:border-blue-500 group-focus:border-blue-500 transition focus:outline-hidden">
           {post.type === 'case-study' ? 'Case study' : 'Blog post'}
         </span>
       </p>
