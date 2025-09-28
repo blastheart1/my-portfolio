@@ -138,25 +138,19 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
             </button>
           </div>
         ) : (
-        <div className="space-y-8">
-          {/* Latest 3 posts in grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {posts.slice(0, 3).map((post) => (
-              <BlogCard key={post.id} post={post} />
-            ))}
-          </div>
-          
-          {/* Show more posts if available */}
-          {posts.length > 3 && (
-            <div className="mt-8">
-              <h3 className="text-xl font-semibold text-white mb-4">More Articles</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {posts.slice(3).map((post) => (
-                  <BlogCard key={post.id} post={post} compact />
-                ))}
-              </div>
-            </div>
-          )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 items-center border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
+          {posts.map((post) => (
+            <BlogCard key={post.id} post={post} />
+          ))}
+        </div>
+        
+        <div className="mt-8 text-center">
+          <button className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-[#ff0] text-black rounded-lg hover:bg-[#ff0]/90 transition-colors focus:outline-none focus:ring-2 focus:ring-[#ff0] focus:ring-offset-2 focus:ring-offset-neutral-900">
+            View all
+            <svg className="shrink-0 size-4" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
         </div>
         )}
       </div>
@@ -166,10 +160,9 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
 
 interface BlogCardProps {
   post: BlogPost;
-  compact?: boolean;
 }
 
-function BlogCard({ post, compact = false }: BlogCardProps) {
+function BlogCard({ post }: BlogCardProps) {
   const getIcon = (topic: string) => {
     // Return relevant icons based on topic
     const icons = {
@@ -234,20 +227,13 @@ function BlogCard({ post, compact = false }: BlogCardProps) {
   };
 
   return (
-    <div className={`group relative z-10 ${compact ? 'p-4' : 'p-4 md:p-6'} h-full flex flex-col bg-neutral-900 focus:outline-hidden rounded-xl before:absolute before:inset-0 before:bg-linear-to-b hover:before:from-transparent hover:before:via-transparent hover:before:to-[#ff0]/10 before:via-80% focus:before:from-transparent focus:before:via-transparent focus:before:to-[#ff0]/10 before:-z-1 before:opacity-0 hover:before:opacity-100 focus:before:opacity-100`}>
+    <div className="group relative z-10 p-4 md:p-6 h-full flex flex-col bg-neutral-900 focus:outline-hidden first:rounded-t-xl last:rounded-b-xl lg:first:rounded-l-xl lg:first:rounded-tr-none lg:last:rounded-r-xl lg:last:rounded-bl-none before:absolute before:inset-0 before:bg-linear-to-b hover:before:from-transparent hover:before:via-transparent hover:before:to-[#ff0]/10 before:via-80% focus:before:from-transparent focus:before:via-transparent focus:before:to-[#ff0]/10 before:-z-1 last:before:rounded-b-xl lg:first:before:rounded-s-xl lg:last:before:rounded-e-xl lg:last:before:rounded-bl-none before:opacity-0 hover:before:opacity-100 focus:before:opacity-100">
       <div className="mb-5">
         {getIcon(post.topic)}
         
         <div className="mt-5">
-          <h3 className={`font-medium text-white ${compact ? 'text-base' : 'text-lg'}`}>{post.title}</h3>
-          <p className={`mt-1 text-neutral-400 ${compact ? 'text-sm' : 'text-base'}`}>{post.excerpt}</p>
-          {post.metrics && !compact && (
-            <div className="mt-3 p-2 bg-neutral-800 rounded-lg">
-              <p className="text-sm text-neutral-300">
-                <span className="text-[#ff0] font-semibold">Key Result:</span> {post.metrics.description}
-              </p>
-            </div>
-          )}
+          <h3 className="mt-5 font-medium text-lg text-white">{post.title}</h3>
+          <p className="mt-1 text-neutral-400">{post.excerpt}</p>
         </div>
       </div>
       <p className="mt-auto">
