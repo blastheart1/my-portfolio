@@ -44,8 +44,7 @@ export default function HeroSection() {
                 window.open('https://calendly.com/antonioluis-santos1/30min', '_blank', 'noopener,noreferrer');
               }
             }}
-            className="space-button galaxy-button"
-            style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+            className="px-6 py-2 bg-[#0033A0] text-white rounded-xl font-medium shadow-lg"
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             whileHover={{ scale: 1.05, y: -2 }}
@@ -70,8 +69,7 @@ export default function HeroSection() {
               }
             }}
           >
-            <div className="galaxy"></div>
-            <span className="text">Schedule a Call</span>
+            Schedule a Call
           </motion.button>
         </div>
 

@@ -28,7 +28,7 @@ export default function AboutSection() {
   <span className="font-semibold"> generative AI</span>, skilled in 
   <span className="font-semibold"> ReactJS, Next.js, TailwindCSS, Supabase, Python, FastAPI, and TensorFlow</span>, 
   with hands-on experience integrating <span className="font-semibold">AI APIs such as OpenAI</span>. 
-  Work includes building <span className="font-semibold">websites, chatbots, and intelligent applications</span> 
+  Work includes building <span className="font-semibold">websites, chatbots, and intelligent applications </span> 
   that merge modern development practices with 
   <span className="font-semibold"> scalable, future-ready AI solutions</span>. 
   Professional background also spans roles as a 

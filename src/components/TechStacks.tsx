@@ -178,6 +178,21 @@ export default function TechStacks() {
           animation: scroll-left-slow 30s linear infinite;
         }
 
+        /* Faster animations on mobile */
+        @media (max-width: 768px) {
+          .animate-scroll-left {
+            animation: scroll-left 12s linear infinite;
+          }
+
+          .animate-scroll-right {
+            animation: scroll-right 15s linear infinite;
+          }
+
+          .animate-scroll-left-slow {
+            animation: scroll-left-slow 18s linear infinite;
+          }
+        }
+
         /* Pause animation on hover */
         .animate-scroll-left:hover,
         .animate-scroll-right:hover,
