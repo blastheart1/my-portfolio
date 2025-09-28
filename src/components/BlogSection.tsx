@@ -166,19 +166,22 @@ interface BlogCardProps {
 
 function BlogCard({ post }: BlogCardProps) {
   const getIcon = (topic: string) => {
-    // Return relevant icons based on topic
+    // Return professional icons based on topic
     const icons = {
       'Generative AI': (
         <svg className="shrink-0 size-8" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#FFE01B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M2 17L12 22L22 17" stroke="#FFE01B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M2 12L12 17L22 12" stroke="#FFE01B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-5 0v-15A2.5 2.5 0 0 1 9.5 2Z" fill="#FFE01B"/>
+          <path d="M14.5 2A2.5 2.5 0 0 1 17 4.5v15a2.5 2.5 0 0 1-5 0v-15A2.5 2.5 0 0 1 14.5 2Z" fill="#FFE01B"/>
+          <path d="M12 8v8" stroke="#000" strokeWidth="2" strokeLinecap="round"/>
+          <path d="M8 12h8" stroke="#000" strokeWidth="2" strokeLinecap="round"/>
         </svg>
       ),
       'Software Quality Assurance': (
         <svg className="shrink-0 size-8" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 12L11 14L15 10" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#10B981" strokeWidth="2"/>
+          <path d="M12 8v4" stroke="#10B981" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M12 16h.01" stroke="#10B981" strokeWidth="2" strokeLinecap="round"/>
         </svg>
       ),
       'Machine Learning': (
@@ -186,28 +189,37 @@ function BlogCard({ post }: BlogCardProps) {
           <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M2 17L12 22L22 17" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M2 12L12 17L22 12" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <circle cx="12" cy="12" r="2" fill="#3B82F6"/>
         </svg>
       ),
       'DevOps': (
         <svg className="shrink-0 size-8" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M8 8h8" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round"/>
+          <path d="M8 12h8" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round"/>
         </svg>
       ),
       'Cloud Computing': (
         <svg className="shrink-0 size-8" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 10H16.74C16.37 8.28 14.82 7 13 7C11.55 7 10.3 7.9 9.7 9.2C9.1 7.9 7.85 7 6.4 7C4.42 7 2.8 8.6 2.8 10.6C2.8 10.6 2.8 10.6 2.8 10.6C1.2 10.6 0 11.8 0 13.4C0 15 1.2 16.2 2.8 16.2H18C19.1 16.2 20 15.3 20 14.2C20 13.1 19.1 10 18 10Z" stroke="#8B5CF6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M6 12h4" stroke="#8B5CF6" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M8 14h2" stroke="#8B5CF6" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
       ),
       'Cybersecurity': (
         <svg className="shrink-0 size-8" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 22S8 18 8 13V6L12 4L16 6V13C16 18 12 22 12 22Z" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M9 12L11 14L15 10" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M12 8v4" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
       ),
       'Data Science': (
         <svg className="shrink-0 size-8" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M3 3V21H21" stroke="#06B6D4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M9 9L12 6L16 10L20 6" stroke="#06B6D4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <circle cx="9" cy="9" r="1" fill="#06B6D4"/>
+          <circle cx="12" cy="6" r="1" fill="#06B6D4"/>
+          <circle cx="16" cy="10" r="1" fill="#06B6D4"/>
         </svg>
       ),
       'Web Development': (
@@ -215,12 +227,15 @@ function BlogCard({ post }: BlogCardProps) {
           <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#EC4899" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M2 17L12 22L22 17" stroke="#EC4899" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M2 12L12 17L22 12" stroke="#EC4899" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M12 8v8" stroke="#EC4899" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
       ),
       default: (
         <svg className="shrink-0 size-8" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M14 2V8H20" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M16 13H8" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M16 17H8" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
       )
     };

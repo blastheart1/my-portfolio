@@ -32,31 +32,32 @@ export async function generateContent(request: ContentGenerationRequest): Promis
       ? `Previous content titles: ${previousContent.map(p => p.title).join(', ')}. Avoid similar topics and approaches.`
       : '';
 
-    const systemPrompt = `You are a technical content writer specializing in ${topic}. Create fact-based, educational content that provides real value to readers. Focus on current industry trends, established best practices, and verifiable information. Avoid fictional scenarios and focus on real-world applications and proven methodologies.`;
+    const systemPrompt = `You are Antonio Luis Santos, a software engineer and technical consultant with expertise in ${topic}. Write in first person, sharing your personal experiences, insights, and professional knowledge. Create authentic, fact-based content that reflects real industry experience and provides genuine value to readers. Focus on practical insights, real challenges faced, and proven solutions you've implemented or observed.`;
 
     let userPrompt = '';
     
     if (type === 'case-study') {
-      userPrompt = `Create a fact-based case study about ${topic}. Include:
-1. A real-world scenario based on actual industry examples
-2. A specific challenge commonly faced in the industry
-3. Proven solutions and methodologies
-4. Realistic results based on industry standards
-5. Key takeaways and lessons learned
+      userPrompt = `Write a personal case study about ${topic} based on your professional experience. Include:
+1. A real project or scenario you've worked on (use "I" and "my experience")
+2. Specific challenges you faced and how you solved them
+3. The technical approach and tools you used
+4. Measurable results and outcomes you achieved
+5. Key lessons learned and insights gained
 
-Focus on established best practices and real industry examples. Avoid fictional companies - use "a leading tech company" or "a Fortune 500 organization" instead. Base metrics on real industry data and studies.
+Write as Antonio Luis Santos sharing his professional experience. Be specific about technologies, methodologies, and results. Use realistic metrics based on industry standards.
 
 ${contextPrompt}
 
 Format the response as JSON with: title, content, excerpt, metrics (with realistic percentage and description).`;
     } else {
-      userPrompt = `Write a fact-based, educational blog post about ${topic}. Include:
-1. Current industry trends and developments (based on real data)
-2. Established best practices and methodologies
-3. Real-world applications and use cases
-4. Industry insights and future outlook
+      userPrompt = `Write a personal blog post about ${topic} sharing your professional insights and experience. Include:
+1. Your perspective on current trends and developments
+2. Best practices you've learned and implemented
+3. Real projects and applications you've worked on
+4. Your thoughts on the future of the field
+5. Practical tips and advice for other developers
 
-Focus on verifiable information, established practices, and educational value. Cite industry standards and proven methodologies.
+Write in first person as Antonio Luis Santos, sharing your authentic professional experience and knowledge. Be conversational but informative.
 
 ${contextPrompt}
 
