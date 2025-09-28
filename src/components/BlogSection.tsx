@@ -138,11 +138,26 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 items-center border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
-            {posts.map((post) => (
+        <div className="space-y-8">
+          {/* Latest 3 posts in grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {posts.slice(0, 3).map((post) => (
               <BlogCard key={post.id} post={post} />
             ))}
           </div>
+          
+          {/* Show more posts if available */}
+          {posts.length > 3 && (
+            <div className="mt-8">
+              <h3 className="text-xl font-semibold text-white mb-4">More Articles</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {posts.slice(3).map((post) => (
+                  <BlogCard key={post.id} post={post} compact />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
         )}
       </div>
     </section>
@@ -151,9 +166,10 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
 
 interface BlogCardProps {
   post: BlogPost;
+  compact?: boolean;
 }
 
-function BlogCard({ post }: BlogCardProps) {
+function BlogCard({ post, compact = false }: BlogCardProps) {
   const getIcon = (topic: string) => {
     // Return different icons based on topic
     const icons = {
