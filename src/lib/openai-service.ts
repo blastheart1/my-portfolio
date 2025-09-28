@@ -32,31 +32,31 @@ export async function generateContent(request: ContentGenerationRequest): Promis
       ? `Previous content titles: ${previousContent.map(p => p.title).join(', ')}. Avoid similar topics and approaches.`
       : '';
 
-    const systemPrompt = `You are a technical content writer specializing in ${topic}. Create engaging, informative content that demonstrates expertise and provides value to readers.`;
+    const systemPrompt = `You are a technical content writer specializing in ${topic}. Create fact-based, educational content that provides real value to readers. Focus on current industry trends, established best practices, and verifiable information. Avoid fictional scenarios and focus on real-world applications and proven methodologies.`;
 
     let userPrompt = '';
     
     if (type === 'case-study') {
-      userPrompt = `Create a compelling case study about ${topic}. Include:
-1. A realistic scenario with a fictional company
-2. A specific challenge they faced
-3. The solution implemented
-4. Measurable results with a percentage improvement
-5. Key takeaways
+      userPrompt = `Create a fact-based case study about ${topic}. Include:
+1. A real-world scenario based on actual industry examples
+2. A specific challenge commonly faced in the industry
+3. Proven solutions and methodologies
+4. Realistic results based on industry standards
+5. Key takeaways and lessons learned
 
-Make it professional and detailed. Include a percentage metric (like "43% improvement" or "20% increase") and a brief description of the achievement.
+Focus on established best practices and real industry examples. Avoid fictional companies - use "a leading tech company" or "a Fortune 500 organization" instead. Base metrics on real industry data and studies.
 
 ${contextPrompt}
 
-Format the response as JSON with: title, content, excerpt, metrics (with percentage and description).`;
+Format the response as JSON with: title, content, excerpt, metrics (with realistic percentage and description).`;
     } else {
-      userPrompt = `Write an informative blog post about ${topic}. Include:
-1. Current trends and developments
-2. Practical insights and best practices
-3. Real-world applications
-4. Future outlook
+      userPrompt = `Write a fact-based, educational blog post about ${topic}. Include:
+1. Current industry trends and developments (based on real data)
+2. Established best practices and methodologies
+3. Real-world applications and use cases
+4. Industry insights and future outlook
 
-Make it engaging and valuable for professionals in the field.
+Focus on verifiable information, established practices, and educational value. Cite industry standards and proven methodologies.
 
 ${contextPrompt}
 
