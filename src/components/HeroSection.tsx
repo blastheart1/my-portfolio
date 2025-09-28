@@ -35,51 +35,17 @@ export default function HeroSection() {
         </motion.p>
 
         <div className="flex flex-col sm:flex-row gap-4 mt-6">
-        <motion.button
-          onClick={() => {
-            if (window.Calendly?.showPopupWidget) {
-              window.Calendly.showPopupWidget('https://calendly.com/antonioluis-santos1/30min');
-            } else {
-              // Fallback: open in new tab if Calendly isn't loaded
-              window.open('https://calendly.com/antonioluis-santos1/30min', '_blank', 'noopener,noreferrer');
-            }
-          }}
-          className="inline-block px-6 py-3 rounded-xl bg-[#0033A0] text-white font-medium shadow-lg hover:bg-[#002A8A] focus:outline-none focus:ring-2 focus:ring-[#0033A0] focus:ring-offset-2 transition-colors"
-          initial={{ opacity: 0, y: 20, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          whileHover={{ scale: 1.05, y: -2 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ 
-            type: "spring", 
-            stiffness: 180, 
-            damping: 12,
-            delay: 0.1 
-          }}
-          aria-label="Schedule a 30-minute consultation call with Antonio Luis Santos"
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
+          <motion.button
+            onClick={() => {
               if (window.Calendly?.showPopupWidget) {
                 window.Calendly.showPopupWidget('https://calendly.com/antonioluis-santos1/30min');
               } else {
+                // Fallback: open in new tab if Calendly isn't loaded
                 window.open('https://calendly.com/antonioluis-santos1/30min', '_blank', 'noopener,noreferrer');
               }
-            }
-          }}
-        >
-          Schedule a Call
-        </motion.button>
-
-          <motion.button
-            onClick={() => {
-              const servicesSection = document.getElementById('services');
-              if (servicesSection) {
-                servicesSection.scrollIntoView({ behavior: 'smooth' });
-              }
             }}
-            className="inline-block px-6 py-3 rounded-xl border-2 border-[#0033A0] text-[#0033A0] dark:bg-white dark:text-black dark:border-white font-medium shadow-lg hover:bg-[#0033A0] hover:text-white dark:hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0033A0] focus:ring-offset-2 transition-colors"
+            className="space-button galaxy-button"
+            style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             whileHover={{ scale: 1.05, y: -2 }}
@@ -88,22 +54,24 @@ export default function HeroSection() {
               type: "spring", 
               stiffness: 180, 
               damping: 12,
-              delay: 0.2 
+              delay: 0.1 
             }}
-            aria-label="View services and pricing packages"
+            aria-label="Schedule a 30-minute consultation call with Antonio Luis Santos"
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                const servicesSection = document.getElementById('services');
-                if (servicesSection) {
-                  servicesSection.scrollIntoView({ behavior: 'smooth' });
+                if (window.Calendly?.showPopupWidget) {
+                  window.Calendly.showPopupWidget('https://calendly.com/antonioluis-santos1/30min');
+                } else {
+                  window.open('https://calendly.com/antonioluis-santos1/30min', '_blank', 'noopener,noreferrer');
                 }
               }
             }}
           >
-            View Services
+            <div className="galaxy"></div>
+            <span className="text">Schedule a Call</span>
           </motion.button>
         </div>
 
