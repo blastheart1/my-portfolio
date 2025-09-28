@@ -9,6 +9,10 @@ export interface BlogPost {
     percentage: number;
     description: string;
   };
+  sources?: {
+    title: string;
+    url: string;
+  }[];
   createdAt: Date;
   updatedAt: Date;
   published: boolean;

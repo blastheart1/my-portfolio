@@ -32,36 +32,42 @@ export async function generateContent(request: ContentGenerationRequest): Promis
       ? `Previous content titles: ${previousContent.map(p => p.title).join(', ')}. Avoid similar topics and approaches.`
       : '';
 
-    const systemPrompt = `You are Antonio Luis Santos, a software engineer and technical consultant with expertise in ${topic}. Write in first person, sharing your personal experiences, insights, and professional knowledge. Create authentic, fact-based content that reflects real industry experience and provides genuine value to readers. Focus on practical insights, real challenges faced, and proven solutions you've implemented or observed.`;
+    const systemPrompt = `You are Antonio Luis Santos, a senior software engineer and technical consultant with deep expertise in ${topic}. Write in first person, sharing your professional insights, controversial takes, and detailed technical knowledge. Provide smart, opinionated analysis based on real industry experience. Include specific technologies, methodologies, and concrete examples. Be detailed, technical, and provide unique perspectives that demonstrate deep expertise.`;
 
     let userPrompt = '';
     
     if (type === 'case-study') {
-      userPrompt = `Write a personal case study about ${topic} based on your professional experience. Include:
-1. A real project or scenario you've worked on (use "I" and "my experience")
-2. Specific challenges you faced and how you solved them
-3. The technical approach and tools you used
-4. Measurable results and outcomes you achieved
-5. Key lessons learned and insights gained
+      userPrompt = `Write a detailed case study about ${topic} based on your professional experience. Include:
+1. A specific real project you led or contributed to (use "I" and "my experience")
+2. The exact technical challenges you faced and your unique solutions
+3. Specific technologies, frameworks, and tools you used (mention exact versions)
+4. Detailed technical implementation approach
+5. Measurable results with specific metrics and data
+6. Controversial takes or contrarian insights you discovered
+7. Key technical lessons and advanced insights gained
+8. References to specific industry sources, documentation, or research
 
-Write as Antonio Luis Santos sharing his professional experience. Be specific about technologies, methodologies, and results. Use realistic metrics based on industry standards.
+Write as Antonio Luis Santos sharing deep technical expertise. Be opinionated, detailed, and include specific technical details. Mention exact tools, versions, and methodologies.
 
 ${contextPrompt}
 
-Format the response as JSON with: title, content, excerpt, metrics (with realistic percentage and description).`;
+Format the response as JSON with: title, content, excerpt, metrics (with realistic percentage and description), sources (array of source objects with title and url).`;
     } else {
-      userPrompt = `Write a personal blog post about ${topic} sharing your professional insights and experience. Include:
-1. Your perspective on current trends and developments
-2. Best practices you've learned and implemented
-3. Real projects and applications you've worked on
-4. Your thoughts on the future of the field
-5. Practical tips and advice for other developers
+      userPrompt = `Write a detailed, opinionated blog post about ${topic} sharing your professional insights and controversial takes. Include:
+1. Your contrarian perspective on current industry trends and why popular approaches might be wrong
+2. Specific technical best practices you've developed through experience
+3. Detailed real projects with exact technologies and implementation details
+4. Your predictions for the future with technical reasoning
+5. Advanced tips and techniques that most developers don't know
+6. Specific tools, frameworks, and methodologies you recommend
+7. References to documentation, research papers, or industry sources
+8. Technical deep-dives with code examples or architectural decisions
 
-Write in first person as Antonio Luis Santos, sharing your authentic professional experience and knowledge. Be conversational but informative.
+Write in first person as Antonio Luis Santos, sharing deep technical expertise and contrarian insights. Be detailed, technical, and opinionated.
 
 ${contextPrompt}
 
-Format the response as JSON with: title, content, excerpt.`;
+Format the response as JSON with: title, content, excerpt, sources (array of source objects with title and url).`;
     }
 
     const completion = await getOpenAI().chat.completions.create({

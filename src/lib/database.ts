@@ -49,21 +49,26 @@ export async function insertBlogPost(post: {
     percentage: number;
     description: string;
   };
+  sources?: {
+    title: string;
+    url: string;
+  }[];
   published: boolean;
 }) {
   try {
     const client = getSupabaseClient();
-    const { data, error } = await client
-      .from('blog_posts')
-      .insert([{
-        title: post.title,
-        content: post.content,
-        excerpt: post.excerpt,
-        type: post.type,
-        topic: post.topic,
-        metrics: post.metrics,
-        published: post.published
-      }])
+        const { data, error } = await client
+          .from('blog_posts')
+          .insert([{
+            title: post.title,
+            content: post.content,
+            excerpt: post.excerpt,
+            type: post.type,
+            topic: post.topic,
+            metrics: post.metrics,
+            sources: post.sources || [],
+            published: post.published
+          }])
       .select('id, created_at, updated_at')
       .single();
     
@@ -87,18 +92,19 @@ export async function getBlogPosts(limit: number = 10, offset: number = 0): Prom
     
     if (error) throw error;
     
-    return data.map(row => ({
-      id: row.id,
-      title: row.title,
-      content: row.content,
-      excerpt: row.excerpt,
-      type: row.type,
-      topic: row.topic,
-      metrics: row.metrics,
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at),
-      published: row.published
-    })) as BlogPost[];
+        return data.map(row => ({
+          id: row.id,
+          title: row.title,
+          content: row.content,
+          excerpt: row.excerpt,
+          type: row.type,
+          topic: row.topic,
+          metrics: row.metrics,
+          sources: row.sources,
+          createdAt: new Date(row.created_at),
+          updatedAt: new Date(row.updated_at),
+          published: row.published
+        })) as BlogPost[];
   } catch (error) {
     console.error('Error fetching blog posts:', error);
     throw error;

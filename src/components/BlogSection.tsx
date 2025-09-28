@@ -11,6 +11,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     fetchPosts();
@@ -140,19 +141,24 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
         ) : (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 items-center border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
-            {posts.map((post) => (
+            {(showAll ? posts : posts.slice(0, 3)).map((post) => (
               <BlogCard key={post.id} post={post} />
             ))}
           </div>
           
-          <div className="mt-8 text-center">
-            <button className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-[#ff0] text-black rounded-lg hover:bg-[#ff0]/90 transition-colors focus:outline-none focus:ring-2 focus:ring-[#ff0] focus:ring-offset-2 focus:ring-offset-neutral-900">
-              View all
-              <svg className="shrink-0 size-4" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
+          {posts.length > 3 && (
+            <div className="mt-8 text-center">
+              <button 
+                onClick={() => setShowAll(!showAll)}
+                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-[#ff0] text-black rounded-lg hover:bg-[#ff0]/90 transition-colors focus:outline-none focus:ring-2 focus:ring-[#ff0] focus:ring-offset-2 focus:ring-offset-neutral-900"
+              >
+                {showAll ? 'Show Less' : 'View All'}
+                <svg className="shrink-0 size-4" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d={showAll ? "M10 4L6 8L10 12" : "M6 12L10 8L6 4"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          )}
         </>
         )}
       </div>
@@ -251,6 +257,29 @@ function BlogCard({ post }: BlogCardProps) {
         <div className="mt-5">
           <h3 className="mt-5 font-medium text-lg text-white">{post.title}</h3>
           <p className="mt-1 text-neutral-400">{post.excerpt}</p>
+          
+          {/* Sources as badges */}
+          {post.sources && post.sources.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {post.sources.slice(0, 2).map((source, index) => (
+                <a
+                  key={index}
+                  href={source.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-neutral-800 text-neutral-300 rounded-md hover:bg-neutral-700 transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  {source.title}
+                </a>
+              ))}
+              {post.sources.length > 2 && (
+                <span className="text-xs text-neutral-500">+{post.sources.length - 2} more</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
       <p className="mt-auto">

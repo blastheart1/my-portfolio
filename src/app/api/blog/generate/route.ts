@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
       type: contentRequest.type,
       topic: contentRequest.topic,
       metrics: generatedContent.metrics,
+      sources: generatedContent.sources,
       published: true
     });
 
