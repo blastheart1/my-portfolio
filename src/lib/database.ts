@@ -1,16 +1,28 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { BlogPost } from '@/types/blog';
 
-// Create Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Lazy initialization of Supabase client
+let supabase: SupabaseClient | null = null;
+
+function getSupabaseClient(): SupabaseClient {
+  if (!supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase environment variables');
+    }
+    
+    supabase = createClient(supabaseUrl, supabaseKey);
+  }
+  return supabase;
+}
 
 export async function createBlogPostTable() {
   try {
+    const client = getSupabaseClient();
     // Table is already created via SQL editor, just verify it exists
-    const { data, error } = await supabase
+    const { error } = await client
       .from('blog_posts')
       .select('id')
       .limit(1);
@@ -40,7 +52,8 @@ export async function insertBlogPost(post: {
   published: boolean;
 }) {
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient();
+    const { data, error } = await client
       .from('blog_posts')
       .insert([{
         title: post.title,
@@ -64,7 +77,8 @@ export async function insertBlogPost(post: {
 
 export async function getBlogPosts(limit: number = 10, offset: number = 0): Promise<BlogPost[]> {
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient();
+    const { data, error } = await client
       .from('blog_posts')
       .select('*')
       .eq('published', true)
@@ -93,7 +107,8 @@ export async function getBlogPosts(limit: number = 10, offset: number = 0): Prom
 
 export async function getBlogPostById(id: string): Promise<BlogPost | null> {
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient();
+    const { data, error } = await client
       .from('blog_posts')
       .select('*')
       .eq('id', id)
@@ -125,7 +140,8 @@ export async function getBlogPostById(id: string): Promise<BlogPost | null> {
 
 export async function getLatestBlogPost(): Promise<BlogPost | null> {
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient();
+    const { data, error } = await client
       .from('blog_posts')
       .select('*')
       .eq('published', true)
