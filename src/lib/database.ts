@@ -1,48 +1,28 @@
-import { Pool } from 'pg';
+import { createClient } from '@supabase/supabase-js';
 import { BlogPost } from '@/types/blog';
 
-// Create PostgreSQL connection pool
-const pool = new Pool({
-  host: process.env.POSTGRES_HOST,
-  port: 5432,
-  database: process.env.POSTGRES_DATABASE,
-  user: process.env.POSTGRES_USER,
-  password: process.env.POSTGRES_PASSWORD,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
-
-// Helper function to execute queries
-async function query(text: string, params?: any[]) {
-  const client = await pool.connect();
-  try {
-    const result = await client.query(text, params);
-    return result;
-  } finally {
-    client.release();
-  }
-}
+// Create Supabase client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export async function createBlogPostTable() {
   try {
-    await query(`
-      CREATE TABLE IF NOT EXISTS blog_posts (
-        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        content TEXT NOT NULL,
-        excerpt TEXT NOT NULL,
-        type VARCHAR(20) NOT NULL CHECK (type IN ('blog', 'case-study')),
-        topic VARCHAR(100) NOT NULL,
-        metrics JSONB,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        published BOOLEAN DEFAULT true
-      );
-    `);
-    console.log('Blog posts table created successfully');
+    // Table is already created via SQL editor, just verify it exists
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('id')
+      .limit(1);
+    
+    if (error && error.code !== 'PGRST116') { // PGRST116 = table doesn't exist
+      throw error;
+    }
+    
+    console.log('Blog posts table verified successfully');
+    return { success: true };
   } catch (error) {
-    console.error('Error creating blog posts table:', error);
+    console.error('Error verifying blog posts table:', error);
     throw error;
   }
 }
@@ -60,12 +40,22 @@ export async function insertBlogPost(post: {
   published: boolean;
 }) {
   try {
-    const result = await query(`
-      INSERT INTO blog_posts (title, content, excerpt, type, topic, metrics, published)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING id, created_at, updated_at;
-    `, [post.title, post.content, post.excerpt, post.type, post.topic, post.metrics ? JSON.stringify(post.metrics) : null, post.published]);
-    return result.rows[0];
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .insert([{
+        title: post.title,
+        content: post.content,
+        excerpt: post.excerpt,
+        type: post.type,
+        topic: post.topic,
+        metrics: post.metrics,
+        published: post.published
+      }])
+      .select('id, created_at, updated_at')
+      .single();
+    
+    if (error) throw error;
+    return data;
   } catch (error) {
     console.error('Error inserting blog post:', error);
     throw error;
@@ -74,13 +64,16 @@ export async function insertBlogPost(post: {
 
 export async function getBlogPosts(limit: number = 10, offset: number = 0): Promise<BlogPost[]> {
   try {
-    const result = await query(`
-      SELECT * FROM blog_posts 
-      WHERE published = true 
-      ORDER BY created_at DESC 
-      LIMIT $1 OFFSET $2;
-    `, [limit, offset]);
-    return result.rows.map(row => ({
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('published', true)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+    
+    if (error) throw error;
+    
+    return data.map(row => ({
       id: row.id,
       title: row.title,
       content: row.content,
@@ -100,23 +93,29 @@ export async function getBlogPosts(limit: number = 10, offset: number = 0): Prom
 
 export async function getBlogPostById(id: string): Promise<BlogPost | null> {
   try {
-    const result = await query(`
-      SELECT * FROM blog_posts 
-      WHERE id = $1 AND published = true;
-    `, [id]);
-    if (result.rows.length === 0) return null;
-    const row = result.rows[0];
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('id', id)
+      .eq('published', true)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return null; // No rows returned
+      throw error;
+    }
+    
     return {
-      id: row.id,
-      title: row.title,
-      content: row.content,
-      excerpt: row.excerpt,
-      type: row.type,
-      topic: row.topic,
-      metrics: row.metrics,
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at),
-      published: row.published
+      id: data.id,
+      title: data.title,
+      content: data.content,
+      excerpt: data.excerpt,
+      type: data.type,
+      topic: data.topic,
+      metrics: data.metrics,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+      published: data.published
     } as BlogPost;
   } catch (error) {
     console.error('Error fetching blog post by ID:', error);
@@ -126,25 +125,30 @@ export async function getBlogPostById(id: string): Promise<BlogPost | null> {
 
 export async function getLatestBlogPost(): Promise<BlogPost | null> {
   try {
-    const result = await query(`
-      SELECT * FROM blog_posts 
-      WHERE published = true 
-      ORDER BY created_at DESC 
-      LIMIT 1;
-    `);
-    if (result.rows.length === 0) return null;
-    const row = result.rows[0];
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('published', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return null; // No rows returned
+      throw error;
+    }
+    
     return {
-      id: row.id,
-      title: row.title,
-      content: row.content,
-      excerpt: row.excerpt,
-      type: row.type,
-      topic: row.topic,
-      metrics: row.metrics,
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at),
-      published: row.published
+      id: data.id,
+      title: data.title,
+      content: data.content,
+      excerpt: data.excerpt,
+      type: data.type,
+      topic: data.topic,
+      metrics: data.metrics,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+      published: data.published
     } as BlogPost;
   } catch (error) {
     console.error('Error fetching latest blog post:', error);
