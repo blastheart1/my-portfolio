@@ -130,6 +130,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
         {posts.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-neutral-400 text-lg mb-6">No content available yet.</p>
+            <p className="text-neutral-500 text-sm mb-4">Posts count: {posts.length}</p>
             <button
               onClick={generateNewContent}
               disabled={loading}
@@ -140,14 +141,18 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
           </div>
         ) : (
         <>
+          <div className="mb-4 text-center">
+            <p className="text-neutral-500 text-sm">Posts count: {posts.length} | Show All: {showAll ? 'Yes' : 'No'}</p>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 items-center border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
             {(showAll ? posts : posts.slice(0, 3)).map((post) => (
               <BlogCard key={post.id} post={post} />
             ))}
           </div>
           
-          {posts.length > 3 && (
+          {posts.length > 3 ? (
             <div className="mt-8 text-center">
+              <p className="text-neutral-500 text-sm mb-2">View All button should be visible (posts: {posts.length} > 3)</p>
               <button 
                 onClick={() => setShowAll(!showAll)}
                 className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-[#ff0] text-black rounded-lg hover:bg-[#ff0]/90 transition-colors focus:outline-none focus:ring-2 focus:ring-[#ff0] focus:ring-offset-2 focus:ring-offset-neutral-900"
@@ -157,6 +162,10 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                   <path d={showAll ? "M10 4L6 8L10 12" : "M6 12L10 8L6 4"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
+            </div>
+          ) : (
+            <div className="mt-8 text-center">
+              <p className="text-neutral-500 text-sm">View All button hidden (posts: {posts.length} ≤ 3)</p>
             </div>
           )}
         </>
