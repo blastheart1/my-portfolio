@@ -1,9 +1,32 @@
-import { sql } from '@vercel/postgres';
+import { Pool } from 'pg';
 import { BlogPost } from '@/types/blog';
+
+// Create PostgreSQL connection pool
+const pool = new Pool({
+  host: process.env.POSTGRES_HOST,
+  port: 5432,
+  database: process.env.POSTGRES_DATABASE,
+  user: process.env.POSTGRES_USER,
+  password: process.env.POSTGRES_PASSWORD,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
+// Helper function to execute queries
+async function query(text: string, params?: any[]) {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(text, params);
+    return result;
+  } finally {
+    client.release();
+  }
+}
 
 export async function createBlogPostTable() {
   try {
-    await sql`
+    await query(`
       CREATE TABLE IF NOT EXISTS blog_posts (
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
@@ -16,7 +39,7 @@ export async function createBlogPostTable() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         published BOOLEAN DEFAULT true
       );
-    `;
+    `);
     console.log('Blog posts table created successfully');
   } catch (error) {
     console.error('Error creating blog posts table:', error);
@@ -37,11 +60,11 @@ export async function insertBlogPost(post: {
   published: boolean;
 }) {
   try {
-    const result = await sql`
+    const result = await query(`
       INSERT INTO blog_posts (title, content, excerpt, type, topic, metrics, published)
-      VALUES (${post.title}, ${post.content}, ${post.excerpt}, ${post.type}, ${post.topic}, ${post.metrics ? JSON.stringify(post.metrics) : null}, ${post.published})
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id, created_at, updated_at;
-    `;
+    `, [post.title, post.content, post.excerpt, post.type, post.topic, post.metrics ? JSON.stringify(post.metrics) : null, post.published]);
     return result.rows[0];
   } catch (error) {
     console.error('Error inserting blog post:', error);
@@ -51,12 +74,12 @@ export async function insertBlogPost(post: {
 
 export async function getBlogPosts(limit: number = 10, offset: number = 0): Promise<BlogPost[]> {
   try {
-    const result = await sql`
+    const result = await query(`
       SELECT * FROM blog_posts 
       WHERE published = true 
       ORDER BY created_at DESC 
-      LIMIT ${limit} OFFSET ${offset};
-    `;
+      LIMIT $1 OFFSET $2;
+    `, [limit, offset]);
     return result.rows.map(row => ({
       id: row.id,
       title: row.title,
@@ -77,10 +100,10 @@ export async function getBlogPosts(limit: number = 10, offset: number = 0): Prom
 
 export async function getBlogPostById(id: string): Promise<BlogPost | null> {
   try {
-    const result = await sql`
+    const result = await query(`
       SELECT * FROM blog_posts 
-      WHERE id = ${id} AND published = true;
-    `;
+      WHERE id = $1 AND published = true;
+    `, [id]);
     if (result.rows.length === 0) return null;
     const row = result.rows[0];
     return {
@@ -103,12 +126,12 @@ export async function getBlogPostById(id: string): Promise<BlogPost | null> {
 
 export async function getLatestBlogPost(): Promise<BlogPost | null> {
   try {
-    const result = await sql`
+    const result = await query(`
       SELECT * FROM blog_posts 
       WHERE published = true 
       ORDER BY created_at DESC 
       LIMIT 1;
-    `;
+    `);
     if (result.rows.length === 0) return null;
     const row = result.rows[0];
     return {
