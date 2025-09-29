@@ -53,6 +53,7 @@ export async function insertBlogPost(post: {
     title: string;
     url: string;
   }[];
+  caseStudyLink?: string;
   published: boolean;
 }) {
   try {
@@ -67,6 +68,7 @@ export async function insertBlogPost(post: {
             topic: post.topic,
             metrics: post.metrics,
             sources: post.sources || [],
+            case_study_link: post.caseStudyLink,
             published: post.published
           }])
       .select('id, created_at, updated_at')
@@ -101,6 +103,7 @@ export async function getBlogPosts(limit: number = 10, offset: number = 0): Prom
           topic: row.topic,
           metrics: row.metrics,
           sources: row.sources,
+          caseStudyLink: row.case_study_link,
           createdAt: new Date(row.created_at),
           updatedAt: new Date(row.updated_at),
           published: row.published

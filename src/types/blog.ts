@@ -13,6 +13,7 @@ export interface BlogPost {
     title: string;
     url: string;
   }[];
+  caseStudyLink?: string;
   createdAt: Date;
   updatedAt: Date;
   published: boolean;
@@ -36,4 +37,5 @@ export interface ContentGenerationResponse {
     title: string;
     url: string;
   }[];
+  caseStudyLink?: string;
 }

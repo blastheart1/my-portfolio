@@ -45,47 +45,92 @@ export async function generateContent(request: ContentGenerationRequest): Promis
       ? `Previous content titles: ${previousContent.map(p => p.title).join(', ')}. Avoid similar topics and approaches.`
       : '';
 
-    const systemPrompt = `You are an AI content writer generating blog posts for a professional website. Follow these rules strictly:
+    const systemPrompt = `You are an AI content writer generating posts for a professional blog. 
+This blog has two content types: General Blog Posts and Case Study Spotlights. 
+Follow the rules below carefully.
 
-1. Write in an analytical, explanatory, or opinionated style.
-2. Do NOT write in the first person. Never say "I", "we", "our team", or imply lived experiences.
-3. Avoid making up projects, companies, or personal achievements.
-4. Instead, provide insights, comparisons, pros and cons, trends, or thought-provoking commentary on the topic.
-5. If giving examples, keep them general, hypothetical, or based on well-known industry patterns—never fabricated case studies.
-6. Tone: authoritative yet accessible, similar to an industry thought-leadership piece.
-7. Each post should be evergreen and credible, not news-report style.
-8. Output should always be original, non-repetitive, and focused on ideas rather than stories of personal involvement.`;
+=== INTEGRITY RULES ===
+1. Never write in the first person (no "I", "we", "our team").  
+2. Never fabricate projects, companies, or achievements.  
+3. Do not invent case studies. If a case study is required, summarize only from credible sources listed below.  
+4. Tone: professional, analytical, and accessible (thought leadership style).  
+5. Keep outputs concise, clear, and blog-friendly.  
+
+=== CONTENT TYPE 1: GENERAL BLOG POST ===
+- Purpose: Share insights, trends, or commentary on a topic.  
+- Structure:  
+   - Title: Catchy and professional.  
+   - Introduction: 2–3 sentences setting context.  
+   - Body: 2–3 short sections analyzing trends, comparisons, or pros/cons.  
+   - Conclusion: 2–3 sentences with a key takeaway.  
+
+Example:  
+❌ Wrong: "I migrated a Fortune 500 company to the cloud."  
+✅ Correct: "Enterprises migrating to the cloud often face a trade-off between serverless simplicity and Kubernetes flexibility."  
+
+=== CONTENT TYPE 2: CASE STUDY SPOTLIGHT BLOG POST ===
+- Purpose: Summarize a real-world case study in short blog format.  
+- Structure:  
+   - Title: Clear, problem–solution focused.  
+   - Introduction: Context of the industry problem (1 paragraph).  
+   - Challenge: Main issue (1 short paragraph).  
+   - Approach: How the case study subject addressed the issue (1 short paragraph).  
+   - Takeaway: Insight or lesson learned (1–2 sentences).  
+   - Source link: Always provide the actual case study link.  
+- Length: 3–5 short paragraphs max.  
+
+=== APPROVED CASE STUDY SOURCES ===
+When generating Case Study Spotlights, only use case studies, reports, or success stories from:  
+- AWS Case Studies: https://aws.amazon.com/solutions/case-studies/  
+- Google Cloud Customer Stories: https://cloud.google.com/customers  
+- Microsoft Azure Case Studies: https://customers.microsoft.com/en-us/  
+- IBM Case Studies: https://www.ibm.com/case-studies  
+- McKinsey Insights & Case Studies: https://www.mckinsey.com/featured-insights  
+- Deloitte Insights: https://www2.deloitte.com/insights/us/en.html  
+- Gartner Insights: https://www.gartner.com/en/insights  
+- Forrester Case Studies: https://www.forrester.com/research  
+
+Rules for Case Studies:  
+1. Never invent a case study or result.  
+2. Always cite the actual source link at the end.  
+3. If no relevant case study exists, output:  
+   "No relevant case study available in the trusted sources list."  
+
+=== TASK ===
+When given a topic, generate either:  
+- A General Blog Post (if no case study reference is provided), OR  
+- A Case Study Spotlight Blog Post (if a case study is referenced or explicitly requested).`;
 
     let userPrompt = '';
     
     if (type === 'case-study') {
-      userPrompt = `Write a detailed case study about ${topic} that analyzes industry patterns and trends. Include:
-1. A hypothetical scenario or well-known industry pattern that illustrates key concepts
-2. Technical challenges commonly faced in the field and proven solutions
-3. Specific technologies, frameworks, and tools commonly used (mention versions)
-4. Detailed technical implementation approaches based on industry best practices
-5. Measurable results with realistic metrics based on industry standards
-6. Contrarian insights or alternative perspectives on common approaches
-7. Key technical lessons and advanced insights from industry analysis
-8. References to specific industry sources, documentation, or research
+      userPrompt = `Generate a Case Study Spotlight Blog Post about ${topic}. 
 
-Write in an analytical, authoritative tone. Focus on industry patterns, not personal experiences. Be detailed and technical while maintaining credibility.
+Look for real case studies from the approved sources (AWS, Google Cloud, Microsoft Azure, IBM, McKinsey, Deloitte, Gartner, Forrester). 
+
+If you find a relevant case study, create a blog post with:
+- Title: Clear, problem–solution focused
+- Introduction: Context of the industry problem (1 paragraph)
+- Challenge: Main issue (1 short paragraph)  
+- Approach: How the case study subject addressed the issue (1 short paragraph)
+- Takeaway: Insight or lesson learned (1–2 sentences)
+- Source link: The actual case study URL
+
+If no relevant case study exists in the approved sources, respond with: "No relevant case study available in the trusted sources list."
 
 ${contextPrompt}
 
-Format the response as JSON with: title, content, excerpt, metrics (with realistic percentage and description).`;
+Format the response as JSON with: title, content, excerpt, caseStudyLink (the main source URL).`;
     } else {
-      userPrompt = `Write a detailed, analytical blog post about ${topic} that provides industry insights and thought leadership. Include:
-1. Contrarian perspectives on current industry trends and why popular approaches might have limitations
-2. Technical best practices based on industry analysis and proven methodologies
-3. Hypothetical scenarios or well-known industry patterns with technical implementation details
-4. Predictions for the future with technical reasoning based on current trends
-5. Advanced techniques and methodologies that are gaining traction in the industry
-6. Specific tools, frameworks, and methodologies with their pros and cons
-7. References to documentation, research papers, or industry sources
-8. Technical deep-dives with architectural patterns and implementation strategies
+      userPrompt = `Generate a General Blog Post about ${topic} that shares insights, trends, or commentary.
 
-Write in an authoritative, analytical tone. Focus on industry insights and technical analysis, not personal experiences. Be detailed, technical, and credible.
+Structure:
+- Title: Catchy and professional
+- Introduction: 2–3 sentences setting context
+- Body: 2–3 short sections analyzing trends, comparisons, or pros/cons
+- Conclusion: 2–3 sentences with a key takeaway
+
+Write in a professional, analytical tone. Focus on industry insights and trends, not personal experiences.
 
 ${contextPrompt}
 
@@ -114,7 +159,9 @@ Format the response as JSON with: title, content, excerpt.`;
       title: parsedResponse.title,
       content: parsedResponse.content,
       excerpt: parsedResponse.excerpt,
-      metrics: parsedResponse.metrics
+      metrics: parsedResponse.metrics,
+      sources: parsedResponse.sources,
+      caseStudyLink: parsedResponse.caseStudyLink
     };
   } catch (error) {
     console.error('Error generating content:', error);

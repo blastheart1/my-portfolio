@@ -628,12 +628,23 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
         )}
       </div>
       
-      {/* Fixed footer - always visible at bottom */}
-      <div className="flex-shrink-0 mt-auto pt-4">
-        <span className="font-medium text-sm text-blue-500 pb-1 border-b-2 border-neutral-700 group-hover:border-blue-500 group-focus:border-blue-500 transition focus:outline-hidden">
-          {post.type === 'case-study' ? 'Case study' : 'Blog post'}
-        </span>
-      </div>
+          {/* Fixed footer - always visible at bottom */}
+          <div className="flex-shrink-0 mt-auto pt-4">
+            {post.caseStudyLink ? (
+              <a
+                href={post.caseStudyLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-sm text-blue-500 pb-1 border-b-2 border-neutral-700 group-hover:border-blue-500 group-focus:border-blue-500 transition focus:outline-hidden hover:text-blue-400"
+              >
+                View Case Study →
+              </a>
+            ) : (
+              <span className="font-medium text-sm text-blue-500 pb-1 border-b-2 border-neutral-700 group-hover:border-blue-500 group-focus:border-blue-500 transition focus:outline-hidden">
+                {post.type === 'case-study' ? 'Case study' : 'Blog post'}
+              </span>
+            )}
+          </div>
     </div>
   );
 }
