@@ -146,7 +146,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
           </div>
         ) : (
         <>
-          <div className="relative h-[400px] overflow-hidden">
+          <div className="relative h-[380px]">
             <div className="grid grid-cols-1 lg:grid-cols-3 h-full border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
               {[0, 1, 2].map((slotIndex) => {
                 const postIndex = currentPage * 3 + slotIndex;
@@ -264,7 +264,7 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0 }: BlogCa
       clearTimeout(timeoutId);
       window.removeEventListener('resize', checkScrollable);
     };
-  }, [post.excerpt, post.sources]); // Re-check when content changes
+  }, [post.excerpt, post.sources, post.title]); // Re-check when content changes
   const getIcon = (topic: string) => {
     // Return professional icons based on topic
     const icons = {
@@ -349,10 +349,16 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0 }: BlogCa
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Scrollable content area */}
+      {/* Fixed header with icon and title */}
+      <div className="flex-shrink-0 mb-4">
+        {getIcon(post.topic)}
+        <h3 className="mt-4 font-medium text-lg text-white">{post.title}</h3>
+      </div>
+      
+      {/* Scrollable content area - only the text content */}
       <div 
         ref={contentRef}
-        className="flex-1 overflow-y-auto scrollbar-hide relative"
+        className="flex-1 overflow-y-auto scrollbar-hide relative min-h-0"
       >
         <div 
           className={`pr-2 pb-6 transition-opacity duration-300 ${
@@ -362,12 +368,6 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0 }: BlogCa
             transitionDelay: `${transitionDelay}ms`
           }}
         >
-          {/* Icon and title now included in fade animation */}
-          <div className="mb-4">
-            {getIcon(post.topic)}
-            <h3 className="mt-4 font-medium text-lg text-white">{post.title}</h3>
-          </div>
-          
           <p className="text-neutral-400 leading-relaxed">{post.excerpt}</p>
           
           {/* Sources as badges */}
