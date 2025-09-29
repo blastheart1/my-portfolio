@@ -190,7 +190,8 @@ Format the response as JSON with: title, content, excerpt.`;
     
     // Add disclaimer to case study content if no link is available
     let finalContent = parsedResponse.content;
-    if (type === 'case-study' && !caseStudyLink) {
+    if (type === 'case-study') {
+      // Always add disclaimer for case studies since we can't guarantee real links
       finalContent = parsedResponse.content + '\n\n*No case study link available from trusted sources.*';
     }
 
