@@ -171,7 +171,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
             </div>
           </div>
           
-          {posts.length > 3 && (
+          {posts.length > 0 && (
             <div className="mt-8 text-center">
               <p className="text-neutral-500 text-sm mb-4">Page {currentPage + 1} of {Math.ceil(posts.length / 3)}</p>
               
@@ -358,7 +358,7 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0 }: BlogCa
       {/* Scrollable content area - only the text content */}
       <div 
         ref={contentRef}
-        className="flex-1 overflow-y-auto scrollbar-hide relative min-h-0"
+        className="flex-1 overflow-y-auto scrollbar-hide relative min-h-0 max-h-48"
       >
         <div 
           className={`pr-2 pb-6 transition-opacity duration-300 ${
@@ -368,7 +368,12 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0 }: BlogCa
             transitionDelay: `${transitionDelay}ms`
           }}
         >
-          <p className="text-neutral-400 leading-relaxed">{post.excerpt}</p>
+          <p className="text-neutral-400 leading-relaxed">
+            {post.excerpt.length > 250 
+              ? `${post.excerpt.substring(0, 250)}...` 
+              : post.excerpt
+            }
+          </p>
           
           {/* Sources as badges */}
           {post.sources && post.sources.length > 0 && (
@@ -402,7 +407,7 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0 }: BlogCa
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                 </svg>
-                <span>scroll for more</span>
+                <span>scroll to read more</span>
               </div>
             </div>
           </div>
