@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { ContentGenerationRequest, ContentGenerationResponse } from '@/types/blog';
 
 let openai: OpenAI | null = null;
+let perplexity: OpenAI | null = null;
 
 function getOpenAI() {
   if (!openai) {
@@ -10,6 +11,20 @@ function getOpenAI() {
     });
   }
   return openai;
+}
+
+function getPerplexity() {
+  if (!perplexity) {
+    if (!process.env.PERPLEXITY_API_KEY) {
+      console.warn('PERPLEXITY_API_KEY not found, falling back to OpenAI GPT-4');
+      return getOpenAI();
+    }
+    perplexity = new OpenAI({
+      apiKey: process.env.PERPLEXITY_API_KEY,
+      baseURL: 'https://api.perplexity.ai',
+    });
+  }
+  return perplexity;
 }
 
 // Topic weights for weighted random selection - higher priority for AI, Software QA, and Software Development
@@ -104,9 +119,7 @@ When given a topic, generate either:
     let userPrompt = '';
     
     if (type === 'case-study') {
-      userPrompt = `Generate a Case Study Analysis Blog Post about ${topic}. 
-
-Look for REAL case studies from these specific sources:
+      userPrompt = `Search for REAL case studies about ${topic} from these approved sources:
 - AWS Case Studies: https://aws.amazon.com/solutions/case-studies/
 - Google Cloud Customer Stories: https://cloud.google.com/customers
 - Microsoft Azure Case Studies: https://customers.microsoft.com/en-us/
@@ -116,7 +129,7 @@ Look for REAL case studies from these specific sources:
 - Gartner Insights: https://www.gartner.com/en/insights
 - Forrester Case Studies: https://www.forrester.com/research
 
-If you find a relevant case study, create a blog post with:
+Use your web search capabilities to find actual case studies from these sources. Create a blog post with:
 - Title: Clear, problem–solution focused
 - Introduction: Context of the industry problem (1 paragraph)
 - Challenge: Main issue faced in the industry (1 short paragraph)  
@@ -128,7 +141,7 @@ If no relevant case study exists, create an analytical post about industry patte
 
 ${contextPrompt}
 
-IMPORTANT: You MUST include a caseStudyLink field in your JSON response. Use a real URL from the approved sources above.
+IMPORTANT: You MUST include a caseStudyLink field in your JSON response with a real URL from the approved sources.
 
 Format the response as JSON with: title, content, excerpt, caseStudyLink (the actual source URL).`;
     } else {
@@ -147,8 +160,14 @@ ${contextPrompt}
 Format the response as JSON with: title, content, excerpt.`;
     }
 
-    const completion = await getOpenAI().chat.completions.create({
-      model: type === 'case-study' ? "gpt-4" : "gpt-3.5-turbo", // Use GPT-4 for case studies, GPT-3.5 for blog posts
+    // Use Perplexity for case studies (real-time web access), OpenAI for blog posts
+    const client = type === 'case-study' ? getPerplexity() : getOpenAI();
+    const model = type === 'case-study' ? 
+      (process.env.PERPLEXITY_API_KEY ? "llama-3.1-sonar-large-128k-online" : "gpt-4") : 
+      "gpt-3.5-turbo";
+    
+    const completion = await client.chat.completions.create({
+      model: model,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
