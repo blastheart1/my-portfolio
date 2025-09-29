@@ -146,7 +146,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
           </div>
         ) : (
         <>
-          <div className="relative h-[380px]">
+          <div className="relative h-[400px]">
             <div className="grid grid-cols-1 lg:grid-cols-3 items-center border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
               {[0, 1, 2].map((slotIndex) => {
                 const postIndex = currentPage * 3 + slotIndex;
@@ -161,7 +161,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                         transitionDelay={slotIndex * 100}
                       />
                     ) : (
-                      <div className="h-full bg-neutral-900 rounded-xl flex items-center justify-center">
+                      <div className="h-full bg-neutral-900 rounded-xl flex items-center justify-center" style={{ minHeight: '380px', maxHeight: '380px' }}>
                         <p className="text-neutral-500 text-sm">No content</p>
                       </div>
                     )}
@@ -324,6 +324,7 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0 }: BlogCa
   return (
     <div 
       className="group relative z-10 p-4 md:p-6 h-full flex flex-col bg-neutral-900 focus:outline-hidden first:rounded-t-xl last:rounded-b-xl lg:first:rounded-l-xl lg:first:rounded-tr-none lg:last:rounded-r-xl lg:last:rounded-bl-none before:absolute before:inset-0 before:bg-linear-to-b hover:before:from-transparent hover:before:via-transparent hover:before:to-[#ff0]/10 before:via-80% focus:before:from-transparent focus:before:via-transparent focus:before:to-[#ff0]/10 before:-z-1 last:before:rounded-b-xl lg:first:before:rounded-s-xl lg:last:before:rounded-e-xl lg:last:before:rounded-bl-none before:opacity-0 hover:before:opacity-100 focus:before:opacity-100"
+      style={{ minHeight: '380px', maxHeight: '380px' }}
     >
       <div className="mb-5">
         {getIcon(post.topic)}
