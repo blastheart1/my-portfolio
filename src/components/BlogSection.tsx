@@ -155,14 +155,14 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
   return (
     <section className={`py-16 px-4 ${className}`}>
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">
-            Blog & Case Studies
-          </h2>
-          <p className="text-neutral-400 text-lg">
-            AI-generated insights on technology and software development
-          </p>
-        </div>
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-black dark:text-white mb-4">
+                Blog & Case Studies
+              </h2>
+              <p className="text-neutral-400 text-lg">
+                AI-generated insights on technology and software development
+              </p>
+            </div>
 
         {posts.length === 0 ? (
           <div className="text-center py-12">
