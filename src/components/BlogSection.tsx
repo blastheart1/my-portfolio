@@ -270,25 +270,6 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                     </svg>
                   </button>
 
-                  {/* Pagination dots */}
-                  <div className="flex gap-3">
-                    {posts.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handlePageChange(index)}
-                        disabled={isTransitioning}
-                        className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                          currentPage === index 
-                            ? 'bg-blue-500 scale-125' 
-                            : isTransitioning
-                            ? 'bg-neutral-600 cursor-not-allowed'
-                            : 'bg-neutral-600 hover:bg-neutral-500'
-                        }`}
-                        aria-label={`Go to post ${index + 1}`}
-                      />
-                    ))}
-                  </div>
-
                   {/* Next button */}
                   <button
                     onClick={() => handlePageChange(Math.min(posts.length - 1, currentPage + 1))}
@@ -328,9 +309,9 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                     </svg>
                   </button>
 
-                  {/* Pagination dots */}
+                  {/* Pagination dots - max 5 dots */}
                   <div className="flex gap-3">
-                    {Array.from({ length: Math.ceil(posts.length / 3) }).map((_, index) => (
+                    {Array.from({ length: Math.min(5, Math.ceil(posts.length / 3)) }).map((_, index) => (
                       <button
                         key={index}
                         onClick={() => handlePageChange(index)}
