@@ -143,9 +143,23 @@ Use your knowledge of real, documented case studies. Reference actual companies 
 
 ${contextPrompt}
 
-IMPORTANT: You MUST include a caseStudyLink field in your JSON response with a real URL from the approved sources.
+CRITICAL: Your response MUST be valid JSON with these exact fields:
+{
+  "title": "Your title here",
+  "content": "Your content here", 
+  "excerpt": "Your excerpt here",
+  "caseStudyLink": "https://aws.amazon.com/solutions/case-studies/netflix/"
+}
 
-Format the response as JSON with: title, content, excerpt, caseStudyLink (a real URL from the approved sources).`;
+The caseStudyLink field is REQUIRED and must contain a real URL from the approved sources.
+
+Example response:
+{
+  "title": "Netflix's Cloud Migration Success Story",
+  "content": "Netflix successfully migrated to AWS...",
+  "excerpt": "How Netflix transformed their infrastructure...",
+  "caseStudyLink": "https://aws.amazon.com/solutions/case-studies/netflix/"
+}`;
     } else {
       userPrompt = `Generate a General Blog Post about ${topic} that shares insights, trends, or commentary.
 
@@ -191,10 +205,17 @@ Format the response as JSON with: title, content, excerpt.`;
     
     // Ensure caseStudyLink is always provided for case studies
     let caseStudyLink = parsedResponse.caseStudyLink;
-    if (type === 'case-study' && !caseStudyLink) {
-      // Fallback to a general industry source
-      caseStudyLink = 'https://aws.amazon.com/solutions/case-studies/';
-      console.log('Using fallback caseStudyLink:', caseStudyLink);
+    if (type === 'case-study') {
+      if (!caseStudyLink) {
+        // Fallback to a general industry source
+        caseStudyLink = 'https://aws.amazon.com/solutions/case-studies/';
+        console.log('Using fallback caseStudyLink:', caseStudyLink);
+      } else {
+        console.log('AI generated caseStudyLink:', caseStudyLink);
+      }
+    } else {
+      // For blog posts, no case study link needed
+      caseStudyLink = undefined;
     }
     
     return {
