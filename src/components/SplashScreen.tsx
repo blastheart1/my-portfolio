@@ -105,7 +105,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           currentIndex = index;
         }
 
-        Observer.create({
+        const observer = Observer.create({
           type: "wheel,touch,pointer",
           wheelSpeed: -1,
           onDown: () => {
@@ -119,6 +119,8 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             } else if (!animating && sections && currentIndex >= sections.length - 1) {
               // On the last section, transition immediately to portfolio
               console.log('Last section reached - transitioning to portfolio');
+              // Disable observer before completing
+              observer.disable();
               onComplete?.();
             }
           },
@@ -146,7 +148,9 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         // Set cleanup function
         cleanup = () => {
           clearTimeout(fallbackTimeout);
-          console.log('Splash cleanup - no blocking needed');
+          // Disable observer to restore scroll functionality
+          observer.disable();
+          console.log('Splash cleanup - observer disabled, scroll restored');
         };
 
       } catch (error) {

@@ -30,17 +30,32 @@ export default function SplashWrapper({ children }: SplashWrapperProps) {
     };
   }, []);
 
-  // Monitor when portfolio becomes visible and ensure parallax is triggered
+  // Monitor when portfolio becomes visible and ensure scroll is working
   useEffect(() => {
     if (splashComplete && !showSplash) {
-      console.log('Portfolio is visible - triggering parallax');
-      const triggerParallax = () => {
+      console.log('Portfolio is visible - ensuring scroll works');
+      
+      const ensureScrollWorks = () => {
+        // Final scroll restoration
+        document.body.classList.remove('splash-active');
+        document.documentElement.classList.remove('splash-active');
+        document.body.style.overflow = 'auto';
+        document.body.style.position = '';
+        document.body.style.height = '';
+        document.body.style.width = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.documentElement.style.overflow = 'auto';
+        
+        // Trigger parallax
         window.dispatchEvent(new Event('scroll'));
+        console.log('Portfolio scroll fully restored');
       };
       
-      triggerParallax();
-      setTimeout(triggerParallax, 100);
-      setTimeout(triggerParallax, 500);
+      ensureScrollWorks();
+      setTimeout(ensureScrollWorks, 100);
+      setTimeout(ensureScrollWorks, 500);
+      setTimeout(ensureScrollWorks, 1000);
     }
   }, [splashComplete, showSplash]);
 
@@ -61,13 +76,42 @@ export default function SplashWrapper({ children }: SplashWrapperProps) {
       (window as any).portfolioTransitionComplete = true;
     }
     
+    // Aggressively restore scroll functionality
+    const restoreScroll = () => {
+      // Remove any remaining splash classes
+      document.body.classList.remove('splash-active');
+      document.documentElement.classList.remove('splash-active');
+      
+      // Clear any inline styles that might block scroll
+      document.body.style.overflow = 'auto';
+      document.body.style.position = '';
+      document.body.style.height = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.documentElement.style.overflow = 'auto';
+      
+      // Force scroll events to restore parallax
+      window.dispatchEvent(new Event('scroll'));
+      console.log('Scroll functionality restored');
+    };
+    
+    // Restore scroll immediately
+    restoreScroll();
+    
     // Dispatch custom event for parallax
     window.dispatchEvent(new CustomEvent('splash-complete'));
+    
+    // Additional scroll restoration attempts
+    setTimeout(restoreScroll, 100);
+    setTimeout(restoreScroll, 500);
     
     // Smooth transition - hide splash immediately
     setTimeout(() => {
       console.log('Hiding splash screen');
       setShowSplash(false);
+      // Final scroll restoration
+      restoreScroll();
     }, 100); // Very short delay for smooth transition
   };
 
