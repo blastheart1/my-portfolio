@@ -188,9 +188,15 @@ Format the response as JSON with: title, content, excerpt.`;
       caseStudyLink = null;
     }
     
+    // Add disclaimer to case study content if no link is available
+    let finalContent = parsedResponse.content;
+    if (type === 'case-study' && !caseStudyLink) {
+      finalContent = parsedResponse.content + '\n\n*No case study link available from trusted sources.*';
+    }
+
     return {
       title: parsedResponse.title,
-      content: parsedResponse.content,
+      content: finalContent,
       excerpt: parsedResponse.excerpt,
       metrics: parsedResponse.metrics,
       sources: parsedResponse.sources,
