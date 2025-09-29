@@ -12,15 +12,28 @@ function getOpenAI() {
   return openai;
 }
 
-const TOPICS = [
-  'Generative AI',
-  'Software Quality Assurance',
-  'Machine Learning',
-  'DevOps',
-  'Cloud Computing',
-  'Cybersecurity',
-  'Data Science',
-  'Web Development'
+// Topic weights for weighted random selection - higher priority for AI, Software QA, and Software Development
+const TOPIC_WEIGHTS = [
+  // High Priority topics (60% total)
+  { topic: 'Generative AI', weight: 15 },
+  { topic: 'Software Quality Assurance', weight: 15 },
+  { topic: 'Machine Learning', weight: 10 },
+  { topic: 'Software Development Best Practices', weight: 10 },
+  { topic: 'AI in Software Development', weight: 10 },
+  
+  // Medium Priority topics (25% total)
+  { topic: 'Test-Driven Development', weight: 8 },
+  { topic: 'Code Quality and Review', weight: 7 },
+  { topic: 'Software Architecture', weight: 5 },
+  { topic: 'DevOps', weight: 5 },
+  { topic: 'Web Development', weight: 5 },
+  { topic: 'API Development', weight: 5 },
+  { topic: 'Microservices', weight: 5 },
+  
+  // Lower Priority topics (15% total)
+  { topic: 'Cloud Computing', weight: 3 },
+  { topic: 'Data Science', weight: 3 },
+  { topic: 'Cybersecurity', weight: 2 }
 ];
 
 export async function generateContent(request: ContentGenerationRequest): Promise<ContentGenerationResponse> {
@@ -110,7 +123,22 @@ Format the response as JSON with: title, content, excerpt.`;
 }
 
 export function getRandomTopic(): string {
-  return TOPICS[Math.floor(Math.random() * TOPICS.length)];
+  // Calculate total weight
+  const totalWeight = TOPIC_WEIGHTS.reduce((sum, item) => sum + item.weight, 0);
+  
+  // Generate random number between 0 and totalWeight
+  let random = Math.random() * totalWeight;
+  
+  // Find the topic based on weighted selection
+  for (const item of TOPIC_WEIGHTS) {
+    random -= item.weight;
+    if (random <= 0) {
+      return item.topic;
+    }
+  }
+  
+  // Fallback to first topic if something goes wrong
+  return TOPIC_WEIGHTS[0].topic;
 }
 
 export function shouldGenerateCaseStudy(): boolean {
