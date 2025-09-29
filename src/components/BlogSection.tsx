@@ -13,6 +13,8 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   useEffect(() => {
     fetchPosts();
@@ -47,6 +49,35 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
         setIsTransitioning(false);
       }, 100);
     }, 300);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      // Swipe left - go to next page
+      const nextPage = Math.min(Math.ceil(posts.length / 3) - 1, currentPage + 1);
+      handlePageChange(nextPage);
+    }
+    
+    if (isRightSwipe) {
+      // Swipe right - go to previous page
+      const prevPage = Math.max(0, currentPage - 1);
+      handlePageChange(prevPage);
+    }
   };
 
   const generateNewContent = async () => {
@@ -146,7 +177,44 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
           </div>
         ) : (
         <>
-          <div className="relative h-[400px]">
+          {/* Mobile: Single card with swipe */}
+          <div className="lg:hidden">
+            <div 
+              className="relative h-[400px] overflow-hidden"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              <div className="flex transition-transform duration-300 ease-in-out" style={{ transform: `translateX(-${currentPage * 100}%)` }}>
+                {posts.map((post) => (
+                  <div key={post.id} className="w-full flex-shrink-0 px-4">
+                    <BlogCard 
+                      post={post} 
+                      isTransitioning={isTransitioning}
+                      transitionDelay={0}
+                      roundedClass="rounded-xl"
+                    />
+                  </div>
+                ))}
+              </div>
+              
+              {/* Swipe indicator */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                <div className="flex items-center gap-1 text-xs text-neutral-400 bg-neutral-800/90 px-3 py-1 rounded-full backdrop-blur-sm">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+                  </svg>
+                  <span>swipe to explore</span>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop: Three card grid */}
+          <div className="hidden lg:block relative h-[400px]">
             <div className="grid grid-cols-1 lg:grid-cols-3 items-center border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
               {[0, 1, 2].map((slotIndex) => {
                 const postIndex = currentPage * 3 + slotIndex;
@@ -181,59 +249,120 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
           
           {posts.length > 0 && (
             <div className="mt-8 text-center">
-              <p className="text-neutral-500 text-sm mb-4">Page {currentPage + 1} of {Math.ceil(posts.length / 3)}</p>
-              
-              <div className="flex items-center justify-center gap-4">
-                {/* Previous button */}
-                <button
-                  onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
-                  disabled={currentPage === 0 || isTransitioning}
-                  className={`p-2 rounded-full transition-all duration-300 ${
-                    currentPage === 0 || isTransitioning
-                      ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
-                      : 'bg-neutral-700 text-blue-500 hover:bg-neutral-600'
-                  }`}
-                  aria-label="Previous page"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
+              {/* Mobile pagination */}
+              <div className="lg:hidden">
+                <p className="text-neutral-500 text-sm mb-4">Post {currentPage + 1} of {posts.length}</p>
+                
+                <div className="flex items-center justify-center gap-4">
+                  {/* Previous button */}
+                  <button
+                    onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
+                    disabled={currentPage === 0 || isTransitioning}
+                    className={`p-2 rounded-full transition-all duration-300 ${
+                      currentPage === 0 || isTransitioning
+                        ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
+                        : 'bg-neutral-700 text-blue-500 hover:bg-neutral-600'
+                    }`}
+                    aria-label="Previous post"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
 
-                {/* Pagination dots */}
-                <div className="flex gap-3">
-                  {Array.from({ length: Math.ceil(posts.length / 3) }).map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handlePageChange(index)}
-                      disabled={isTransitioning}
-                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                        currentPage === index 
-                          ? 'bg-blue-500 scale-125' 
-                          : isTransitioning
-                          ? 'bg-neutral-600 cursor-not-allowed'
-                          : 'bg-neutral-600 hover:bg-neutral-500'
-                      }`}
-                      aria-label={`Go to page ${index + 1}`}
-                    />
-                  ))}
+                  {/* Pagination dots */}
+                  <div className="flex gap-3">
+                    {posts.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handlePageChange(index)}
+                        disabled={isTransitioning}
+                        className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                          currentPage === index 
+                            ? 'bg-blue-500 scale-125' 
+                            : isTransitioning
+                            ? 'bg-neutral-600 cursor-not-allowed'
+                            : 'bg-neutral-600 hover:bg-neutral-500'
+                        }`}
+                        aria-label={`Go to post ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Next button */}
+                  <button
+                    onClick={() => handlePageChange(Math.min(posts.length - 1, currentPage + 1))}
+                    disabled={currentPage === posts.length - 1 || isTransitioning}
+                    className={`p-2 rounded-full transition-all duration-300 ${
+                      currentPage === posts.length - 1 || isTransitioning
+                        ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
+                        : 'bg-neutral-700 text-blue-500 hover:bg-neutral-600'
+                    }`}
+                    aria-label="Next post"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
                 </div>
+              </div>
 
-                {/* Next button */}
-                <button
-                  onClick={() => handlePageChange(Math.min(Math.ceil(posts.length / 3) - 1, currentPage + 1))}
-                  disabled={currentPage === Math.ceil(posts.length / 3) - 1 || isTransitioning}
-                  className={`p-2 rounded-full transition-all duration-300 ${
-                    currentPage === Math.ceil(posts.length / 3) - 1 || isTransitioning
-                      ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
-                      : 'bg-neutral-700 text-blue-500 hover:bg-neutral-600'
-                  }`}
-                  aria-label="Next page"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
+              {/* Desktop pagination */}
+              <div className="hidden lg:block">
+                <p className="text-neutral-500 text-sm mb-4">Page {currentPage + 1} of {Math.ceil(posts.length / 3)}</p>
+                
+                <div className="flex items-center justify-center gap-4">
+                  {/* Previous button */}
+                  <button
+                    onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
+                    disabled={currentPage === 0 || isTransitioning}
+                    className={`p-2 rounded-full transition-all duration-300 ${
+                      currentPage === 0 || isTransitioning
+                        ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
+                        : 'bg-neutral-700 text-blue-500 hover:bg-neutral-600'
+                    }`}
+                    aria-label="Previous page"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+
+                  {/* Pagination dots */}
+                  <div className="flex gap-3">
+                    {Array.from({ length: Math.ceil(posts.length / 3) }).map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handlePageChange(index)}
+                        disabled={isTransitioning}
+                        className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                          currentPage === index 
+                            ? 'bg-blue-500 scale-125' 
+                            : isTransitioning
+                            ? 'bg-neutral-600 cursor-not-allowed'
+                            : 'bg-neutral-600 hover:bg-neutral-500'
+                        }`}
+                        aria-label={`Go to page ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Next button */}
+                  <button
+                    onClick={() => handlePageChange(Math.min(Math.ceil(posts.length / 3) - 1, currentPage + 1))}
+                    disabled={currentPage === Math.ceil(posts.length / 3) - 1 || isTransitioning}
+                    className={`p-2 rounded-full transition-all duration-300 ${
+                      currentPage === Math.ceil(posts.length / 3) - 1 || isTransitioning
+                        ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
+                        : 'bg-neutral-700 text-blue-500 hover:bg-neutral-600'
+                    }`}
+                    aria-label="Next page"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           )}
