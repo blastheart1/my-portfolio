@@ -108,7 +108,7 @@
     180deg,
     rgba(0, 0, 0, 0.7) 0%,
     rgba(0, 0, 0, 0.3) 100%
-  ), url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+  ), url('https://images.unsplash.com/photo-1446776877081-d282a0f896e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
   background-size: cover;
   background-position: center;
 }
@@ -118,7 +118,7 @@
     180deg,
     rgba(0, 0, 0, 0.7) 0%,
     rgba(0, 0, 0, 0.3) 100%
-  ), url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+  ), url('https://images.unsplash.com/photo-1521791136064-7986c2920216?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
   background-size: cover;
   background-position: center;
 }
@@ -140,12 +140,13 @@
   height: 8px;
   border-radius: 50%;
   background-color: rgba(255, 255, 255, 0.3);
-  transition: all 0.3s ease;
+  transition: all 0.2s ease-out;
 }
 
 .progress-dot.active {
   background-color: white;
-  transform: scale(1.2);
+  transform: scale(1.3);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
 /* Scroll Indicator */

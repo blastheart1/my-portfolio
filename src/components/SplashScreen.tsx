@@ -64,7 +64,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           const dFactor = fromTop ? -1 : 1;
           
         const tl = gsap.timeline({
-          defaults: { duration: 0.8, ease: "power2.inOut" }, // Faster animation
+          defaults: { duration: 0.6, ease: "power2.out" }, // More responsive animation
           onComplete: () => {
             animating = false;
             setCurrentSection(index);
@@ -94,13 +94,13 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             }, {
                 autoAlpha: 1,
                 yPercent: 0,
-                duration: 0.6, // Faster text animation
-                ease: "power2",
+                duration: 0.4, // More responsive text animation
+                ease: "power2.out",
                 stagger: {
-                  each: 0.01, // Faster stagger
+                  each: 0.005, // More responsive stagger
                   from: "random"
                 }
-              }, 0.1); // Earlier start
+              }, 0.05); // Earlier start for better responsiveness
 
           currentIndex = index;
         }
@@ -284,10 +284,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         ))}
       </div>
       
-      {/* Debug Info */}
-      <div className="fixed top-4 left-4 text-white text-sm bg-black/50 px-2 py-1 rounded">
-        Section: {currentSection + 1}/5
-      </div>
+      {/* Debug Info - Removed section indicators */}
 
       {/* Scroll Indicator */}
       <div className="scroll-indicator">
