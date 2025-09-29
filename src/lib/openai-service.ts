@@ -119,31 +119,33 @@ When given a topic, generate either:
     let userPrompt = '';
     
     if (type === 'case-study') {
-      userPrompt = `Search for REAL case studies about ${topic} from these approved sources:
-- AWS Case Studies: https://aws.amazon.com/solutions/case-studies/
-- Google Cloud Customer Stories: https://cloud.google.com/customers
-- Microsoft Azure Case Studies: https://customers.microsoft.com/en-us/
-- IBM Case Studies: https://www.ibm.com/case-studies
-- McKinsey Insights: https://www.mckinsey.com/featured-insights
-- Deloitte Insights: https://www2.deloitte.com/insights/us/en.html
-- Gartner Insights: https://www.gartner.com/en/insights
-- Forrester Case Studies: https://www.forrester.com/research
+      userPrompt = `Create a Case Study Analysis Blog Post about ${topic} using your knowledge of real industry case studies.
 
-Use your web search capabilities to find actual case studies from these sources. Create a blog post with:
+Focus on well-known, documented case studies from these types of sources:
+- AWS Case Studies (e.g., Netflix, Airbnb, Spotify migrations)
+- Google Cloud Customer Stories (e.g., Twitter, Snapchat, PayPal)
+- Microsoft Azure Case Studies (e.g., BMW, GE, Starbucks)
+- IBM Case Studies (e.g., Walmart, American Airlines)
+- McKinsey Insights (e.g., digital transformation studies)
+- Deloitte Insights (e.g., enterprise modernization)
+- Gartner Research (e.g., technology adoption studies)
+- Forrester Case Studies (e.g., customer experience transformations)
+
+Create a blog post with:
 - Title: Clear, problem–solution focused
 - Introduction: Context of the industry problem (1 paragraph)
 - Challenge: Main issue faced in the industry (1 short paragraph)  
 - Approach: How the case study subject addressed the issue (1 short paragraph)
 - Takeaway: Key insights and lessons learned (1–2 sentences)
-- Source: The actual case study URL from the approved sources
+- Source: A relevant URL from the approved sources
 
-If no relevant case study exists, create an analytical post about industry patterns and include a general industry source.
+Use your knowledge of real, documented case studies. Reference actual companies and their documented challenges/solutions.
 
 ${contextPrompt}
 
 IMPORTANT: You MUST include a caseStudyLink field in your JSON response with a real URL from the approved sources.
 
-Format the response as JSON with: title, content, excerpt, caseStudyLink (the actual source URL).`;
+Format the response as JSON with: title, content, excerpt, caseStudyLink (a real URL from the approved sources).`;
     } else {
       userPrompt = `Generate a General Blog Post about ${topic} that shares insights, trends, or commentary.
 
@@ -160,11 +162,9 @@ ${contextPrompt}
 Format the response as JSON with: title, content, excerpt.`;
     }
 
-    // Use Perplexity for case studies (real-time web access), OpenAI for blog posts
-    const client = type === 'case-study' ? getPerplexity() : getOpenAI();
-    const model = type === 'case-study' ? 
-      (process.env.PERPLEXITY_API_KEY ? "llama-3.1-sonar-large-128k-online" : "gpt-4") : 
-      "gpt-3.5-turbo";
+    // Use GPT-4 for case studies (better reasoning and knowledge), GPT-3.5 for blog posts
+    const client = getOpenAI();
+    const model = type === 'case-study' ? "gpt-4" : "gpt-3.5-turbo";
     
     const completion = await client.chat.completions.create({
       model: model,
@@ -187,12 +187,14 @@ Format the response as JSON with: title, content, excerpt.`;
     // Debug logging
     console.log('Generated response keys:', Object.keys(parsedResponse));
     console.log('caseStudyLink value:', parsedResponse.caseStudyLink);
+    console.log('Full response:', JSON.stringify(parsedResponse, null, 2));
     
     // Ensure caseStudyLink is always provided for case studies
     let caseStudyLink = parsedResponse.caseStudyLink;
     if (type === 'case-study' && !caseStudyLink) {
       // Fallback to a general industry source
       caseStudyLink = 'https://aws.amazon.com/solutions/case-studies/';
+      console.log('Using fallback caseStudyLink:', caseStudyLink);
     }
     
     return {
