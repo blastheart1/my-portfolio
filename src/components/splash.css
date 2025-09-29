@@ -7,6 +7,13 @@
   height: 100vh;
   z-index: 9999;
   overflow: hidden;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 /* No scroll blocking - let GSAP handle everything naturally */
@@ -22,6 +29,8 @@
   top: 0;
   position: fixed;
   visibility: hidden;
+  touch-action: none;
+  -webkit-touch-callout: none;
 }
 
 .splash-container section .outer,
@@ -179,6 +188,25 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .splash-container {
+    /* Ensure full coverage on mobile */
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+  }
+  
+  .splash-container section {
+    /* Ensure sections cover entire mobile viewport */
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+  
   .splash-container section .bg h2 {
     font-size: clamp(1.5rem, 6vw, 4rem);
     padding: 0 1rem;

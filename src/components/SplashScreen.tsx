@@ -128,7 +128,18 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           preventDefault: true
         });
 
-        // Let GSAP Observer handle all scroll events - no additional blocking needed
+        // Add mobile-specific touch event handling
+        const handleMobileTouch = (e: TouchEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+        };
+
+        // Add touch event listeners for mobile
+        if (containerRef.current) {
+          containerRef.current.addEventListener('touchstart', handleMobileTouch, { passive: false });
+          containerRef.current.addEventListener('touchmove', handleMobileTouch, { passive: false });
+          containerRef.current.addEventListener('touchend', handleMobileTouch, { passive: false });
+        }
 
         gotoSection(0, 1);
 
@@ -150,6 +161,14 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           clearTimeout(fallbackTimeout);
           // Disable observer to restore scroll functionality
           observer.disable();
+          
+          // Remove mobile touch event listeners
+          if (containerRef.current) {
+            containerRef.current.removeEventListener('touchstart', handleMobileTouch);
+            containerRef.current.removeEventListener('touchmove', handleMobileTouch);
+            containerRef.current.removeEventListener('touchend', handleMobileTouch);
+          }
+          
           console.log('Splash cleanup - observer disabled, scroll restored');
         };
 
@@ -175,7 +194,15 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   }
 
   return (
-    <div ref={containerRef} className="splash-container">
+    <div 
+      ref={containerRef} 
+      className="splash-container"
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+      onTouchCancel={(e) => e.stopPropagation()}
+      style={{ touchAction: 'none' }}
+    >
       {/* Section 1: Welcome */}
       <section className="first">
         <div className="outer">
