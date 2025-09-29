@@ -146,7 +146,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
           </div>
         ) : (
         <>
-          <div className="relative h-[320px] overflow-hidden">
+          <div className="relative h-[400px] overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-3 h-full border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
               {[0, 1, 2].map((slotIndex) => {
                 const postIndex = currentPage * 3 + slotIndex;
@@ -349,12 +349,6 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0 }: BlogCa
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Fixed header with icon and title */}
-      <div className="flex-shrink-0 mb-4">
-        {getIcon(post.topic)}
-        <h3 className="mt-4 font-medium text-lg text-white">{post.title}</h3>
-      </div>
-      
       {/* Scrollable content area */}
       <div 
         ref={contentRef}
@@ -368,6 +362,12 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0 }: BlogCa
             transitionDelay: `${transitionDelay}ms`
           }}
         >
+          {/* Icon and title now included in fade animation */}
+          <div className="mb-4">
+            {getIcon(post.topic)}
+            <h3 className="mt-4 font-medium text-lg text-white">{post.title}</h3>
+          </div>
+          
           <p className="text-neutral-400 leading-relaxed">{post.excerpt}</p>
           
           {/* Sources as badges */}
@@ -409,8 +409,8 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0 }: BlogCa
         )}
       </div>
       
-      {/* Fixed footer */}
-      <div className="flex-shrink-0 mt-4">
+      {/* Fixed footer - always visible at bottom */}
+      <div className="flex-shrink-0 mt-auto pt-4">
         <span className="font-medium text-sm text-blue-500 pb-1 border-b-2 border-neutral-700 group-hover:border-blue-500 group-focus:border-blue-500 transition focus:outline-hidden">
           {post.type === 'case-study' ? 'Case study' : 'Blog post'}
         </span>
