@@ -292,14 +292,15 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
     const target = e.currentTarget;
     const { scrollTop, scrollHeight, clientHeight } = target;
     
-    // Prevent scroll leakage
-    if (scrollTop <= 0 && e.deltaY < 0) {
+    // More precise boundary detection
+    const isAtTop = scrollTop <= 1; // Allow 1px tolerance
+    const isAtBottom = scrollTop >= scrollHeight - clientHeight - 1; // Allow 1px tolerance
+    
+    // Prevent scroll leakage at boundaries
+    if ((isAtTop && e.deltaY < 0) || (isAtBottom && e.deltaY > 0)) {
       e.preventDefault();
       e.stopPropagation();
-    }
-    if (scrollTop >= scrollHeight - clientHeight && e.deltaY > 0) {
-      e.preventDefault();
-      e.stopPropagation();
+      return false;
     }
   };
   const getIcon = (topic: string) => {
@@ -382,7 +383,7 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
 
   return (
     <div 
-      className={`group relative z-10 p-4 md:p-6 h-full flex flex-col bg-neutral-900 focus:outline-hidden before:absolute before:inset-0 before:bg-linear-to-b hover:before:from-transparent hover:before:via-transparent hover:before:to-[#ff0]/10 before:via-80% focus:before:from-transparent focus:before:via-transparent focus:before:to-[#ff0]/10 before:-z-1 before:opacity-0 hover:before:opacity-100 focus:before:opacity-100 ${roundedClass}`}
+      className={`group relative z-10 p-4 md:p-6 h-full flex flex-col bg-neutral-900 focus:outline-hidden before:absolute before:inset-0 before:bg-linear-to-b hover:before:from-transparent hover:before:via-transparent hover:before:to-blue-500/10 before:via-80% focus:before:from-transparent focus:before:via-transparent focus:before:to-blue-500/10 before:-z-1 before:opacity-0 hover:before:opacity-100 focus:before:opacity-100 ${roundedClass}`}
       style={{ minHeight: '380px', maxHeight: '380px' }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -399,6 +400,17 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
         className="flex-1 overflow-y-auto scrollbar-hide relative min-h-0"
         onScroll={handleScroll}
         onWheel={handleWheel}
+        onTouchStart={(e) => {
+          // Prevent touch scroll leakage
+          const target = e.currentTarget;
+          const { scrollTop, scrollHeight, clientHeight } = target;
+          const isAtTop = scrollTop <= 1;
+          const isAtBottom = scrollTop >= scrollHeight - clientHeight - 1;
+          
+          if (isAtTop || isAtBottom) {
+            e.stopPropagation();
+          }
+        }}
       >
         <div 
           className={`pr-2 pb-6 transition-opacity duration-300 ${
@@ -451,7 +463,7 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
       
       {/* Fixed footer - always visible at bottom */}
       <div className="flex-shrink-0 mt-auto pt-4">
-        <span className="font-medium text-sm text-[#ff0] pb-1 border-b-2 border-neutral-700 group-hover:border-[#ff0] group-focus:border-[#ff0] transition focus:outline-hidden">
+        <span className="font-medium text-sm text-blue-500 pb-1 border-b-2 border-neutral-700 group-hover:border-blue-500 group-focus:border-blue-500 transition focus:outline-hidden">
           {post.type === 'case-study' ? 'Case study' : 'Blog post'}
         </span>
       </div>
