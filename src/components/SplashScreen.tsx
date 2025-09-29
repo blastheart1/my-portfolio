@@ -43,8 +43,8 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         
         if (!sections || !images || !headings.length) return;
 
-        const splitHeadings = headings.map((heading: any) => 
-          new SplitText(heading, { 
+        const splitHeadings = headings.map((heading: unknown) => 
+          new SplitText(heading as HTMLElement, { 
             type: "chars,words,lines", 
             linesClass: "clip-text" 
           })
@@ -267,7 +267,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           <div className="inner">
             <div className="bg">
               <h2 className="section-heading">
-                Let's Build Something Amazing Together
+                Let&apos;s Build Something Amazing Together
               </h2>
             </div>
           </div>

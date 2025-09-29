@@ -10,7 +10,7 @@ interface SplashWrapperProps {
 export default function SplashWrapper({ children }: SplashWrapperProps) {
   const [showSplash, setShowSplash] = useState(true);
   const [splashComplete, setSplashComplete] = useState(false);
-  const [showOverlay, setShowOverlay] = useState(false);
+  // Removed showOverlay as it's not used in current implementation
   const portfolioRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -59,10 +59,10 @@ export default function SplashWrapper({ children }: SplashWrapperProps) {
     }
   }, [splashComplete, showSplash]);
 
-  // Cleanup overlay on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      setShowOverlay(false);
+      // Cleanup function if needed
     };
   }, []);
 
@@ -73,7 +73,7 @@ export default function SplashWrapper({ children }: SplashWrapperProps) {
     
     // Prevent Framer Motion from restarting by setting a flag
     if (typeof window !== 'undefined') {
-      (window as any).portfolioTransitionComplete = true;
+      (window as Window & { portfolioTransitionComplete?: boolean }).portfolioTransitionComplete = true;
     }
     
     // Aggressively restore scroll functionality
