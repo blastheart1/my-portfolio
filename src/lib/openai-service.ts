@@ -106,20 +106,31 @@ When given a topic, generate either:
     if (type === 'case-study') {
       userPrompt = `Generate a Case Study Analysis Blog Post about ${topic}. 
 
-Create an analytical case study that examines industry patterns and real-world scenarios. Focus on:
+Look for REAL case studies from these specific sources:
+- AWS Case Studies: https://aws.amazon.com/solutions/case-studies/
+- Google Cloud Customer Stories: https://cloud.google.com/customers
+- Microsoft Azure Case Studies: https://customers.microsoft.com/en-us/
+- IBM Case Studies: https://www.ibm.com/case-studies
+- McKinsey Insights: https://www.mckinsey.com/featured-insights
+- Deloitte Insights: https://www2.deloitte.com/insights/us/en.html
+- Gartner Insights: https://www.gartner.com/en/insights
+- Forrester Case Studies: https://www.forrester.com/research
 
+If you find a relevant case study, create a blog post with:
 - Title: Clear, problem–solution focused
 - Introduction: Context of the industry problem (1 paragraph)
 - Challenge: Main issue faced in the industry (1 short paragraph)  
-- Approach: Common solutions and methodologies used (1 short paragraph)
+- Approach: How the case study subject addressed the issue (1 short paragraph)
 - Takeaway: Key insights and lessons learned (1–2 sentences)
-- Reference: Include a relevant industry source or documentation link
+- Source: The actual case study URL from the approved sources
 
-Use industry-standard examples and reference well-known companies or methodologies. Make it educational and insightful.
+If no relevant case study exists, create an analytical post about industry patterns and include a general industry source.
 
 ${contextPrompt}
 
-Format the response as JSON with: title, content, excerpt, caseStudyLink (a relevant industry source URL like https://aws.amazon.com/solutions/case-studies/ or https://cloud.google.com/customers).`;
+IMPORTANT: You MUST include a caseStudyLink field in your JSON response. Use a real URL from the approved sources above.
+
+Format the response as JSON with: title, content, excerpt, caseStudyLink (the actual source URL).`;
     } else {
       userPrompt = `Generate a General Blog Post about ${topic} that shares insights, trends, or commentary.
 
@@ -137,7 +148,7 @@ Format the response as JSON with: title, content, excerpt.`;
     }
 
     const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-3.5-turbo", // Using GPT-3.5 for cost efficiency
+      model: type === 'case-study' ? "gpt-4" : "gpt-3.5-turbo", // Use GPT-4 for case studies, GPT-3.5 for blog posts
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
@@ -154,13 +165,24 @@ Format the response as JSON with: title, content, excerpt.`;
     // Parse JSON response
     const parsedResponse = JSON.parse(response);
     
+    // Debug logging
+    console.log('Generated response keys:', Object.keys(parsedResponse));
+    console.log('caseStudyLink value:', parsedResponse.caseStudyLink);
+    
+    // Ensure caseStudyLink is always provided for case studies
+    let caseStudyLink = parsedResponse.caseStudyLink;
+    if (type === 'case-study' && !caseStudyLink) {
+      // Fallback to a general industry source
+      caseStudyLink = 'https://aws.amazon.com/solutions/case-studies/';
+    }
+    
     return {
       title: parsedResponse.title,
       content: parsedResponse.content,
       excerpt: parsedResponse.excerpt,
       metrics: parsedResponse.metrics,
       sources: parsedResponse.sources,
-      caseStudyLink: parsedResponse.caseStudyLink
+      caseStudyLink: caseStudyLink
     };
   } catch (error) {
     console.error('Error generating content:', error);
