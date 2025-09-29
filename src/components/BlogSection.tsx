@@ -640,9 +640,16 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
                 View Case Study →
               </a>
             ) : (
-              <span className="font-medium text-sm text-blue-500 pb-1 border-b-2 border-neutral-700 group-hover:border-blue-500 group-focus:border-blue-500 transition focus:outline-hidden">
-                {post.type === 'case-study' ? 'Case study' : 'Blog post'}
-              </span>
+              <div className="space-y-1">
+                <span className="font-medium text-sm text-blue-500 pb-1 border-b-2 border-neutral-700 group-hover:border-blue-500 group-focus:border-blue-500 transition focus:outline-hidden">
+                  {post.type === 'case-study' ? 'Case study' : 'Blog post'}
+                </span>
+                {post.type === 'case-study' && (
+                  <p className="text-xs text-neutral-500">
+                    🔎 No case study link available from trusted sources
+                  </p>
+                )}
+              </div>
             )}
           </div>
     </div>

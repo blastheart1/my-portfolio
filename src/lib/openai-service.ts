@@ -177,7 +177,7 @@ Format the response as JSON with: title, content, excerpt.`;
     let caseStudyLink = parsedResponse.caseStudyLink;
     if (type === 'case-study') {
       if (!caseStudyLink || caseStudyLink === null || caseStudyLink === undefined || caseStudyLink === 'null') {
-        // No real case study found, use null (will show fallback message in UI)
+        // No real case study found, use null (will show disclaimer in UI)
         caseStudyLink = null;
         console.log('No real case study found, using null');
       } else {
