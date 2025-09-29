@@ -106,44 +106,30 @@ When given a topic:
     let userPrompt = '';
     
     if (type === 'case-study') {
-      userPrompt = `Create a Case Study Analysis Blog Post about ${topic}.
+      userPrompt = `Create a Case Study Spotlight Blog Post about ${topic}.
 
-IMPORTANT: Use your web browsing capabilities to find a REAL case study from these approved sources:
-- AWS Case Studies: https://aws.amazon.com/solutions/case-studies/
-- Google Cloud Customer Stories: https://cloud.google.com/customers
-- Microsoft Azure Case Studies: https://customers.microsoft.com/en-us/
-- IBM Case Studies: https://www.ibm.com/case-studies
-- McKinsey Insights: https://www.mckinsey.com/featured-insights
-- Deloitte Insights: https://www2.deloitte.com/insights/us/en.html
-- Gartner Insights: https://www.gartner.com/en/insights
-- Forrester Case Studies: https://www.forrester.com/research
+Follow these guidelines:
+- If you can find a real case study from these approved sources, create a Case Study Spotlight:
+  • AWS: https://aws.amazon.com/solutions/case-studies/
+  • Google Cloud: https://cloud.google.com/customers
+  • Microsoft Azure: https://customers.microsoft.com/en-us/
+  • IBM: https://www.ibm.com/case-studies
+  • McKinsey: https://www.mckinsey.com/featured-insights
+  • Deloitte: https://www2.deloitte.com/insights/us/en.html
+  • Gartner: https://www.gartner.com/en/insights
+  • Forrester: https://www.forrester.com/research
 
-If you can find a real case study, create a Case Study Spotlight with:
-- Title: Clear, problem–solution focused
-- Introduction: Context of the industry problem (1 paragraph)
-- Challenge: Main issue faced (1 short paragraph)  
-- Approach: How the case study subject addressed the issue (1 short paragraph)
-- Takeaway: Key insights and lessons learned (1–2 sentences)
-- Source: The actual case study URL from the approved sources
+- Structure: Title → Intro (context) → Challenge → Approach → Takeaway → Source link
+- Length: 3–5 short paragraphs max
+- Always include the original source link at the end if available
 
-If you cannot find a real case study, create a General Blog Post with:
-- Title: Catchy and professional
-- Introduction: 2–3 sentences setting context
-- Body: 2–3 short sections analyzing trends, comparisons, or pros/cons
-- Conclusion: 2–3 sentences with a key takeaway
-- Add at the end: "🔎 No relevant case study available from trusted sources. This article provides a general analysis instead."
+- If you cannot find a credible source link due to system limitations:
+  → Output a general blog post on the same topic instead
+  → At the end of the post, add: "🔎 No relevant case study available from trusted sources. This article provides a general analysis instead."
 
 ${contextPrompt}
 
-CRITICAL: Your response MUST be valid JSON with these exact fields:
-{
-  "title": "Your title here",
-  "content": "Your content here", 
-  "excerpt": "Your excerpt here",
-  "caseStudyLink": "https://real-url-from-approved-sources.com"
-}
-
-The caseStudyLink field is REQUIRED. If you found a real case study, use the actual URL. If not, use null.`;
+Format the response as JSON with: title, content, excerpt, caseStudyLink (the actual source URL if available, or null if not).`;
     } else {
       userPrompt = `Generate a General Blog Post about ${topic} that shares insights, trends, or commentary.
 
@@ -160,9 +146,9 @@ ${contextPrompt}
 Format the response as JSON with: title, content, excerpt.`;
     }
 
-    // Use GPT-4o for case studies (web access), GPT-4o-mini for blog posts (cost-effective)
+    // Use GPT-3.5-turbo for both blog posts and case studies (cost-effective)
     const client = getOpenAI();
-    const model = type === 'case-study' ? "gpt-4o" : "gpt-4o-mini";
+    const model = "gpt-3.5-turbo";
     
     const completion = await client.chat.completions.create({
       model: model,
