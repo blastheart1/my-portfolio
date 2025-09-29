@@ -34,8 +34,16 @@ export default function ParallaxBackground() {
       setScrollY(window.scrollY);
     };
     
+    // Use both scroll and wheel events to ensure parallax works
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('wheel', handleScroll, { passive: true });
+    window.addEventListener('touchmove', handleScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('wheel', handleScroll);
+      window.removeEventListener('touchmove', handleScroll);
+    };
   }, []);
 
   // Dark mode observer
@@ -45,6 +53,21 @@ export default function ParallaxBackground() {
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     return () => observer.disconnect();
+  }, []);
+
+  // Force parallax update when splash completes
+  useEffect(() => {
+    const handleSplashComplete = () => {
+      // Force a scroll update to trigger parallax
+      setScrollY(window.scrollY);
+    };
+
+    // Listen for custom splash completion event
+    window.addEventListener('splash-complete', handleSplashComplete);
+    
+    return () => {
+      window.removeEventListener('splash-complete', handleSplashComplete);
+    };
   }, []);
 
   // Generate stars with different layers for parallax
