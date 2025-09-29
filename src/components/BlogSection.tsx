@@ -152,6 +152,13 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                 const postIndex = currentPage * 3 + slotIndex;
                 const post = posts[postIndex];
                 
+                // Determine rounded corners based on position
+                const getRoundedClasses = (index: number) => {
+                  if (index === 0) return 'rounded-l-xl'; // First card - left rounded
+                  if (index === 1) return ''; // Middle card - no rounded corners
+                  return 'rounded-r-xl'; // Last card - right rounded
+                };
+                
                 return (
                   <div key={`${currentPage}-${slotIndex}`}>
                     {post ? (
@@ -159,9 +166,10 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                         post={post} 
                         isTransitioning={isTransitioning}
                         transitionDelay={slotIndex * 100}
+                        roundedClass={getRoundedClasses(slotIndex)}
                       />
                     ) : (
-                      <div className="h-full bg-neutral-900 rounded-xl flex items-center justify-center" style={{ minHeight: '380px', maxHeight: '380px' }}>
+                      <div className={`h-full bg-neutral-900 flex items-center justify-center ${getRoundedClasses(slotIndex)}`} style={{ minHeight: '380px', maxHeight: '380px' }}>
                         <p className="text-neutral-500 text-sm">No content</p>
                       </div>
                     )}
@@ -240,9 +248,10 @@ interface BlogCardProps {
   post: BlogPost;
   isTransitioning?: boolean;
   transitionDelay?: number;
+  roundedClass?: string;
 }
 
-function BlogCard({ post, isTransitioning = false, transitionDelay = 0 }: BlogCardProps) {
+function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedClass = '' }: BlogCardProps) {
   const getIcon = (topic: string) => {
     // Return professional icons based on topic
     const icons = {
@@ -323,7 +332,7 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0 }: BlogCa
 
   return (
     <div 
-      className="group relative z-10 p-4 md:p-6 h-full flex flex-col bg-neutral-900 focus:outline-hidden first:rounded-t-xl last:rounded-b-xl lg:first:rounded-l-xl lg:first:rounded-tr-none lg:last:rounded-r-xl lg:last:rounded-bl-none before:absolute before:inset-0 before:bg-linear-to-b hover:before:from-transparent hover:before:via-transparent hover:before:to-[#ff0]/10 before:via-80% focus:before:from-transparent focus:before:via-transparent focus:before:to-[#ff0]/10 before:-z-1 last:before:rounded-b-xl lg:first:before:rounded-s-xl lg:last:before:rounded-e-xl lg:last:before:rounded-bl-none before:opacity-0 hover:before:opacity-100 focus:before:opacity-100"
+      className={`group relative z-10 p-4 md:p-6 h-full flex flex-col bg-neutral-900 focus:outline-hidden before:absolute before:inset-0 before:bg-linear-to-b hover:before:from-transparent hover:before:via-transparent hover:before:to-[#ff0]/10 before:via-80% focus:before:from-transparent focus:before:via-transparent focus:before:to-[#ff0]/10 before:-z-1 before:opacity-0 hover:before:opacity-100 focus:before:opacity-100 ${roundedClass}`}
       style={{ minHeight: '380px', maxHeight: '380px' }}
     >
       <div className="mb-5">
