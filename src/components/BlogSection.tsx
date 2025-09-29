@@ -115,7 +115,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
               Blog & Case Studies
             </h2>
             <p className="text-neutral-400 text-lg">
-              AI-generated insights on technology and software development
+              Insights on technology and software development
             </p>
           </div>
           <div className="flex items-center justify-center h-64">
@@ -135,7 +135,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
               Blog & Case Studies
             </h2>
             <p className="text-neutral-400 text-lg">
-              AI-generated insights on technology and software development
+              Insights on technology and software development
             </p>
           </div>
           <div className="text-center">
@@ -160,7 +160,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                 Blog & Case Studies
               </h2>
               <p className="text-neutral-400 text-lg">
-                AI-generated insights on technology and software development
+                Insights on technology and software development
               </p>
             </div>
 
@@ -548,8 +548,26 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
     >
       {/* Fixed header with icon and title */}
       <div className="flex-shrink-0 mb-4">
-        {getIcon(post.topic)}
-        <h3 className="mt-4 font-medium text-lg text-white">{post.title}</h3>
+        <div 
+          className={`transition-all duration-500 ease-out ${
+            isTransitioning ? 'opacity-0 translate-y-4 scale-95' : 'opacity-100 translate-y-0 scale-100'
+          }`}
+          style={{
+            transitionDelay: `${transitionDelay}ms`
+          }}
+        >
+          {getIcon(post.topic)}
+        </div>
+        <h3 
+          className={`mt-4 font-medium text-lg text-white transition-all duration-500 ease-out ${
+            isTransitioning ? 'opacity-0 translate-y-4 scale-95' : 'opacity-100 translate-y-0 scale-100'
+          }`}
+          style={{
+            transitionDelay: `${transitionDelay + 100}ms`
+          }}
+        >
+          {post.title}
+        </h3>
       </div>
       
       {/* Scrollable content area */}
@@ -571,18 +589,25 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
         }}
       >
         <div 
-          className={`pr-2 pb-6 transition-opacity duration-300 ${
-            isTransitioning ? 'opacity-0' : 'opacity-100'
+          className={`pr-2 pb-6 transition-all duration-500 ease-out ${
+            isTransitioning ? 'opacity-0 translate-y-6 scale-98' : 'opacity-100 translate-y-0 scale-100'
           }`}
           style={{
-            transitionDelay: `${transitionDelay}ms`
+            transitionDelay: `${transitionDelay + 200}ms`
           }}
         >
           <p className="text-neutral-400 leading-relaxed">{post.excerpt}</p>
           
           {/* Sources as badges */}
           {post.sources && post.sources.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div 
+              className={`mt-4 flex flex-wrap gap-2 transition-all duration-500 ease-out ${
+                isTransitioning ? 'opacity-0 translate-y-2 scale-95' : 'opacity-100 translate-y-0 scale-100'
+              }`}
+              style={{
+                transitionDelay: `${transitionDelay + 400}ms`
+              }}
+            >
               {post.sources.slice(0, 2).map((source, index) => (
                 <a
                   key={index}
@@ -606,9 +631,9 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
         
         {/* Scroll indicator - fades when scrolled */}
         {isHovered && hasScrollableContent && showScrollIndicator && (
-          <div className="absolute bottom-0 left-0 right-2 h-8 bg-gradient-to-t from-neutral-900 via-neutral-900/80 to-transparent pointer-events-none">
-            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2">
-              <div className="flex items-center gap-1 text-xs text-neutral-400 bg-neutral-800/90 px-3 py-1 rounded-full backdrop-blur-sm">
+          <div className="absolute bottom-0 left-0 right-2 h-9 bg-gradient-to-t from-neutral-900 via-neutral-900/80 to-transparent pointer-events-none">
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+              <div className="flex items-center gap-1 text-xs text-neutral-400">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                 </svg>
@@ -621,9 +646,9 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
         {/* Mobile scroll down indicator */}
         <div className="lg:hidden">
           {hasScrollableContent && showScrollDownIndicator && (
-            <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2">
-              <div className="flex items-center gap-1 text-xs text-neutral-400 bg-neutral-800/90 px-3 py-1 rounded-full backdrop-blur-sm">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2">
+              <div className="flex items-center gap-1 text-[10px] text-neutral-400">
+                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                 </svg>
                 <span>scroll down for more</span>
@@ -634,7 +659,14 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
       </div>
       
           {/* Fixed footer - always visible at bottom */}
-          <div className="flex-shrink-0 mt-auto pt-4">
+          <div 
+            className={`flex-shrink-0 mt-auto pt-4 transition-all duration-500 ease-out ${
+              isTransitioning ? 'opacity-0 translate-y-4 scale-95' : 'opacity-100 translate-y-0 scale-100'
+            }`}
+            style={{
+              transitionDelay: `${transitionDelay + 300}ms`
+            }}
+          >
             {post.caseStudyLink ? (
               <a
                 href={post.caseStudyLink}
