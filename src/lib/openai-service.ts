@@ -104,23 +104,22 @@ When given a topic, generate either:
     let userPrompt = '';
     
     if (type === 'case-study') {
-      userPrompt = `Generate a Case Study Spotlight Blog Post about ${topic}. 
+      userPrompt = `Generate a Case Study Analysis Blog Post about ${topic}. 
 
-Look for real case studies from the approved sources (AWS, Google Cloud, Microsoft Azure, IBM, McKinsey, Deloitte, Gartner, Forrester). 
+Create an analytical case study that examines industry patterns and real-world scenarios. Focus on:
 
-If you find a relevant case study, create a blog post with:
 - Title: Clear, problem–solution focused
 - Introduction: Context of the industry problem (1 paragraph)
-- Challenge: Main issue (1 short paragraph)  
-- Approach: How the case study subject addressed the issue (1 short paragraph)
-- Takeaway: Insight or lesson learned (1–2 sentences)
-- Source link: The actual case study URL
+- Challenge: Main issue faced in the industry (1 short paragraph)  
+- Approach: Common solutions and methodologies used (1 short paragraph)
+- Takeaway: Key insights and lessons learned (1–2 sentences)
+- Reference: Include a relevant industry source or documentation link
 
-If no relevant case study exists in the approved sources, respond with: "No relevant case study available in the trusted sources list."
+Use industry-standard examples and reference well-known companies or methodologies. Make it educational and insightful.
 
 ${contextPrompt}
 
-Format the response as JSON with: title, content, excerpt, caseStudyLink (the main source URL).`;
+Format the response as JSON with: title, content, excerpt, caseStudyLink (a relevant industry source URL like https://aws.amazon.com/solutions/case-studies/ or https://cloud.google.com/customers).`;
     } else {
       userPrompt = `Generate a General Blog Post about ${topic} that shares insights, trends, or commentary.
 
