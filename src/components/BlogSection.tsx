@@ -147,7 +147,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
         ) : (
         <>
           <div className="relative h-[380px]">
-            <div className="grid grid-cols-1 lg:grid-cols-3 h-full border border-neutral-700 divide-y lg:divide-y-0 lg:divide-x divide-neutral-700 rounded-xl">
+            <div className="grid grid-cols-1 lg:grid-cols-3 h-full rounded-xl">
               {[0, 1, 2].map((slotIndex) => {
                 const postIndex = currentPage * 3 + slotIndex;
                 const post = posts[postIndex];
