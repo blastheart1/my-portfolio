@@ -16,9 +16,14 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   useEffect(() => {
     setMounted(true);
     
-    // No scroll blocking - let GSAP handle everything naturally
+    // Add splash-active class to block scrolling
+    document.body.classList.add('splash-active');
+    document.documentElement.classList.add('splash-active');
+    
     return () => {
-      // Clean exit - no blocking needed
+      // Remove splash-active class on cleanup
+      document.body.classList.remove('splash-active');
+      document.documentElement.classList.remove('splash-active');
     };
   }, []);
 
@@ -51,14 +56,17 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         );
         
         let currentIndex = -1;
-        const wrap = gsap.utils.wrap(0, sections.length);
         let animating = false;
 
         gsap.set(outerWrappers, { yPercent: 100 });
         gsap.set(innerWrappers, { yPercent: -100 });
 
         function gotoSection(index: number, direction: number) {
-          index = wrap(index);
+          // Prevent wrapping - don't allow going beyond bounds
+          if (!sections || index < 0 || index >= sections.length) {
+            return;
+          }
+          
           animating = true;
           const fromTop = direction === -1;
           const dFactor = fromTop ? -1 : 1;
@@ -109,26 +117,47 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           type: "wheel,touch,pointer",
           wheelSpeed: -1,
           onDown: () => {
+            // Only allow going back if not at first section
             if (!animating && currentIndex > 0) {
               gotoSection(currentIndex - 1, -1);
             }
           },
           onUp: () => {
+            // Only allow going forward if not at last section
             if (!animating && sections && currentIndex < sections.length - 1) {
               gotoSection(currentIndex + 1, 1);
-            } else if (!animating && sections && currentIndex >= sections.length - 1) {
-              // On the last section, transition immediately to portfolio
-              console.log('Last section reached - transitioning to portfolio');
-              // Disable observer before completing
+            } else if (!animating && sections && currentIndex === sections.length - 1) {
+              // On the last section, start smooth scroll transition to portfolio
+              console.log('Last section reached - starting scroll transition to portfolio');
+              
+              // Disable observer immediately to prevent any further navigation
               observer.disable();
-              onComplete?.();
+              
+              // Create smooth scroll-out animation for the splash container
+              const scrollOutTimeline = gsap.timeline({
+                onComplete: () => {
+                  // Ensure scroll is properly restored before completing
+                  document.body.style.overflow = 'auto';
+                  document.documentElement.style.overflow = 'auto';
+                  onComplete?.();
+                }
+              });
+              
+              // Scroll the splash container up and out of view
+              scrollOutTimeline.to(containerRef.current, {
+                y: "-100%",
+                duration: 1.0,
+                ease: "power2.inOut"
+              });
             }
           },
           tolerance: 10,
-          preventDefault: true
+          preventDefault: true,
+          // Isolate observer to only work within splash container
+          target: containerRef.current
         });
 
-        // Add targeted touch event handling to prevent portfolio interaction
+        // Add targeted touch event handling to prevent portfolio interaction (desktop only)
         const handleTouchEvents = (e: TouchEvent) => {
           // Only prevent if the touch is outside the splash container
           if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -137,10 +166,28 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           }
         };
 
-        // Add document-level touch event prevention
-        document.addEventListener('touchstart', handleTouchEvents, { passive: false });
-        document.addEventListener('touchmove', handleTouchEvents, { passive: false });
-        document.addEventListener('touchend', handleTouchEvents, { passive: false });
+        // Add scroll event blocking to prevent portfolio scroll during splash
+        const handleScrollEvents = (e: Event) => {
+          // Only block scroll events that are not from the splash container
+          if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+          }
+        };
+
+        // Add document-level touch event prevention with proper cleanup
+        const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+        let touchEventOptions = { passive: false, capture: true };
+        
+        // Always add touch event blocking to prevent mobile scroll
+        document.addEventListener('touchstart', handleTouchEvents, touchEventOptions);
+        document.addEventListener('touchmove', handleTouchEvents, touchEventOptions);
+        document.addEventListener('touchend', handleTouchEvents, touchEventOptions);
+        
+        // Block scroll events from reaching portfolio
+        document.addEventListener('scroll', handleScrollEvents, { capture: true });
+        document.addEventListener('wheel', handleScrollEvents, { capture: true });
 
         gotoSection(0, 1);
 
@@ -163,12 +210,16 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           // Disable observer to restore scroll functionality
           observer.disable();
           
-          // Remove document-level touch event listeners
-          document.removeEventListener('touchstart', handleTouchEvents);
-          document.removeEventListener('touchmove', handleTouchEvents);
-          document.removeEventListener('touchend', handleTouchEvents);
+          // Remove document-level touch event listeners with same options
+          document.removeEventListener('touchstart', handleTouchEvents, touchEventOptions);
+          document.removeEventListener('touchmove', handleTouchEvents, touchEventOptions);
+          document.removeEventListener('touchend', handleTouchEvents, touchEventOptions);
           
-          console.log('Splash cleanup - observer disabled, scroll restored');
+          // Remove scroll event blocking
+          document.removeEventListener('scroll', handleScrollEvents, { capture: true });
+          document.removeEventListener('wheel', handleScrollEvents, { capture: true });
+          
+          console.log('Splash cleanup - observer disabled, touch events removed, scroll events unblocked, scroll restored');
         };
 
       } catch (error) {

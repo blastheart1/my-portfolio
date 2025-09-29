@@ -364,7 +364,7 @@ export default function ContactSection() {
           </div>
 
           <motion.div
-            className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm pt-4 border-t border-gray-200 dark:border-gray-700"
+            className="flex items-center justify-center gap-2 text-gray-700 dark:text-gray-300 text-sm pt-4 border-t border-gray-200 dark:border-gray-700"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}

@@ -49,7 +49,7 @@ export default function ExperienceSection() {
   const toggleShowMore = () => setShowMore((prev) => !prev);
 
   return (
-    <section id="experience" className="px-6 py-24 max-w-4xl mx-auto relative">
+    <section id="experience" className="px-6 py-20 max-w-4xl mx-auto relative">
       <motion.h2
         className="text-3xl font-bold text-center mb-12"
         initial={{ opacity: 0, y: -20 }}

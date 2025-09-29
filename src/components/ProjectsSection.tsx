@@ -69,9 +69,9 @@ function ProjectDescription({ description }: { description: string }) {
 
 export default function ProjectsSection() {
   return (
-    <section id="projects" className="px-6 py-32 max-w-6xl mx-auto">
+    <section id="projects" className="px-6 py-20 max-w-6xl mx-auto">
       <motion.h2
-        className="text-3xl font-semibold text-center text-gray-900 dark:text-gray-100 mb-16"
+        className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-4"
         initial={{ opacity: 0, y: -20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}

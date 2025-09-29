@@ -8,7 +8,7 @@ export default function AboutSection() {
   const [showTooltip, setShowTooltip] = useState(false);
 
   return (
-    <section id="about" className="py-0 max-w-4xl mx-auto px-6 text-center">
+    <section id="about" className="py-16 max-w-4xl mx-auto px-6 text-center">
       <motion.h2
         className="text-3xl font-bold mb-6"
         initial={{ opacity: 0, y: -20 }}

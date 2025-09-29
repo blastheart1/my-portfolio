@@ -3,9 +3,81 @@
   inset: 0;
   pointer-events: none;
   z-index: -10;
+  /* Mobile optimizations */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+/* Background gradient optimizations */
+.parallax-background {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  /* Prevent gradient flickering */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  will-change: background-color;
+  /* Smooth gradient transitions */
+  transition: background-color 1s ease-out;
 }
 
 .star {
   position: absolute;
   border-radius: 50%;
+  /* Hardware acceleration for smooth mobile performance */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  /* Smooth transitions */
+  transition: opacity 0.1s ease-out;
+  /* Prevent text selection on mobile */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+/* Optimize for mobile rendering */
+will-change: transform, opacity;
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  .stars-layer {
+    /* Reduce compositing layers on mobile */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    /* Optimize for mobile scrolling */
+    -webkit-overflow-scrolling: touch;
+    /* Reduce paint complexity */
+    contain: layout style paint;
+    /* Prevent mobile dragging */
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+  }
+  
+  .star {
+    /* Simplified mobile rendering */
+    will-change: transform;
+    /* Disable transitions on mobile for better performance */
+    transition: none !important;
+    /* Optimize for mobile GPUs */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    /* Reduce shadow complexity on mobile */
+    filter: none;
+    /* Prevent mobile dragging/snapping */
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+    /* Smooth mobile rendering */
+    -webkit-perspective: 1000px;
+    perspective: 1000px;
+  }
 }

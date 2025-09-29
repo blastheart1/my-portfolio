@@ -86,7 +86,7 @@ export default function TechStacks() {
   );
 
   return (
-    <section id="tech-stacks" className="w-full py-20 overflow-hidden">
+    <section id="tech-stacks" className="w-full py-16 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
         <motion.div

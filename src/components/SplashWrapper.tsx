@@ -47,6 +47,10 @@ export default function SplashWrapper({ children }: SplashWrapperProps) {
         document.body.style.left = '';
         document.documentElement.style.overflow = 'auto';
         
+        // Force touch-action reset for mobile
+        document.body.style.touchAction = '';
+        document.documentElement.style.touchAction = '';
+        
         // Trigger parallax
         window.dispatchEvent(new Event('scroll'));
         console.log('Portfolio scroll fully restored');
@@ -91,8 +95,30 @@ export default function SplashWrapper({ children }: SplashWrapperProps) {
       document.body.style.left = '';
       document.documentElement.style.overflow = 'auto';
       
-      // Force scroll events to restore parallax
-      window.dispatchEvent(new Event('scroll'));
+      // Force touch-action reset for mobile
+      document.body.style.touchAction = '';
+      document.documentElement.style.touchAction = '';
+      
+      // Force scroll events to restore parallax with proper timing
+      setTimeout(() => {
+        // Reset scroll position to top
+        window.scrollTo(0, 0);
+        
+        // Trigger multiple scroll events to ensure parallax updates
+        window.dispatchEvent(new Event('scroll'));
+        window.dispatchEvent(new Event('wheel'));
+        window.dispatchEvent(new Event('touchmove'));
+        
+        // Trigger parallax update
+        window.dispatchEvent(new CustomEvent('splash-complete'));
+        
+        // Additional parallax trigger after a short delay
+        setTimeout(() => {
+          window.dispatchEvent(new Event('scroll'));
+          window.dispatchEvent(new CustomEvent('splash-complete'));
+        }, 100);
+      }, 50);
+      
       console.log('Scroll functionality restored');
     };
     
@@ -102,17 +128,94 @@ export default function SplashWrapper({ children }: SplashWrapperProps) {
     // Dispatch custom event for parallax
     window.dispatchEvent(new CustomEvent('splash-complete'));
     
+    // Force parallax to update with current scroll position
+    setTimeout(() => {
+      // Direct scroll position update for parallax
+      const parallaxEvent = new CustomEvent('scroll', { 
+        detail: { scrollY: window.scrollY } 
+      });
+      window.dispatchEvent(parallaxEvent);
+      
+      // Also dispatch a regular scroll event
+      window.dispatchEvent(new Event('scroll'));
+    }, 25);
+    
     // Additional scroll restoration attempts
     setTimeout(restoreScroll, 100);
     setTimeout(restoreScroll, 500);
     
-    // Smooth transition - hide splash immediately
+    // Mobile-specific scroll restoration
+    if (window.innerWidth <= 768) {
+      // Immediate mobile scroll restoration
+      document.body.style.touchAction = 'auto';
+      document.documentElement.style.touchAction = 'auto';
+      document.body.style.overflow = 'auto';
+      document.documentElement.style.overflow = 'auto';
+      
+      // Remove any remaining touch event listeners
+      const removeAllTouchListeners = () => {
+        const events = ['touchstart', 'touchmove', 'touchend'];
+        events.forEach(event => {
+          document.removeEventListener(event, () => {}, { passive: false });
+          document.removeEventListener(event, () => {}, { passive: true });
+          document.removeEventListener(event, () => {}, { capture: true });
+          document.removeEventListener(event, () => {}, { capture: false });
+        });
+      };
+      
+      removeAllTouchListeners();
+      
+      setTimeout(() => {
+        // Force mobile scroll restoration
+        document.body.style.touchAction = 'auto';
+        document.documentElement.style.touchAction = 'auto';
+        document.body.style.overflow = 'auto';
+        document.documentElement.style.overflow = 'auto';
+        
+        // Trigger a scroll event to activate mobile scrolling
+        window.scrollTo(0, 1);
+        window.scrollTo(0, 0);
+        
+        // Force enable touch scrolling
+        document.body.style.pointerEvents = 'auto';
+        document.documentElement.style.pointerEvents = 'auto';
+        
+        console.log('Mobile scroll restoration completed');
+      }, 100);
+    }
+    
+    // Smooth scroll transition - hide splash after scroll animation completes
     setTimeout(() => {
-      console.log('Hiding splash screen');
+      console.log('Hiding splash screen after scroll animation');
       setShowSplash(false);
-      // Final scroll restoration
+      
+      // Final scroll restoration and position reset
       restoreScroll();
-    }, 100); // Very short delay for smooth transition
+      
+      // Ensure scroll position is at top when portfolio appears
+      window.scrollTo(0, 0);
+      
+      // Force parallax update after position reset
+      setTimeout(() => {
+        // Reset scroll position to ensure parallax starts from top
+        window.scrollTo(0, 0);
+        
+        // Trigger parallax events
+        window.dispatchEvent(new Event('scroll'));
+        window.dispatchEvent(new Event('wheel'));
+        window.dispatchEvent(new CustomEvent('splash-complete'));
+        
+        // Force a small scroll to trigger parallax
+        window.scrollTo(0, 1);
+        window.scrollTo(0, 0);
+        
+        // Additional parallax trigger
+        setTimeout(() => {
+          window.dispatchEvent(new Event('scroll'));
+          window.dispatchEvent(new CustomEvent('splash-complete'));
+        }, 50);
+      }, 100);
+    }, 1000); // Match the scroll-out duration from splash screen
   };
 
   return (
@@ -120,37 +223,58 @@ export default function SplashWrapper({ children }: SplashWrapperProps) {
       {showSplash && (
         <>
           <SplashScreen onComplete={handleSplashComplete} />
-          {/* Touch-blocking overlay to prevent portfolio interaction */}
+          {/* Scroll-blocking overlay to prevent portfolio scroll during splash */}
           <div 
             className="fixed inset-0 z-[9998] bg-transparent"
+            onScroll={(e) => e.preventDefault()}
+            onWheel={(e) => e.preventDefault()}
             onTouchStart={(e) => e.preventDefault()}
             onTouchMove={(e) => e.preventDefault()}
             onTouchEnd={(e) => e.preventDefault()}
-            style={{ touchAction: 'none' }}
+            style={{ 
+              touchAction: 'none',
+              pointerEvents: 'auto'
+            }}
           />
         </>
       )}
       
-      {/* No overlay - clean transition */}
+      {/* No overlay needed for scroll-based transition */}
       
       <div 
         ref={portfolioRef}
         key="portfolio-content"
-        className={`transition-opacity duration-500 ease-out ${
-          splashComplete ? 'opacity-100' : 'opacity-0'
+        className={`portfolio-content ${
+          splashComplete ? 'scroll-in' : 'scroll-out'
         }`}
         style={{
           position: 'relative',
-          zIndex: splashComplete ? 1 : 0
+          zIndex: splashComplete ? 1 : 0,
+          touchAction: 'auto',
+          overflow: 'auto'
+        }}
+        onTouchStart={() => {
+          // Force mobile scroll activation on touch
+          document.body.style.touchAction = 'auto';
+          document.documentElement.style.touchAction = 'auto';
         }}
       >
         {children}
       </div>
       
       <style jsx>{`
-        @keyframes fadeOut {
-          from { opacity: 1; }
-          to { opacity: 0; }
+        @keyframes scrollOut {
+          from { transform: translateY(0); }
+          to { transform: translateY(-100%); }
+        }
+        
+        @keyframes scrollIn {
+          from { 
+            transform: translateY(100vh); 
+          }
+          to { 
+            transform: translateY(0); 
+          }
         }
       `}</style>
     </div>
