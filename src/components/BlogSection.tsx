@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BlogPost } from '@/types/blog';
 
 interface BlogSectionProps {
@@ -252,6 +252,56 @@ interface BlogCardProps {
 }
 
 function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedClass = '' }: BlogCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [hasScrollableContent, setHasScrollableContent] = useState(false);
+  const [showScrollIndicator, setShowScrollIndicator] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const checkScrollable = () => {
+      if (contentRef.current) {
+        const isScrollable = contentRef.current.scrollHeight > contentRef.current.clientHeight;
+        setHasScrollableContent(isScrollable);
+        setShowScrollIndicator(isScrollable);
+      }
+    };
+    
+    checkScrollable();
+    const timeoutId = setTimeout(checkScrollable, 100);
+    
+    window.addEventListener('resize', checkScrollable);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', checkScrollable);
+    };
+  }, [post.excerpt, post.sources, post.title]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement;
+    const { scrollTop } = target;
+    
+    // Hide indicator when scrolled
+    if (scrollTop > 0) {
+      setShowScrollIndicator(false);
+    } else {
+      setShowScrollIndicator(true);
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const { scrollTop, scrollHeight, clientHeight } = target;
+    
+    // Prevent scroll leakage
+    if (scrollTop <= 0 && e.deltaY < 0) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (scrollTop >= scrollHeight - clientHeight && e.deltaY > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
   const getIcon = (topic: string) => {
     // Return professional icons based on topic
     const icons = {
@@ -334,20 +384,31 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
     <div 
       className={`group relative z-10 p-4 md:p-6 h-full flex flex-col bg-neutral-900 focus:outline-hidden before:absolute before:inset-0 before:bg-linear-to-b hover:before:from-transparent hover:before:via-transparent hover:before:to-[#ff0]/10 before:via-80% focus:before:from-transparent focus:before:via-transparent focus:before:to-[#ff0]/10 before:-z-1 before:opacity-0 hover:before:opacity-100 focus:before:opacity-100 ${roundedClass}`}
       style={{ minHeight: '380px', maxHeight: '380px' }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="mb-5">
+      {/* Fixed header with icon and title */}
+      <div className="flex-shrink-0 mb-4">
         {getIcon(post.topic)}
-        
+        <h3 className="mt-4 font-medium text-lg text-white">{post.title}</h3>
+      </div>
+      
+      {/* Scrollable content area */}
+      <div 
+        ref={contentRef}
+        className="flex-1 overflow-y-auto scrollbar-hide relative min-h-0"
+        onScroll={handleScroll}
+        onWheel={handleWheel}
+      >
         <div 
-          className={`mt-5 transition-opacity duration-300 ${
+          className={`pr-2 pb-6 transition-opacity duration-300 ${
             isTransitioning ? 'opacity-0' : 'opacity-100'
           }`}
           style={{
             transitionDelay: `${transitionDelay}ms`
           }}
         >
-          <h3 className="mt-5 font-medium text-lg text-white">{post.title}</h3>
-          <p className="mt-1 text-neutral-400">{post.excerpt}</p>
+          <p className="text-neutral-400 leading-relaxed">{post.excerpt}</p>
           
           {/* Sources as badges */}
           {post.sources && post.sources.length > 0 && (
@@ -372,13 +433,28 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
             </div>
           )}
         </div>
+        
+        {/* Scroll indicator - fades when scrolled */}
+        {isHovered && hasScrollableContent && showScrollIndicator && (
+          <div className="absolute bottom-0 left-0 right-2 h-8 bg-gradient-to-t from-neutral-900 via-neutral-900/80 to-transparent pointer-events-none">
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2">
+              <div className="flex items-center gap-1 text-xs text-neutral-400 bg-neutral-800/90 px-3 py-1 rounded-full backdrop-blur-sm">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+                <span>scroll to read more</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       
-      <p className="mt-auto">
+      {/* Fixed footer - always visible at bottom */}
+      <div className="flex-shrink-0 mt-auto pt-4">
         <span className="font-medium text-sm text-[#ff0] pb-1 border-b-2 border-neutral-700 group-hover:border-[#ff0] group-focus:border-[#ff0] transition focus:outline-hidden">
           {post.type === 'case-study' ? 'Case study' : 'Blog post'}
         </span>
-      </p>
+      </div>
     </div>
   );
 }
