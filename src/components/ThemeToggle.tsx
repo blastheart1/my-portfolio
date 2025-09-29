@@ -1,10 +1,34 @@
 'use client';
 
 import { useState, useEffect } from "react";
+import { useScrollFade } from "@/hooks/useScrollFade";
 
-export default function ThemeToggle() {
+interface ThemeToggleProps {
+  isModalOpen?: boolean;
+}
+
+export default function ThemeToggle({ isModalOpen = false }: ThemeToggleProps) {
   const [dark, setDark] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Use different thresholds for mobile vs desktop
+  const { opacity, isVisible } = useScrollFade({ 
+    threshold: isMobile ? 30 : 50, 
+    fadeOut: true 
+  });
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+    
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Initialize theme from localStorage or system preference
   useEffect(() => {
@@ -34,13 +58,14 @@ export default function ThemeToggle() {
   // Prevent hydration mismatch
   if (!mounted) {
     return (
-      <div className="fixed top-4 right-4 z-50 w-14 h-7 rounded-full bg-gray-300" />
+      <div className={`fixed top-4 right-4 z-50 w-14 h-7 rounded-full bg-gray-300 ${isModalOpen ? 'hidden' : ''}`} />
     );
   }
 
   return (
     <button
-      className="fixed top-4 right-4 z-50 flex items-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full p-1"
+      className={`fixed top-4 right-4 z-50 flex items-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full p-1 transition-opacity duration-300 ${isModalOpen ? 'hidden' : ''}`}
+      style={{ opacity: isVisible ? opacity : 0 }}
       onClick={() => setDark(!dark)}
       aria-label={`Switch to ${dark ? 'light' : 'dark'} mode`}
       title={`Switch to ${dark ? 'light' : 'dark'} mode`}

@@ -1,11 +1,10 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import ThemeToggle from "@/components/ThemeToggle"; // we'll create this
-import FloatingNav from "@/components/FloatingNav";
 import CalendlyScript from '@/components/CalendlyScript';
-import BackToTop from '@/components/BackToTop';
 import StructuredData from '@/components/StructuredData';
 import ServiceWorker from '@/components/ServiceWorker';
+import { ModalProvider } from '@/contexts/ModalContext';
+import ClientLayoutContent from '@/components/ClientLayoutContent';
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
@@ -66,11 +65,11 @@ export const metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon.ico', type: 'image/x-icon' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
       { url: '/code-light.ico', type: 'image/x-icon', media: '(prefers-color-scheme: light)' },
       { url: '/code-dark.ico', type: 'image/x-icon', media: '(prefers-color-scheme: dark)' }
     ],
-    shortcut: '/favicon.ico',
+    shortcut: '/favicon.svg',
     apple: '/code-light.ico',
   },
   manifest: '/site.webmanifest',
@@ -88,6 +87,19 @@ export const viewport = {
   ],
 };
 
+function LayoutContent({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <StructuredData />
+      <ServiceWorker />
+      <ClientLayoutContent>
+        {children}
+      </ClientLayoutContent>
+      <CalendlyScript />
+    </>
+  );
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -99,13 +111,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-300`}
       >
-        <StructuredData />
-        <ServiceWorker />
-        <ThemeToggle />
-        <FloatingNav />
-        {children}
-        <BackToTop />
-        <CalendlyScript />
+        <ModalProvider>
+          <LayoutContent>{children}</LayoutContent>
+        </ModalProvider>
       </body>
     </html>
   );

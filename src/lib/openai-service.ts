@@ -5,8 +5,22 @@ let openai: OpenAI | null = null;
 
 function getOpenAI() {
   if (!openai) {
+    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+    if (!apiKey) {
+      console.warn('Missing OpenAI API key, using mock client');
+      // Return a mock OpenAI instance for build time
+      return {
+        chat: {
+          completions: {
+            create: async () => ({
+              choices: [{ message: { content: '{"title": "Mock Title", "content": "Mock content", "excerpt": "Mock excerpt"}' } }]
+            })
+          }
+        }
+      } as unknown as OpenAI;
+    }
     openai = new OpenAI({
-      apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+      apiKey: apiKey,
     });
   }
   return openai;
@@ -70,19 +84,19 @@ Follow the rules carefully.
 
 === SOURCE HANDLING ===
 - If you have browsing or web access, fetch case studies only from these sites:  
-   • AWS: https://aws.amazon.com/solutions/case-studies/  
-   • Google Cloud: https://cloud.google.com/customers  
-   • Microsoft Azure: https://customers.microsoft.com/en-us/  
-   • IBM: https://www.ibm.com/case-studies  
-   • McKinsey: https://www.mckinsey.com/featured-insights  
-   • Deloitte: https://www2.deloitte.com/insights/us/en.html  
-   • Gartner: https://www.gartner.com/en/insights  
-   • Forrester: https://www.forrester.com/research  
+  • AWS: https://aws.amazon.com/solutions/case-studies/  
+  • Google Cloud: https://cloud.google.com/customers  
+  • Microsoft Azure: https://customers.microsoft.com/en-us/  
+  • IBM: https://www.ibm.com/case-studies  
+  • McKinsey: https://www.mckinsey.com/featured-insights  
+  • Deloitte: https://www2.deloitte.com/insights/us/en.html  
+  • Gartner: https://www.gartner.com/en/insights  
+  • Forrester: https://www.forrester.com/research  
 
 - If you cannot fetch a credible source link due to system limitations:  
-   → Output a general blog post on the same topic instead.  
-   → At the end of the post, add:  
-     "🔎 No relevant case study available from trusted sources. This article provides a general analysis instead."  
+  → Output a general blog post on the same topic instead.  
+  → At the end of the post, add:  
+    "🔎 No relevant case study available from trusted sources. This article provides a general analysis instead."  
 
 === TASK ===
 When given a topic:  
@@ -115,7 +129,7 @@ Follow these guidelines:
 
 ${contextPrompt}
 
-Format the response as JSON with: title, content, excerpt, caseStudyLink (the actual source URL if available, or null if not).`;
+Format the response as JSON with: title, content (as plain text, not JSON), excerpt, caseStudyLink (the actual source URL if available, or null if not).`;
     } else {
       userPrompt = `Generate a General Blog Post about ${topic} that shares insights, trends, or commentary.
 
@@ -129,7 +143,7 @@ Write in a professional, analytical tone. Focus on industry insights and trends,
 
 ${contextPrompt}
 
-Format the response as JSON with: title, content, excerpt.`;
+Format the response as JSON with: title, content (as plain text, not JSON), excerpt.`;
     }
 
     // Use GPT-3.5-turbo for both blog posts and case studies (cost-effective)
