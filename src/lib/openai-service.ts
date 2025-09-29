@@ -206,7 +206,7 @@ Format the response as JSON with: title, content, excerpt.`;
     // Ensure caseStudyLink is always provided for case studies
     let caseStudyLink = parsedResponse.caseStudyLink;
     if (type === 'case-study') {
-      if (!caseStudyLink) {
+      if (!caseStudyLink || caseStudyLink === null || caseStudyLink === undefined) {
         // Fallback to a general industry source
         caseStudyLink = 'https://aws.amazon.com/solutions/case-studies/';
         console.log('Using fallback caseStudyLink:', caseStudyLink);
