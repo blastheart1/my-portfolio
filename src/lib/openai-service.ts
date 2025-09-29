@@ -2,7 +2,6 @@ import OpenAI from 'openai';
 import { ContentGenerationRequest, ContentGenerationResponse } from '@/types/blog';
 
 let openai: OpenAI | null = null;
-let perplexity: OpenAI | null = null;
 
 function getOpenAI() {
   if (!openai) {
@@ -13,19 +12,6 @@ function getOpenAI() {
   return openai;
 }
 
-function getPerplexity() {
-  if (!perplexity) {
-    if (!process.env.PERPLEXITY_API_KEY) {
-      console.warn('PERPLEXITY_API_KEY not found, falling back to OpenAI GPT-4');
-      return getOpenAI();
-    }
-    perplexity = new OpenAI({
-      apiKey: process.env.PERPLEXITY_API_KEY,
-      baseURL: 'https://api.perplexity.ai',
-    });
-  }
-  return perplexity;
-}
 
 // Topic weights for weighted random selection - higher priority for AI, Software QA, and Software Development
 const TOPIC_WEIGHTS = [
