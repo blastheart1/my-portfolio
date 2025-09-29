@@ -118,7 +118,17 @@ export default function SplashWrapper({ children }: SplashWrapperProps) {
   return (
     <div className="relative">
       {showSplash && (
-        <SplashScreen onComplete={handleSplashComplete} />
+        <>
+          <SplashScreen onComplete={handleSplashComplete} />
+          {/* Touch-blocking overlay to prevent portfolio interaction */}
+          <div 
+            className="fixed inset-0 z-[9998] bg-transparent"
+            onTouchStart={(e) => e.preventDefault()}
+            onTouchMove={(e) => e.preventDefault()}
+            onTouchEnd={(e) => e.preventDefault()}
+            style={{ touchAction: 'none' }}
+          />
+        </>
       )}
       
       {/* No overlay - clean transition */}

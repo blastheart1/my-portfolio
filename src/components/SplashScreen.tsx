@@ -128,18 +128,19 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           preventDefault: true
         });
 
-        // Add mobile-specific touch event handling
-        const handleMobileTouch = (e: TouchEvent) => {
-          e.preventDefault();
-          e.stopPropagation();
+        // Add targeted touch event handling to prevent portfolio interaction
+        const handleTouchEvents = (e: TouchEvent) => {
+          // Only prevent if the touch is outside the splash container
+          if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
         };
 
-        // Add touch event listeners for mobile
-        if (containerRef.current) {
-          containerRef.current.addEventListener('touchstart', handleMobileTouch, { passive: false });
-          containerRef.current.addEventListener('touchmove', handleMobileTouch, { passive: false });
-          containerRef.current.addEventListener('touchend', handleMobileTouch, { passive: false });
-        }
+        // Add document-level touch event prevention
+        document.addEventListener('touchstart', handleTouchEvents, { passive: false });
+        document.addEventListener('touchmove', handleTouchEvents, { passive: false });
+        document.addEventListener('touchend', handleTouchEvents, { passive: false });
 
         gotoSection(0, 1);
 
@@ -162,12 +163,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           // Disable observer to restore scroll functionality
           observer.disable();
           
-          // Remove mobile touch event listeners
-          if (containerRef.current) {
-            containerRef.current.removeEventListener('touchstart', handleMobileTouch);
-            containerRef.current.removeEventListener('touchmove', handleMobileTouch);
-            containerRef.current.removeEventListener('touchend', handleMobileTouch);
-          }
+          // Remove document-level touch event listeners
+          document.removeEventListener('touchstart', handleTouchEvents);
+          document.removeEventListener('touchmove', handleTouchEvents);
+          document.removeEventListener('touchend', handleTouchEvents);
           
           console.log('Splash cleanup - observer disabled, scroll restored');
         };
@@ -197,11 +196,18 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     <div 
       ref={containerRef} 
       className="splash-container"
-      onTouchStart={(e) => e.stopPropagation()}
-      onTouchMove={(e) => e.stopPropagation()}
-      onTouchEnd={(e) => e.stopPropagation()}
-      onTouchCancel={(e) => e.stopPropagation()}
-      style={{ touchAction: 'none' }}
+      onTouchStart={(e) => {
+        // Allow touch events on splash screen
+        e.stopPropagation();
+      }}
+      onTouchMove={(e) => {
+        // Allow touch events on splash screen
+        e.stopPropagation();
+      }}
+      onTouchEnd={(e) => {
+        // Allow touch events on splash screen
+        e.stopPropagation();
+      }}
     >
       {/* Section 1: Welcome */}
       <section className="first">
