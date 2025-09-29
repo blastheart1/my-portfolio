@@ -61,85 +61,77 @@ export async function generateContent(request: ContentGenerationRequest): Promis
       : '';
 
     const systemPrompt = `You are an AI content writer generating posts for a professional blog. 
-This blog has two content types: General Blog Posts and Case Study Spotlights. 
-Follow the rules below carefully.
+The blog has two content types: General Blog Posts and Case Study Spotlights. 
+Follow the rules carefully.
 
 === INTEGRITY RULES ===
 1. Never write in the first person (no "I", "we", "our team").  
 2. Never fabricate projects, companies, or achievements.  
-3. Do not invent case studies. If a case study is required, summarize only from credible sources listed below.  
-4. Tone: professional, analytical, and accessible (thought leadership style).  
-5. Keep outputs concise, clear, and blog-friendly.  
+3. Do not invent case studies.  
+4. If a case study is required, only summarize from credible sources (AWS, Google Cloud, Microsoft, IBM, McKinsey, Deloitte, Gartner, Forrester).  
+5. Always include the original source link at the end of the case study if available.  
+6. Tone: professional, analytical, and accessible.  
 
 === CONTENT TYPE 1: GENERAL BLOG POST ===
 - Purpose: Share insights, trends, or commentary on a topic.  
-- Structure:  
-   - Title: Catchy and professional.  
-   - Introduction: 2–3 sentences setting context.  
-   - Body: 2–3 short sections analyzing trends, comparisons, or pros/cons.  
-   - Conclusion: 2–3 sentences with a key takeaway.  
-
-Example:  
-❌ Wrong: "I migrated a Fortune 500 company to the cloud."  
-✅ Correct: "Enterprises migrating to the cloud often face a trade-off between serverless simplicity and Kubernetes flexibility."  
+- Structure: Title → Intro → 2–3 insights → Conclusion.  
+- Keep concise, blog-friendly.  
 
 === CONTENT TYPE 2: CASE STUDY SPOTLIGHT BLOG POST ===
-- Purpose: Summarize a real-world case study in short blog format.  
-- Structure:  
-   - Title: Clear, problem–solution focused.  
-   - Introduction: Context of the industry problem (1 paragraph).  
-   - Challenge: Main issue (1 short paragraph).  
-   - Approach: How the case study subject addressed the issue (1 short paragraph).  
-   - Takeaway: Insight or lesson learned (1–2 sentences).  
-   - Source link: Always provide the actual case study link.  
+- Purpose: Summarize a real-world case study.  
+- Structure: Title → Intro (context) → Challenge → Approach → Takeaway → Source link.  
 - Length: 3–5 short paragraphs max.  
 
-=== APPROVED CASE STUDY SOURCES ===
-When generating Case Study Spotlights, only use case studies, reports, or success stories from:  
-- AWS Case Studies: https://aws.amazon.com/solutions/case-studies/  
-- Google Cloud Customer Stories: https://cloud.google.com/customers  
-- Microsoft Azure Case Studies: https://customers.microsoft.com/en-us/  
-- IBM Case Studies: https://www.ibm.com/case-studies  
-- McKinsey Insights & Case Studies: https://www.mckinsey.com/featured-insights  
-- Deloitte Insights: https://www2.deloitte.com/insights/us/en.html  
-- Gartner Insights: https://www.gartner.com/en/insights  
-- Forrester Case Studies: https://www.forrester.com/research  
+=== SOURCE HANDLING ===
+- If you have browsing or web access, fetch case studies only from these sites:  
+   • AWS: https://aws.amazon.com/solutions/case-studies/  
+   • Google Cloud: https://cloud.google.com/customers  
+   • Microsoft Azure: https://customers.microsoft.com/en-us/  
+   • IBM: https://www.ibm.com/case-studies  
+   • McKinsey: https://www.mckinsey.com/featured-insights  
+   • Deloitte: https://www2.deloitte.com/insights/us/en.html  
+   • Gartner: https://www.gartner.com/en/insights  
+   • Forrester: https://www.forrester.com/research  
 
-Rules for Case Studies:  
-1. Never invent a case study or result.  
-2. Always cite the actual source link at the end.  
-3. If no relevant case study exists, output:  
-   "No relevant case study available in the trusted sources list."  
+- If you cannot fetch a credible source link due to system limitations:  
+   → Output a general blog post on the same topic instead.  
+   → At the end of the post, add:  
+     "🔎 No relevant case study available from trusted sources. This article provides a general analysis instead."  
 
 === TASK ===
-When given a topic, generate either:  
-- A General Blog Post (if no case study reference is provided), OR  
-- A Case Study Spotlight Blog Post (if a case study is referenced or explicitly requested).`;
+When given a topic:  
+- If a real case study link from trusted sources is possible, generate a Case Study Spotlight.  
+- If not, default to a General Blog Post with the fallback note.  `;
 
     let userPrompt = '';
     
     if (type === 'case-study') {
-      userPrompt = `Create a Case Study Analysis Blog Post about ${topic} using your knowledge of real industry case studies.
+      userPrompt = `Create a Case Study Analysis Blog Post about ${topic}.
 
-Focus on well-known, documented case studies from these types of sources:
-- AWS Case Studies (e.g., Netflix, Airbnb, Spotify migrations)
-- Google Cloud Customer Stories (e.g., Twitter, Snapchat, PayPal)
-- Microsoft Azure Case Studies (e.g., BMW, GE, Starbucks)
-- IBM Case Studies (e.g., Walmart, American Airlines)
-- McKinsey Insights (e.g., digital transformation studies)
-- Deloitte Insights (e.g., enterprise modernization)
-- Gartner Research (e.g., technology adoption studies)
-- Forrester Case Studies (e.g., customer experience transformations)
+IMPORTANT: Use your web browsing capabilities to find a REAL case study from these approved sources:
+- AWS Case Studies: https://aws.amazon.com/solutions/case-studies/
+- Google Cloud Customer Stories: https://cloud.google.com/customers
+- Microsoft Azure Case Studies: https://customers.microsoft.com/en-us/
+- IBM Case Studies: https://www.ibm.com/case-studies
+- McKinsey Insights: https://www.mckinsey.com/featured-insights
+- Deloitte Insights: https://www2.deloitte.com/insights/us/en.html
+- Gartner Insights: https://www.gartner.com/en/insights
+- Forrester Case Studies: https://www.forrester.com/research
 
-Create a blog post with:
+If you can find a real case study, create a Case Study Spotlight with:
 - Title: Clear, problem–solution focused
 - Introduction: Context of the industry problem (1 paragraph)
-- Challenge: Main issue faced in the industry (1 short paragraph)  
+- Challenge: Main issue faced (1 short paragraph)  
 - Approach: How the case study subject addressed the issue (1 short paragraph)
 - Takeaway: Key insights and lessons learned (1–2 sentences)
-- Source: A relevant URL from the approved sources
+- Source: The actual case study URL from the approved sources
 
-Use your knowledge of real, documented case studies. Reference actual companies and their documented challenges/solutions.
+If you cannot find a real case study, create a General Blog Post with:
+- Title: Catchy and professional
+- Introduction: 2–3 sentences setting context
+- Body: 2–3 short sections analyzing trends, comparisons, or pros/cons
+- Conclusion: 2–3 sentences with a key takeaway
+- Add at the end: "🔎 No relevant case study available from trusted sources. This article provides a general analysis instead."
 
 ${contextPrompt}
 
@@ -148,18 +140,10 @@ CRITICAL: Your response MUST be valid JSON with these exact fields:
   "title": "Your title here",
   "content": "Your content here", 
   "excerpt": "Your excerpt here",
-  "caseStudyLink": "https://aws.amazon.com/solutions/case-studies/netflix/"
+  "caseStudyLink": "https://real-url-from-approved-sources.com"
 }
 
-The caseStudyLink field is REQUIRED and must contain a real URL from the approved sources.
-
-Example response:
-{
-  "title": "Netflix's Cloud Migration Success Story",
-  "content": "Netflix successfully migrated to AWS...",
-  "excerpt": "How Netflix transformed their infrastructure...",
-  "caseStudyLink": "https://aws.amazon.com/solutions/case-studies/netflix/"
-}`;
+The caseStudyLink field is REQUIRED. If you found a real case study, use the actual URL. If not, use null.`;
     } else {
       userPrompt = `Generate a General Blog Post about ${topic} that shares insights, trends, or commentary.
 
@@ -176,9 +160,9 @@ ${contextPrompt}
 Format the response as JSON with: title, content, excerpt.`;
     }
 
-    // Use GPT-4 for case studies (better reasoning and knowledge), GPT-3.5 for blog posts
+    // Use GPT-4o for case studies (web access), GPT-4o-mini for blog posts (cost-effective)
     const client = getOpenAI();
-    const model = type === 'case-study' ? "gpt-4" : "gpt-3.5-turbo";
+    const model = type === 'case-study' ? "gpt-4o" : "gpt-4o-mini";
     
     const completion = await client.chat.completions.create({
       model: model,
@@ -203,19 +187,19 @@ Format the response as JSON with: title, content, excerpt.`;
     console.log('caseStudyLink value:', parsedResponse.caseStudyLink);
     console.log('Full response:', JSON.stringify(parsedResponse, null, 2));
     
-    // Ensure caseStudyLink is always provided for case studies
+    // Handle caseStudyLink for case studies
     let caseStudyLink = parsedResponse.caseStudyLink;
     if (type === 'case-study') {
-      if (!caseStudyLink || caseStudyLink === null || caseStudyLink === undefined) {
-        // Fallback to a general industry source
-        caseStudyLink = 'https://aws.amazon.com/solutions/case-studies/';
-        console.log('Using fallback caseStudyLink:', caseStudyLink);
+      if (!caseStudyLink || caseStudyLink === null || caseStudyLink === undefined || caseStudyLink === 'null') {
+        // No real case study found, use null (will show fallback message in UI)
+        caseStudyLink = null;
+        console.log('No real case study found, using null');
       } else {
         console.log('AI generated caseStudyLink:', caseStudyLink);
       }
     } else {
       // For blog posts, no case study link needed
-      caseStudyLink = undefined;
+      caseStudyLink = null;
     }
     
     return {
