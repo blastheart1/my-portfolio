@@ -19,6 +19,14 @@ const projects = [
     tech: ["React", "TypeScript", "Python", "OpenAI", "Tailwind CSS", "Framer Motion", "Vercel", "Render"],
     link: "https://resume-ai-frontend-orpin.vercel.app"
   },
+
+  { 
+    title: "Voice AI Assistant", 
+    description: "Real-time voice conversation AI with streaming speech synthesis and natural language processing. Features live audio streaming, WebRTC communication, and intelligent speech recognition with seamless browser compatibility.", 
+    tech: ["React", "TypeScript", "Python FastAPI", "LiveKit", "OpenAI Whisper", "WebRTC", "WebSocket", "Vercel", "Render"], 
+    link: "https://voice-ai-braincx.vercel.app/" 
+  },
+  
   { 
     title: "Pilates With Bee", 
     description: "Built an online Pilates clinic platform for scheduling sessions, managing content, and providing virtual consultations. Integrated headless CMS and automation tools for streamlined client management.", 
