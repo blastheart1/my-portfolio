@@ -7,39 +7,69 @@ import StackBadge from "./StackBadge";
 
 const projects = [
   {
-    title: "Advanced AI Chatbot",
+    title: "Advanced Chatbot",
     description:
-      "Built an AI-powered chatbot for my developer portfolio using TensorFlow.js and the OpenAI API. Designed with React and TypeScript for a responsive experience, styled with Tailwind CSS, and enhanced with Framer Motion animations to deliver an engaging conversational interface.",
+      "Built a chatbot for my developer portfolio using TensorFlow.js and the OpenAI API. Designed with React and TypeScript for a responsive experience, styled with Tailwind CSS, and enhanced with Framer Motion animations to deliver an engaging conversational interface.",
     tech: ["React", "TypeScript", "TensorFlow.js", "OpenAI API", "Tailwind CSS", "Framer Motion"],
     link: "https://luis-chatbot.vercel.app/"
   },
   {
-    title: "ResumeAI",
-    description: "A web app that analyzes resumes against job descriptions using AI, providing skill matching, missing keywords, and actionable recommendations. Highlights full-stack development, AI integration, interactive UI, and real-time insights.",
+    title: "Resume Analyzer",
+    description: "A web app that analyzes resumes against job descriptions, providing skill matching, missing keywords, and actionable recommendations. Highlights full-stack development, interactive UI, and real-time insights.",
     tech: ["React", "TypeScript", "Python", "OpenAI", "Tailwind CSS", "Framer Motion", "Vercel", "Render"],
     link: "https://resume-ai-frontend-orpin.vercel.app"
   },
-
   { 
-    title: "Voice AI Assistant", 
-    description: "Real-time voice conversation AI with streaming speech synthesis and natural language processing. Features live audio streaming, WebRTC communication, and intelligent speech recognition with seamless browser compatibility.", 
+    title: "Voice Assistant", 
+    description: "Real-time voice conversation application with streaming speech synthesis and natural language processing. Features live audio streaming, WebRTC communication, and intelligent speech recognition with seamless browser compatibility.", 
     tech: ["React", "TypeScript", "Python FastAPI", "LiveKit", "OpenAI Whisper", "WebRTC", "WebSocket", "Vercel", "Render"], 
-    link: "https://voice-ai-braincx.vercel.app/" 
+    link: "https://voice-ai-braincx.vercel.app/"
   },
-  
   { 
     title: "Pilates With Bee", 
     description: "Built an online Pilates clinic platform for scheduling sessions, managing content, and providing virtual consultations. Integrated headless CMS and automation tools for streamlined client management.", 
     tech: ["Next.js", "React", "Tailwind CSS", "Sanity CMS", "Zapier", "Vercel"], 
-    link: "https://pilates-w-bee.vercel.app/" 
+    link: "https://pilates-w-bee.vercel.app/"
   },
   { 
     title: "VA Portfolio Sample", 
     description: "Professional virtual assistant portfolio website with functional contact form, email automation, and modern UI. Features responsive design, interactive animations, and automated email notifications for client inquiries.", 
     tech: ["Next.js 15", "TypeScript", "Tailwind CSS", "Framer Motion", "Resend API", "GSAP", "Swiper", "Vercel"], 
-    link: "https://va-portfolio-sample.vercel.app/" 
+    link: "https://va-portfolio-sample.vercel.app/"
   },
 ];
+
+// Fill tile component for the 6th slot
+function FillTile({ onClick, hasMoreProjects }: { onClick: () => void, hasMoreProjects: boolean }) {
+  return (
+    <div
+      className="group"
+    >
+      <Card className="rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div 
+          className="flex flex-col items-center justify-center text-center flex-grow relative p-6"
+          style={{
+            backgroundImage: 'linear-gradient(135deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.6) 100%), url(/projects-bg.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        >
+          
+          {/* Content */}
+          <div className="relative z-10 flex flex-col items-center justify-center">
+            <h3 className="text-lg font-semibold text-white mb-2 font-sf-pro drop-shadow-md">
+              {hasMoreProjects ? "Show All" : "More Projects Coming Soon"}
+            </h3>
+            <p className="text-sm text-white drop-shadow-sm">
+              {hasMoreProjects ? "View all projects" : "Stay tuned for more exciting projects"}
+            </p>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
 
 function ProjectDescription({ description }: { description: string }) {
   const [expanded, setExpanded] = useState(false);
@@ -59,7 +89,7 @@ function ProjectDescription({ description }: { description: string }) {
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ type: "spring", stiffness: 100, damping: 20 }}
-          className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed overflow-hidden ${
+          className={`text-sm text-gray-600 dark:text-gray-400 leading-relaxed overflow-hidden ${
             !expanded ? "line-clamp-3" : ""
           }`}
         >
@@ -68,7 +98,7 @@ function ProjectDescription({ description }: { description: string }) {
       </AnimatePresence>
 
       <span
-        className="text-blue-600 text-sm mt-1 cursor-pointer hover:underline"
+        className="text-gray-700 dark:text-gray-300 text-sm mt-2 cursor-pointer hover:underline font-medium"
         onClick={handleToggle}
       >
         {expanded ? "See less" : "See more"}
@@ -77,23 +107,58 @@ function ProjectDescription({ description }: { description: string }) {
   );
 }
 
+function ProjectCard({ project, index }: { project: typeof projects[0], index: number }) {
+  return (
+    <div className="group block h-full">
+      <Card className="rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col h-full p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+        <div className="flex flex-col flex-grow">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 leading-tight font-sf-pro mb-4">
+            {project.title}
+          </h3>
+
+          <div className="mb-6 flex-grow">
+            <ProjectDescription description={project.description} />
+          </div>
+
+          <div className="mt-auto">
+            <div className="flex flex-wrap gap-2 mb-4">
+              {project.tech.map((tech) => (
+                <StackBadge key={tech} name={tech} />
+              ))}
+            </div>
+
+            <a
+              href={project.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center text-gray-700 dark:text-gray-300 font-medium hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+            >
+              <span>View Project</span>
+              <svg className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 export default function ProjectsSection() {
-  const [currentPage, setCurrentPage] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
-
-  const handlePageChange = (newPage: number) => {
-    if (newPage === currentPage || isTransitioning) return;
-    
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setCurrentPage(newPage);
-      setTimeout(() => {
-        setIsTransitioning(false);
-      }, 100);
-    }, 300);
-  };
+  
+  const displayedProjects = showAll ? projects : projects.slice(0, 5);
+  const hasMoreProjects = projects.length >= 7;
+  
+  // Mobile carousel logic
+  const allItems = [...displayedProjects.map(p => ({ ...p, isFillTile: false }))];
+  if (!showAll && hasMoreProjects) {
+    allItems.push({ title: "Show All", description: "View all projects", tech: [], link: "", isFillTile: true });
+  }
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
@@ -111,241 +176,159 @@ export default function ProjectsSection() {
     const isLeftSwipe = distance > 50;
     const isRightSwipe = distance < -50;
 
-    if (isLeftSwipe) {
-      const nextPage = Math.min(projects.length - 1, currentPage + 1);
-      handlePageChange(nextPage);
+    if (isLeftSwipe && currentSlide < allItems.length - 1) {
+      setCurrentSlide(currentSlide + 1);
     }
     
-    if (isRightSwipe) {
-      const prevPage = Math.max(0, currentPage - 1);
-      handlePageChange(prevPage);
+    if (isRightSwipe && currentSlide > 0) {
+      setCurrentSlide(currentSlide - 1);
+    }
+  };
+
+  const nextSlide = () => {
+    if (currentSlide < allItems.length - 1) {
+      setCurrentSlide(currentSlide + 1);
+    }
+  };
+
+  const prevSlide = () => {
+    if (currentSlide > 0) {
+      setCurrentSlide(currentSlide - 1);
     }
   };
 
   return (
-    <section id="projects" className="px-6 py-32 max-w-6xl mx-auto">
-      <motion.h2
-        className="text-3xl font-semibold text-center text-gray-900 dark:text-gray-100 mb-16"
+    <section id="projects" className="px-4 md:px-6 py-20 md:py-32 max-w-6xl mx-auto">
+      <motion.div
+        className="text-center mb-16"
         initial={{ opacity: 0, y: -20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
       >
-        Projects
-      </motion.h2>
+        <h2 className="text-4xl md:text-5xl font-semibold text-gray-900 dark:text-gray-100 mb-4 tracking-tight font-sf-pro">
+          Projects
+        </h2>
+        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          A showcase of my latest work, featuring modern web applications built with cutting-edge technologies.
+        </p>
+      </motion.div>
 
-      {/* Mobile: Single card with swipe */}
-      <div className="lg:hidden">
-         <div 
-           className="relative overflow-hidden"
-           onTouchStart={handleTouchStart}
-           onTouchMove={handleTouchMove}
-           onTouchEnd={handleTouchEnd}
-         >
-          <div className="flex transition-transform duration-300 ease-in-out" style={{ transform: `translateX(-${currentPage * 100}%)` }}>
-            {projects.map((project, i) => (
-              <div key={project.title} className="w-full flex-shrink-0 px-2">
-                 <motion.a
-                   href={project.link}
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   initial={{ opacity: 0, y: 20 }}
-                   whileInView={{ opacity: 1, y: 0 }}
-                   viewport={{ once: true, amount: 0.3 }}
-                   transition={{ duration: 0.6, delay: i * 0.2 }}
-                   className="group block h-full"
-                 >
-                   <Card className="rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-2 transition-transform duration-300 flex flex-col h-full p-8">
-                     <div className="flex flex-col flex-grow">
-                       <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-                         {project.title}
-                       </h3>
+      {/* Mobile Carousel */}
+      <div className="block md:hidden">
+        <div 
+          className="relative overflow-hidden rounded-2xl"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div 
+            className="flex transition-transform duration-300 ease-in-out"
+            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+          >
+            {allItems.map((item, index) => {
+              if (item.isFillTile) {
+                return (
+                  <div key="fill-tile" className="w-full flex-shrink-0 px-4">
+                    <FillTile 
+                      onClick={() => setShowAll(true)} 
+                      hasMoreProjects={hasMoreProjects}
+                    />
+                  </div>
+                );
+              }
+              return (
+                <div key={item.title} className="w-full flex-shrink-0 px-4">
+                  <ProjectCard project={item} index={index} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-                       <div className="mb-6">
-                         <ProjectDescription description={project.description} />
-                       </div>
+        {/* Mobile Navigation */}
+        <div className="flex items-center justify-center mt-6 gap-4">
+          <button
+            onClick={prevSlide}
+            disabled={currentSlide === 0}
+            className={`p-2 rounded-full transition-all duration-300 ${
+              currentSlide === 0
+                ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed' 
+                : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-400 dark:hover:bg-gray-500'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
 
-                       {/* Fixed height badge area - 3 lines max with natural badge sizing */}
-                       <div className="mt-auto" style={{ minHeight: '96px' }}>
-                         <div className="flex flex-wrap gap-2" style={{ maxHeight: '96px', overflow: 'hidden' }}>
-                           {project.tech.map((tech) => (
-                             <StackBadge key={tech} name={tech} />
-                           ))}
-                         </div>
-                       </div>
-                     </div>
-
-                     {project.link && (
-                       <span className="mt-6 text-[#0033A0] dark:text-white font-medium group-hover:underline self-start">
-                         View Project
-                       </span>
-                     )}
-                   </Card>
-                 </motion.a>
-              </div>
+          {/* Dots indicator */}
+          <div className="flex gap-2">
+            {allItems.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  currentSlide === index 
+                    ? 'bg-gray-600 dark:bg-gray-400 scale-125' 
+                    : 'bg-gray-300 dark:bg-gray-600'
+                }`}
+              />
             ))}
           </div>
+
+          <button
+            onClick={nextSlide}
+            disabled={currentSlide === allItems.length - 1}
+            className={`p-2 rounded-full transition-all duration-300 ${
+              currentSlide === allItems.length - 1
+                ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed' 
+                : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-400 dark:hover:bg-gray-500'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
+
+        {/* Slide counter */}
+        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+          {currentSlide + 1} of {allItems.length}
+        </p>
       </div>
 
-       {/* Desktop: Three card grid */}
-       <div className="hidden lg:block relative">
-         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 auto-rows-fr">
-          {[0, 1, 2].map((slotIndex) => {
-            const projectIndex = currentPage * 3 + slotIndex;
-            const project = projects[projectIndex];
-            
-            return (
-              <div key={`${currentPage}-${slotIndex}`} className="h-full">
-                {project ? (
-                   <motion.a
-                     href={project.link}
-                     target="_blank"
-                     rel="noopener noreferrer"
-                     initial={{ opacity: 0, y: 20 }}
-                     whileInView={{ opacity: 1, y: 0 }}
-                     viewport={{ once: true, amount: 0.3 }}
-                     transition={{ duration: 0.6, delay: slotIndex * 0.2 }}
-                     className="group block h-full"
-                   >
-                     <Card className="rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-2 transition-transform duration-300 flex flex-col h-full p-8">
-                       <div className="flex flex-col flex-grow">
-                         <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-                           {project.title}
-                         </h3>
-
-                         <div className="mb-6">
-                           <ProjectDescription description={project.description} />
-                         </div>
-
-                         {/* Fixed height badge area - 3 lines max with natural badge sizing */}
-                         <div className="mt-auto" style={{ minHeight: '96px' }}>
-                           <div className="flex flex-wrap gap-2" style={{ maxHeight: '96px', overflow: 'hidden' }}>
-                             {project.tech.map((tech) => (
-                               <StackBadge key={tech} name={tech} />
-                             ))}
-                           </div>
-                         </div>
-                       </div>
-
-                       {project.link && (
-                         <span className="mt-6 text-[#0033A0] dark:text-white font-medium group-hover:underline self-start">
-                           View Project
-                         </span>
-                       )}
-                     </Card>
-                   </motion.a>
-                ) : (
-                  <div className="h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center rounded-2xl">
-                    <p className="text-gray-500 text-sm">Coming Soon</p>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+      {/* Desktop Grid Layout */}
+      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {displayedProjects.map((project, index) => (
+          <ProjectCard key={project.title} project={project} index={index} />
+        ))}
+        
+        {/* Show fill tile only when not showing all projects */}
+        {!showAll && (
+          <FillTile 
+            onClick={() => setShowAll(true)} 
+            hasMoreProjects={hasMoreProjects}
+          />
+        )}
       </div>
 
-      {/* Pagination Controls */}
-      {projects.length > 0 && (
-        <div className="mt-4 text-center">
-          {/* Mobile pagination */}
-          <div className="lg:hidden">
-            <p className="text-gray-500 text-sm mb-2">Project {currentPage + 1} of {projects.length}</p>
-            
-            <div className="flex items-center justify-center gap-4">
-              {/* Previous button */}
-              <button
-                onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
-                disabled={currentPage === 0 || isTransitioning}
-                className={`p-2 rounded-full transition-all duration-300 ${
-                  currentPage === 0 || isTransitioning
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed' 
-                    : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-400 dark:hover:bg-gray-500'
-                }`}
-                aria-label="Previous project"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-
-              {/* Next button */}
-              <button
-                onClick={() => handlePageChange(Math.min(projects.length - 1, currentPage + 1))}
-                disabled={currentPage === projects.length - 1 || isTransitioning}
-                className={`p-2 rounded-full transition-all duration-300 ${
-                  currentPage === projects.length - 1 || isTransitioning
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed' 
-                    : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-400 dark:hover:bg-gray-500'
-                }`}
-                aria-label="Next project"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Desktop pagination */}
-          <div className="hidden lg:block">
-            <p className="text-gray-500 text-sm mb-4">Page {currentPage + 1} of {Math.ceil(projects.length / 3)}</p>
-            
-            <div className="flex items-center justify-center gap-4">
-              {/* Previous button */}
-              <button
-                onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
-                disabled={currentPage === 0 || isTransitioning}
-                className={`p-2 rounded-full transition-all duration-300 ${
-                  currentPage === 0 || isTransitioning
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed' 
-                    : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-400 dark:hover:bg-gray-500'
-                }`}
-                aria-label="Previous page"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-
-              {/* Pagination dots - max 5 dots */}
-              <div className="flex gap-3">
-                {Array.from({ length: Math.min(5, Math.ceil(projects.length / 3)) }).map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handlePageChange(index)}
-                    disabled={isTransitioning}
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                      currentPage === index 
-                        ? 'bg-blue-500 scale-125' 
-                        : isTransitioning
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-gray-400 hover:bg-gray-500'
-                    }`}
-                    aria-label={`Go to page ${index + 1}`}
-                  />
-                ))}
-              </div>
-
-              {/* Next button */}
-              <button
-                onClick={() => handlePageChange(Math.min(Math.ceil(projects.length / 3) - 1, currentPage + 1))}
-                disabled={currentPage === Math.ceil(projects.length / 3) - 1 || isTransitioning}
-                className={`p-2 rounded-full transition-all duration-300 ${
-                  currentPage === Math.ceil(projects.length / 3) - 1 || isTransitioning
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed' 
-                    : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-400 dark:hover:bg-gray-500'
-                }`}
-                aria-label="Next page"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Desktop View All Button - only show if projects >= 7 */}
+      {hasMoreProjects && (
+        <motion.div
+          className="hidden md:block text-center mt-12"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="px-8 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-full transition-all duration-300 hover:scale-105 font-sf-pro"
+          >
+            {showAll ? "Show Less" : "View All Projects"}
+          </button>
+        </motion.div>
       )}
     </section>
   );

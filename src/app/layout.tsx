@@ -1,12 +1,18 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import CalendlyScript from '@/components/CalendlyScript';
 import StructuredData from '@/components/StructuredData';
 import ServiceWorker from '@/components/ServiceWorker';
 import { ModalProvider } from '@/contexts/ModalContext';
 import ClientLayoutContent from '@/components/ClientLayoutContent';
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+
+// Using Inter as a close alternative to SF Pro Display
+const inter = Inter({ 
+  variable: "--font-sf-pro", 
+  subsets: ["latin"],
+  display: 'swap',
+  preload: true
+});
 
 export const metadata = {
   title: 'Luis.dev - Antonio Luis Santos | Full-Stack Developer & QA Specialist',
@@ -109,7 +115,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href="https://calendly.com" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-300`}
+        className={`${inter.variable} antialiased transition-colors duration-300`}
       >
         <ModalProvider>
           <LayoutContent>{children}</LayoutContent>
