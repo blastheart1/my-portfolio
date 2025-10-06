@@ -554,14 +554,7 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
             }}
           >
             <div className="h-6 flex items-center">
-              {hasScrolledToBottom ? (
-                <button
-                  onClick={() => onReadMore?.(post)}
-                  className="font-medium text-sm text-blue-500 pb-1 border-b-2 border-neutral-700 hover:border-blue-500 focus:border-blue-500 transition-all duration-300 ease-in-out focus:outline-hidden hover:text-blue-400 cursor-pointer"
-                >
-                  Click to read →
-                </button>
-              ) : post.caseStudyLink ? (
+              {post.caseStudyLink ? (
                 <a
                   href={post.caseStudyLink}
                   target="_blank"
@@ -571,9 +564,12 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
                   View Case Study →
                 </a>
               ) : (
-                <span className="font-medium text-sm text-blue-500 pb-1 border-b-2 border-neutral-700 group-hover:border-blue-500 group-focus:border-blue-500 transition-all duration-300 ease-in-out focus:outline-hidden">
-                  {post.type === 'case-study' ? 'Case study' : 'Blog post'}
-                </span>
+                <button
+                  onClick={() => onReadMore?.(post)}
+                  className="font-medium text-sm text-blue-500 pb-1 border-b-2 border-neutral-700 hover:border-blue-500 focus:border-blue-500 transition-all duration-300 ease-in-out focus:outline-hidden hover:text-blue-400 cursor-pointer"
+                >
+                  Click to read →
+                </button>
               )}
             </div>
           </div>
