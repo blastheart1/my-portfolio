@@ -140,24 +140,37 @@ export async function POST(request: NextRequest) {
     const fromEmail = 'onboarding@resend.dev';
     const toEmail = process.env.TO_EMAIL || 'antonioluis.santos1@gmail.com';
 
-    // Send both emails
-    const [leadNotificationResult, welcomeEmailResult] = await Promise.all([
-      resend.emails.send({
-        from: `Luis.dev <${fromEmail}>`,
-        to: [toEmail],
-        subject: `📋 ${priority} Priority Lead: ${leadData.name} wants ${leadData.projectType} services`,
-        html: generateLeadNotificationHtml(leadData, priority),
-      }),
-      resend.emails.send({
-        from: `Luis.dev <${fromEmail}>`,
-        to: [leadData.email],
-        subject: `👋 Thanks for your inquiry, ${leadData.name}!`,
-        html: generateWelcomeEmailHtml(leadData),
-      })
-    ]);
+    // Send lead notification email to Luis
+    console.log('📤 Sending lead notification email...');
+    const leadNotificationResult = await resend.emails.send({
+      from: `Luis.dev <${fromEmail}>`,
+      to: [toEmail],
+      subject: `📋 ${priority} Priority Lead: ${leadData.name} wants ${leadData.projectType.charAt(0).toUpperCase() + leadData.projectType.slice(1)} services`,
+      html: generateLeadNotificationHtml(leadData, priority),
+    });
 
-    if (leadNotificationResult.error || welcomeEmailResult.error) {
-      throw new Error('Failed to send emails');
+    console.log('📤 Lead notification result:', leadNotificationResult);
+
+    // Send welcome email to the lead
+    console.log('📤 Sending welcome email...');
+    const welcomeEmailResult = await resend.emails.send({
+      from: `Luis.dev <${fromEmail}>`,
+      to: [leadData.email],
+      subject: `👋 Thanks for your inquiry, ${leadData.name}! - Luis Santos`,
+      html: generateWelcomeEmailHtml(leadData),
+    });
+
+    console.log('📤 Welcome email result:', welcomeEmailResult);
+
+    // Check for errors AFTER both emails are sent (like source project)
+    if (leadNotificationResult.error) {
+      console.error('❌ Lead notification error:', leadNotificationResult.error);
+      throw new Error(`Lead notification failed: ${leadNotificationResult.error.message}`);
+    }
+
+    if (welcomeEmailResult.error) {
+      console.error('❌ Welcome email error:', welcomeEmailResult.error);
+      throw new Error(`Welcome email failed: ${welcomeEmailResult.error.message}`);
     }
 
     console.log('✅ Lead notification email sent:', leadNotificationResult.data?.id);
@@ -172,8 +185,13 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Lead submission error:', error);
+    console.error('❌ Error details:', error instanceof Error ? error.stack : error);
     return NextResponse.json(
-      { error: 'Failed to submit lead', details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        error: 'Failed to submit lead', 
+        details: error instanceof Error ? error.message : 'Unknown error',
+        stack: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined
+      },
       { status: 500 }
     );
   }
