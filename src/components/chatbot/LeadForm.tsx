@@ -41,6 +41,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
+  const [autoCloseTimeout, setAutoCloseTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Block background scrolling when form is open
   useEffect(() => {
@@ -194,7 +195,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
       setIsFormSubmitted(true);
       
       // Auto-close after 10 seconds
-      setTimeout(() => {
+      const timeout = setTimeout(() => {
         onClose();
         setSubmitStatus('idle');
         setIsFormSubmitted(false);
@@ -209,7 +210,10 @@ export const LeadForm: React.FC<LeadFormProps> = ({
           phone: ''
         });
         setErrors({});
+        setAutoCloseTimeout(null);
       }, 10000);
+      
+      setAutoCloseTimeout(timeout);
     } catch (error) {
       console.error('Lead form submission error:', error);
       setSubmitStatus('error');
@@ -219,6 +223,12 @@ export const LeadForm: React.FC<LeadFormProps> = ({
   };
 
   const resetForm = () => {
+    // Clear any pending auto-close timeout
+    if (autoCloseTimeout) {
+      clearTimeout(autoCloseTimeout);
+      setAutoCloseTimeout(null);
+    }
+    
     setIsFormSubmitted(false);
     setSubmitStatus('idle');
     setFormData({
@@ -232,6 +242,15 @@ export const LeadForm: React.FC<LeadFormProps> = ({
       phone: ''
     });
     setErrors({});
+  };
+  
+  const handleClose = () => {
+    // Clear any pending auto-close timeout
+    if (autoCloseTimeout) {
+      clearTimeout(autoCloseTimeout);
+      setAutoCloseTimeout(null);
+    }
+    onClose();
   };
 
 
@@ -281,7 +300,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                   Send Another Inquiry
                 </button>
                 <button
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
                 >
                   Close
