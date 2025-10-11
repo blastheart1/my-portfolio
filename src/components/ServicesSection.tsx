@@ -386,12 +386,19 @@ export default function ServicesSection() {
         transition={{ duration: 0.6, delay: 0.4 }}
         viewport={{ once: true }}
       >
-        <button
+        <motion.button
           onClick={handleContactClick}
-          className="px-8 py-3 tracking-wide text-white capitalize transition-colors duration-300 transform bg-blue-600 rounded-lg hover:bg-blue-500 focus:outline-none focus:bg-blue-500 focus:ring focus:ring-blue-300 focus:ring-opacity-80 font-medium font-sf-pro"
+          className="px-6 py-2 bg-[#0033A0] text-white rounded-xl font-medium shadow-lg"
+          whileHover={{ scale: 1.05, y: -2 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ 
+            type: "spring", 
+            stiffness: 180, 
+            damping: 12
+          }}
         >
           Schedule Consultation
-        </button>
+        </motion.button>
       </motion.div>
     </section>
   );
