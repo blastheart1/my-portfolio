@@ -169,7 +169,7 @@ export class LeadDetectionService {
 
   private calculateCategoryConfidence(input: string, keywords: string[]): number {
     let matches = 0;
-    let totalWords = input.split(' ').length;
+    const totalWords = input.split(' ').length;
 
     keywords.forEach(keyword => {
       if (input.includes(keyword)) {

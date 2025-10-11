@@ -29,7 +29,10 @@ export const Chatbot: React.FC<ChatbotProps> = ({
   const [isModelReady, setIsModelReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [learningCount, setLearningCount] = useState(0);
-  const [performanceStats, setPerformanceStats] = useState<any>(null);
+  const [performanceStats, setPerformanceStats] = useState<{
+    tensorflow?: unknown;
+    openai?: unknown;
+  } | null>(null);
   const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(false);
 
   // Initialize services

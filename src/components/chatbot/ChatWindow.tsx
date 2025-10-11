@@ -332,7 +332,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       if (match.keywords.some(keyword => message.includes(keyword))) {
         return { 
           response: match.response,
-          directLeadForm: (match as any).directLeadForm || false
+          directLeadForm: ('directLeadForm' in match ? (match as { directLeadForm: boolean }).directLeadForm : false)
         };
       }
     }

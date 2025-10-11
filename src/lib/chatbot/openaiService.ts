@@ -116,7 +116,6 @@ export class OpenAIService {
     );
     
     // Check for non-Latin characters (Cyrillic, Arabic, Chinese, etc.)
-    // eslint-disable-next-line no-control-regex
     const hasNonLatinChars = /[^\u0000-\u007F\u00C0-\u017F\u0100-\u017F\u0180-\u024F]/.test(text);
     
     // Check for Tagalog-specific characters
@@ -713,7 +712,7 @@ export class OpenAIService {
     const lastParagraph = truncated.lastIndexOf('\n\n');
     const lastBullet = truncated.lastIndexOf('•');
     
-    let breakPoint = Math.max(lastSentence, lastParagraph, lastBullet);
+    const breakPoint = Math.max(lastSentence, lastParagraph, lastBullet);
     
     if (breakPoint > maxLength * 0.7) { // If we found a good break point
       return text.substring(0, breakPoint + 1) + '\n\n*[Response truncated for brevity]*';

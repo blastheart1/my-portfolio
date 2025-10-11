@@ -239,7 +239,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200">
             <div>
-              <h2 className="text-xl md:text-2xl font-bold text-gray-900">Let's Work Together!</h2>
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900">Let&apos;s Work Together!</h2>
               <p className="text-gray-600 mt-1 text-sm md:text-base">
                 {triggerContext || "I'd love to discuss your project needs"}
               </p>
@@ -289,7 +289,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                     <span className="text-white text-sm">✓</span>
                   </div>
                   <p className="text-green-800 font-medium">
-                    Thank you for your inquiry. I've received your message and will carefully review your project needs. My goal is to ensure you get the right solution, and I'll be in touch shortly with more details on how we can move forward.
+                    Thank you for your inquiry. I&apos;ve received your message and will carefully review your project needs. My goal is to ensure you get the right solution, and I&apos;ll be in touch shortly with more details on how we can move forward.
                   </p>
                 </div>
               </motion.div>
