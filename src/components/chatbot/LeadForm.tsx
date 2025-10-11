@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, User, Building, DollarSign, Clock, FileText } from 'lucide-react';
+import { X, Mail, User, Building, DollarSign, Clock, FileText, Check } from 'lucide-react';
 
 export interface LeadData {
   name: string;
@@ -40,6 +40,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
   const [errors, setErrors] = useState<Partial<Record<keyof LeadData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
 
   // Block background scrolling when form is open
   useEffect(() => {
@@ -190,10 +191,13 @@ export const LeadForm: React.FC<LeadFormProps> = ({
     try {
       await onSubmit(formData);
       setSubmitStatus('success');
+      setIsFormSubmitted(true);
       
+      // Auto-close after 10 seconds
       setTimeout(() => {
         onClose();
         setSubmitStatus('idle');
+        setIsFormSubmitted(false);
         setFormData({
           name: '',
           email: '',
@@ -205,13 +209,29 @@ export const LeadForm: React.FC<LeadFormProps> = ({
           phone: ''
         });
         setErrors({});
-      }, 3000);
+      }, 10000);
     } catch (error) {
       console.error('Lead form submission error:', error);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const resetForm = () => {
+    setIsFormSubmitted(false);
+    setSubmitStatus('idle');
+    setFormData({
+      name: '',
+      email: '',
+      company: '',
+      projectType: 'website',
+      budget: 'starter',
+      timeline: 'flexible',
+      description: '',
+      phone: ''
+    });
+    setErrors({});
   };
 
 
@@ -236,24 +256,61 @@ export const LeadForm: React.FC<LeadFormProps> = ({
           onClick={(e) => e.stopPropagation()}
           data-lead-form="true"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200">
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-gray-900">Let&apos;s Work Together!</h2>
-              <p className="text-gray-600 mt-1 text-sm md:text-base">
-                {triggerContext || "I'd love to discuss your project needs"}
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          {isFormSubmitted ? (
+            // Success Screen
+            <motion.div
+              className="text-center py-12 px-6"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
             >
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
-          </div>
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Check className="w-10 h-10 text-green-600" />
+              </div>
+              <h3 className="text-2xl font-bold mb-3 text-green-600">
+                Message Sent Successfully!
+              </h3>
+              <p className="text-gray-600 mb-6 text-lg">
+                Thank you for your inquiry. I&apos;ve received your message and will carefully review your project needs. I&apos;ll be in touch shortly with more details on how we can move forward.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={resetForm}
+                  className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Send Another Inquiry
+                </button>
+                <button
+                  onClick={onClose}
+                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                >
+                  Close
+                </button>
+              </div>
+              <p className="text-sm text-gray-500 mt-6">
+                This window will close automatically in a few seconds...
+              </p>
+            </motion.div>
+          ) : (
+            <>
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200">
+                <div>
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-900">Let&apos;s Work Together!</h2>
+                  <p className="text-gray-600 mt-1 text-sm md:text-base">
+                    {triggerContext || "I'd love to discuss your project needs"}
+                  </p>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-4 md:space-y-6">
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-4 md:space-y-6">
             {/* Form Validation Summary */}
             {Object.keys(errors).length > 0 && (
               <motion.div
@@ -494,7 +551,9 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                 )}
               </button>
             </div>
-          </form>
+              </form>
+            </>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>
