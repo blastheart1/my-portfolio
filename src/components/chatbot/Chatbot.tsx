@@ -7,6 +7,19 @@ import { PerformanceToggle } from './PerformanceToggle';
 import { TensorFlowService } from '@/lib/chatbot/tensorflowModel';
 import { OpenAIService } from '@/lib/chatbot/openaiService';
 
+type PerformanceStats = {
+  tensorflow?: {
+    cacheStats: { size: number; maxSize: number };
+    trainingMetrics: { startTime: number; endTime: number; epochs: number; finalLoss: number; finalAccuracy: number };
+    modelReady: boolean;
+  };
+  openai?: {
+    cacheStats: { size: number; maxSize: number };
+    usageStats: { totalRequests: number; totalTokens: number; totalCost: number; averageResponseTime: number };
+    rateLimitDelay: number;
+  };
+};
+
 interface ChatbotProps {
   openaiApiKey?: string;
   confidenceThreshold?: number;
@@ -29,18 +42,21 @@ export const Chatbot: React.FC<ChatbotProps> = ({
   const [isModelReady, setIsModelReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [learningCount, setLearningCount] = useState(0);
-  const [performanceStats, setPerformanceStats] = useState<{
-    tensorflow?: unknown;
-    openai?: unknown;
-  } | null>(null);
+  const [performanceStats, setPerformanceStats] = useState<PerformanceStats | null>(null);
   const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(false);
 
-  // Initialize services
-  const tensorflowService = useMemo(() => new TensorFlowService(confidenceThreshold), [confidenceThreshold]);
-  const apiKey = openaiApiKey || process.env.NEXT_PUBLIC_OPENAI_API_KEY || '';
-  const openaiService = useMemo(() => new OpenAIService({ 
-    apiKey: apiKey
-  }), [apiKey]);
+  // Initialize services (only on client-side)
+  const tensorflowService = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    return new TensorFlowService(confidenceThreshold);
+  }, [confidenceThreshold]);
+  
+  const apiKey = openaiApiKey || (typeof window !== 'undefined' ? process.env.NEXT_PUBLIC_OPENAI_API_KEY : '') || '';
+  
+  const openaiService = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    return new OpenAIService({ apiKey: apiKey });
+  }, [apiKey]);
 
   // Debug API key (remove in production)
   useEffect(() => {
@@ -59,7 +75,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({
 
   // Notify parent component of status changes
   useEffect(() => {
-    if (onStatusChange) {
+    if (onStatusChange && openaiService) {
       onStatusChange({
         isModelReady,
         isLoading,
@@ -71,6 +87,10 @@ export const Chatbot: React.FC<ChatbotProps> = ({
 
   // Initialize TensorFlow.js model
   useEffect(() => {
+    // Don't initialize during SSR or build time
+    if (typeof window === 'undefined') return;
+    if (!tensorflowService) return;
+    
     const initializeModel = async () => {
       try {
         setIsLoading(true);
@@ -103,14 +123,16 @@ export const Chatbot: React.FC<ChatbotProps> = ({
         }
 
         // Get performance stats
-        const tensorflowStats = tensorflowService.getPerformanceStats();
-        const openaiStats = openaiService.getPerformanceStats();
-        const combinedStats = {
-          tensorflow: tensorflowStats,
-          openai: openaiStats
-        };
-        setPerformanceStats(combinedStats);
-        console.log('📊 Performance Stats:', combinedStats);
+        if (tensorflowService && openaiService) {
+          const tensorflowStats = tensorflowService.getPerformanceStats();
+          const openaiStats = openaiService.getPerformanceStats();
+          const combinedStats = {
+            tensorflow: tensorflowStats,
+            openai: openaiStats
+          };
+          setPerformanceStats(combinedStats);
+          console.log('📊 Performance Stats:', combinedStats);
+        }
         
         // Performance monitor is hidden by default, can be toggled
         setShowPerformanceMonitor(false);
@@ -130,9 +152,11 @@ export const Chatbot: React.FC<ChatbotProps> = ({
 
   // Update performance stats periodically
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     if (!tensorflowService || !openaiService) return;
 
     const updatePerformanceStats = () => {
+      if (!tensorflowService || !openaiService) return;
       const tensorflowStats = tensorflowService.getPerformanceStats();
       const openaiStats = openaiService.getPerformanceStats();
       const combinedStats = {
@@ -158,7 +182,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({
   // Cleanup on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
-      if (tensorflowService) {
+      if (typeof window !== 'undefined' && tensorflowService) {
         tensorflowService.cleanup();
       }
     };
@@ -179,6 +203,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({
 
   const handleLearningExample = async (userInput: string, openAiResponse: string): Promise<{success: boolean, reason?: string}> => {
     try {
+      if (!tensorflowService) return { success: false, reason: 'Service not initialized' };
       const result = await tensorflowService.addLearningExample(userInput, openAiResponse);
       
       if (result.success) {
@@ -194,6 +219,10 @@ export const Chatbot: React.FC<ChatbotProps> = ({
       return { success: false, reason: 'Internal error occurred' };
     }
   };
+
+  // Don't render during SSR
+  if (typeof window === 'undefined') return null;
+  if (!tensorflowService || !openaiService) return null;
 
   return (
     <>

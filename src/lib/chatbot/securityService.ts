@@ -52,6 +52,20 @@ export class SecurityService {
     };
   }
 
+  static validateAIResponse(response: string): SecurityValidation {
+    if (response.length > this.MAX_RESPONSE_LENGTH) {
+      return { isValid: false, reason: 'Response too long' };
+    }
+
+    for (const pattern of this.MALICIOUS_PATTERNS) {
+      if (pattern.test(response)) {
+        return { isValid: false, reason: 'Response contains malicious content' };
+      }
+    }
+
+    return { isValid: true };
+  }
+
   private static sanitizeInput(input: string): string {
     return input
       .replace(/[<>]/g, '')
@@ -76,6 +90,20 @@ export class SecurityService {
     
     localStorage.setItem(key, now.toString());
     return true;
+  }
+
+  static isDuplicateLearning(input: string): boolean {
+    if (typeof window === 'undefined') return false;
+    
+    const key = `learning_${btoa(input).substring(0, 20)}`;
+    const exists = localStorage.getItem(key);
+    
+    if (exists) {
+      return true;
+    }
+    
+    localStorage.setItem(key, Date.now().toString());
+    return false;
   }
 }
 

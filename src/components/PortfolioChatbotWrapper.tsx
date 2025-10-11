@@ -3,10 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 
-// Dynamically import the chatbot to avoid SSR issues
+// Dynamically import the chatbot to avoid SSR issues and build-time initialization
 const Chatbot = dynamic(
   () => import('./chatbot/Chatbot').then(mod => ({ default: mod.Chatbot })),
-  { ssr: false }
+  { 
+    ssr: false,
+    loading: () => null  // No loading state to prevent build-time execution
+  }
 );
 
 export default function PortfolioChatbotWrapper() {
