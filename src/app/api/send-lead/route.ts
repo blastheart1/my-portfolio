@@ -162,25 +162,29 @@ export async function POST(request: NextRequest) {
 
     console.log('📤 Welcome email result:', welcomeEmailResult);
 
-    // Check for errors AFTER both emails are sent (like source project)
+    // Check for errors AFTER both emails are sent
     if (leadNotificationResult.error) {
       console.error('❌ Lead notification error:', leadNotificationResult.error);
       throw new Error(`Lead notification failed: ${leadNotificationResult.error.message}`);
     }
 
+    console.log('✅ Lead notification email sent:', leadNotificationResult.data?.id);
+
+    // Check welcome email but DON'T fail if it errors (temporary fix for unverified domain)
     if (welcomeEmailResult.error) {
       console.error('❌ Welcome email error:', welcomeEmailResult.error);
-      throw new Error(`Welcome email failed: ${welcomeEmailResult.error.message}`);
+      console.warn('⚠️ Welcome email failed - likely due to unverified recipient. Lead notification was successful.');
+      // Don't throw - you already received the lead notification
+    } else {
+      console.log('✅ Welcome email sent:', welcomeEmailResult.data?.id);
     }
-
-    console.log('✅ Lead notification email sent:', leadNotificationResult.data?.id);
-    console.log('✅ Welcome email sent:', welcomeEmailResult.data?.id);
 
     return NextResponse.json({
       success: true,
       message: 'Lead submitted successfully',
       leadNotificationId: leadNotificationResult.data?.id,
-      welcomeEmailId: welcomeEmailResult.data?.id
+      welcomeEmailId: welcomeEmailResult.data?.id,
+      welcomeEmailSent: !welcomeEmailResult.error
     });
 
   } catch (error) {
