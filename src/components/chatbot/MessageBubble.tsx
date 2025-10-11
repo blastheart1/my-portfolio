@@ -18,8 +18,6 @@ interface MessageBubbleProps {
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const isUser = message.isUser;
-  const source = message.source;
-  const confidence = message.confidence;
 
   return (
     <motion.div
@@ -42,35 +40,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             message.content
           )}
         </div>
-        
-        {/* Source indicator for bot messages */}
-        {!isUser && source && (
-          <div className="mt-1 md:mt-2 text-xs opacity-70">
-            {source === 'faq' ? (
-              <span className="inline-flex items-center">
-                📚 TensorFlow
-                {confidence && (
-                  <span className="ml-1">
-                    ({Math.round(confidence * 100)}% confidence
-                    {message.relevance && (
-                      <span>, {Math.round(message.relevance * 100)}% relevance</span>
-                    )}
-                    )
-                  </span>
-                )}
-              </span>
-            ) : (
-              <span className="inline-flex items-center">
-                🤖 AI Response
-                {message.relevance && (
-                  <span className="ml-1">
-                    ({Math.round(message.relevance * 100)}% Luis relevance)
-                  </span>
-                )}
-              </span>
-            )}
-          </div>
-        )}
         
         {/* Timestamp */}
         <div className="text-xs mt-1 text-gray-500">

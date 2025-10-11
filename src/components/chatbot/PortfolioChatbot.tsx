@@ -38,7 +38,6 @@ export const PortfolioChatbot: React.FC<PortfolioChatbotProps> = ({
   openaiApiKey = '',
   confidenceThreshold = 0.75,
   position = 'bottom-right',
-  theme = 'auto',
   size = 'medium',
   showButton = true,
   autoOpen = false,
@@ -245,8 +244,7 @@ export const PortfolioChatbot: React.FC<PortfolioChatbotProps> = ({
         }
 
         // Check for lead generation
-        const conversationHistory = [...messages, userMessage].map(m => m.content);
-        const leadTrigger = leadDetectionService.detectLeadOpportunity(userMessage.content, conversationHistory);
+        const leadTrigger = leadDetectionService.detectLeadOpportunity(userMessage.content);
         
         if (leadTrigger.shouldShowForm) {
           setTimeout(() => {
@@ -297,7 +295,7 @@ export const PortfolioChatbot: React.FC<PortfolioChatbotProps> = ({
   const handleLeadSubmission = async (leadData: LeadData) => {
     try {
       await resendService.sendLeadNotification(leadData);
-      await resendService.sendWelcomeEmail(leadData);
+      await resendService.sendWelcomeEmail();
       console.log('✅ Lead submitted successfully:', leadData);
     } catch (error) {
       console.error('❌ Failed to submit lead:', error);

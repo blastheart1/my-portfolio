@@ -59,7 +59,7 @@ export class ResendService {
     }
   }
 
-  async sendWelcomeEmail(leadData: LeadData): Promise<void> {
+  async sendWelcomeEmail(): Promise<void> {
     console.log('✅ Welcome email will be sent via API endpoint');
   }
 }

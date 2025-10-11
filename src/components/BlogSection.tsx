@@ -377,7 +377,6 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
   const [hasScrollableContent, setHasScrollableContent] = useState(false);
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const [showScrollDownIndicator, setShowScrollDownIndicator] = useState(false);
-  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -402,11 +401,7 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;
-    const { scrollTop, scrollHeight, clientHeight } = target;
-    
-    // Check if scrolled to bottom
-    const isAtBottom = scrollTop >= scrollHeight - clientHeight - 5; // 5px tolerance
-    setHasScrolledToBottom(isAtBottom);
+    const { scrollTop } = target;
     
     // Hide indicator when scrolled
     if (scrollTop > 0) {

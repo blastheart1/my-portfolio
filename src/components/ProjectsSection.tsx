@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import StackBadge from "./StackBadge";
 
 const projects = [
@@ -40,7 +40,7 @@ const projects = [
 ];
 
 // Fill tile component for the 6th slot
-function FillTile({ onClick, hasMoreProjects }: { onClick: () => void, hasMoreProjects: boolean }) {
+function FillTile({ hasMoreProjects }: { hasMoreProjects: boolean }) {
   return (
     <div
       className="group"
@@ -107,7 +107,7 @@ function ProjectDescription({ description }: { description: string }) {
   );
 }
 
-function ProjectCard({ project, index }: { project: typeof projects[0], index: number }) {
+function ProjectCard({ project }: { project: typeof projects[0] }) {
   return (
     <div className="group block h-full">
       <Card className="rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col h-full p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
@@ -226,12 +226,11 @@ export default function ProjectsSection() {
             className="flex transition-transform duration-300 ease-in-out"
             style={{ transform: `translateX(-${currentSlide * 100}%)` }}
           >
-            {allItems.map((item, index) => {
+            {allItems.map((item) => {
               if (item.isFillTile) {
                 return (
                   <div key="fill-tile" className="w-full flex-shrink-0 px-4">
                     <FillTile 
-                      onClick={() => setShowAll(true)} 
                       hasMoreProjects={hasMoreProjects}
                     />
                   </div>
@@ -239,7 +238,7 @@ export default function ProjectsSection() {
               }
               return (
                 <div key={item.title} className="w-full flex-shrink-0 px-4">
-                  <ProjectCard project={item} index={index} />
+                  <ProjectCard project={item} />
                 </div>
               );
             })}
@@ -300,14 +299,13 @@ export default function ProjectsSection() {
 
       {/* Desktop Grid Layout */}
       <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {displayedProjects.map((project, index) => (
-          <ProjectCard key={project.title} project={project} index={index} />
+        {displayedProjects.map((project) => (
+          <ProjectCard key={project.title} project={project} />
         ))}
         
         {/* Show fill tile only when not showing all projects */}
         {!showAll && (
           <FillTile 
-            onClick={() => setShowAll(true)} 
             hasMoreProjects={hasMoreProjects}
           />
         )}

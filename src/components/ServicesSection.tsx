@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Card } from "@/components/ui/card";
-import { Check, X, Code, Briefcase, Settings, Zap } from "lucide-react";
+import { Check, Code, Briefcase, Zap } from "lucide-react";
 
 interface ServiceTier {
   name: string;

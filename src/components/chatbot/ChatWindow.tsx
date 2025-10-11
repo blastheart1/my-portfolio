@@ -566,8 +566,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
         // Check for lead generation opportunity (only if we haven't already triggered direct form)
         if (!directFormTriggered && !directFormTriggeredRef.current) {
-          const conversationHistory = [...messages, userMessage].map(m => m.content);
-          const leadTrigger = leadDetectionService.current.detectLeadOpportunity(userMessage.content, conversationHistory);
+          const leadTrigger = leadDetectionService.current.detectLeadOpportunity(userMessage.content);
           
           if (leadTrigger.shouldShowForm) {
             console.log('🎯 Lead opportunity detected:', leadTrigger);
@@ -653,7 +652,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       await resendService.current.sendLeadNotification(leadData);
       
       // Send welcome email to the lead
-      await resendService.current.sendWelcomeEmail(leadData);
+      await resendService.current.sendWelcomeEmail();
       
       console.log('✅ Lead submitted successfully:', leadData);
       

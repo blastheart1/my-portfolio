@@ -59,7 +59,7 @@ export class LeadDetectionService {
     'no thanks', 'not now', 'maybe someday'
   ];
 
-  detectLeadOpportunity(userInput: string, conversationHistory: string[] = []): LeadTrigger {
+  detectLeadOpportunity(userInput: string): LeadTrigger {
     const lowerInput = userInput.toLowerCase().trim();
     
     const hasNegativeIndicator = this.negativeIndicators.some(phrase => 
@@ -136,7 +136,7 @@ export class LeadDetectionService {
     if (hasEcommerceIndicator || hasBusinessWebsiteIndicator) {
       return {
         shouldShowForm: true,
-        triggerContext: this.generateEcommerceTriggerContext(lowerInput),
+        triggerContext: this.generateEcommerceTriggerContext(),
         confidence: 0.9,
         category: 'services'
       };
@@ -150,7 +150,7 @@ export class LeadDetectionService {
     };
   }
 
-  private generateEcommerceTriggerContext(input: string): string {
+  private generateEcommerceTriggerContext(): string {
     const contexts = [
       "Perfect! I specialize in building e-commerce websites and online stores!",
       "Excellent! I can help you create a professional website for your business!",

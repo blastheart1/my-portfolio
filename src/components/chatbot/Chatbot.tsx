@@ -231,15 +231,32 @@ export const Chatbot: React.FC<ChatbotProps> = ({
         src="/LuisBot.png"
         alt="Luis AI Chatbot"
         onClick={toggleChat}
-        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 w-16 h-16 md:w-20 md:h-20 cursor-pointer z-40 object-cover rounded-full shadow-lg border-2 border-white"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
+        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 w-16 h-16 md:w-20 md:h-20 cursor-pointer z-40"
+        style={{ filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' }}
+        whileHover={{ 
+          scale: 1.1,
+          rotate: [0, -5, 5, -5, 0],
+          filter: 'drop-shadow(0 8px 12px rgba(0, 0, 0, 0.2))'
+        }}
+        whileTap={{ 
+          scale: 0.9,
+          rotate: 0
+        }}
+        initial={{ scale: 0, opacity: 0, y: 20 }}
+        animate={{ 
+          scale: 1, 
+          opacity: 1, 
+          y: 0,
+          rotate: [0, 0, 0, 0, 0],
+        }}
         transition={{ 
           type: "spring", 
-          stiffness: 200, 
-          damping: 15 
+          stiffness: 260, 
+          damping: 20,
+          rotate: {
+            duration: 0.5,
+            ease: "easeInOut"
+          }
         }}
         role="button"
         tabIndex={0}
@@ -272,18 +289,20 @@ export const Chatbot: React.FC<ChatbotProps> = ({
 
 
 
-      {/* Performance Toggle Button */}
-      <PerformanceToggle 
-        onClick={togglePerformanceMonitor}
-        isVisible={showPerformanceMonitor}
-      />
-
-      {/* Performance Monitor */}
-      <PerformanceMonitor 
-        stats={performanceStats} 
-        isVisible={showPerformanceMonitor}
-        onToggle={togglePerformanceMonitor}
-      />
+      {/* Performance Monitor - Disabled in Production */}
+      {process.env.NODE_ENV === 'development' && (
+        <>
+          <PerformanceToggle 
+            onClick={togglePerformanceMonitor}
+            isVisible={showPerformanceMonitor}
+          />
+          <PerformanceMonitor 
+            stats={performanceStats} 
+            isVisible={showPerformanceMonitor}
+            onToggle={togglePerformanceMonitor}
+          />
+        </>
+      )}
 
 
       {/* Chat Window */}
