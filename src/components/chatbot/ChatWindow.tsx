@@ -652,7 +652,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       await resendService.current.sendLeadNotification(leadData);
       
       // Send welcome email to the lead
-      await resendService.current.sendWelcomeEmail();
+      await resendService.current.sendWelcomeEmail(leadData);
       
       console.log('✅ Lead submitted successfully:', leadData);
       

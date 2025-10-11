@@ -27,21 +27,19 @@ export class ResendService {
   }
 
   async sendLeadNotification(leadData: LeadData): Promise<void> {
+    // Check if API key is configured
     if (!this.config.apiKey || this.config.apiKey.trim() === '') {
       throw new Error('Resend API key is not configured. Please add NEXT_PUBLIC_RESEND_API_KEY to your environment variables.');
     }
 
     try {
-      const response = await fetch('/api/contact', {
+      const response = await fetch('/api/send-lead', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: leadData.name,
-          email: leadData.email,
-          message: `Project Type: ${leadData.projectType}\nBudget: ${leadData.budget}\nTimeline: ${leadData.timeline}\n${leadData.company ? `Company: ${leadData.company}\n` : ''}${leadData.phone ? `Phone: ${leadData.phone}\n` : ''}\n\nDescription:\n${leadData.description}`,
-          source: 'chatbot'
+          leadData: leadData
         }),
       });
 
@@ -59,7 +57,9 @@ export class ResendService {
     }
   }
 
-  async sendWelcomeEmail(): Promise<void> {
+  async sendWelcomeEmail(leadData: LeadData): Promise<void> {
+    // This is now handled by the API endpoint along with the lead notification
+    // The /api/send-lead endpoint sends both emails
     console.log('✅ Welcome email will be sent via API endpoint');
   }
 }
