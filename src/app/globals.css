@@ -165,6 +165,31 @@ html {
   display: none;  /* Chrome, Safari and Opera */
 }
 
+/* Chatbot custom scrollbar for messages container */
+.chat-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
+}
+.chat-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(155, 155, 155, 0.5);
+  border-radius: 20px;
+  border: transparent;
+}
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(155, 155, 155, 0.7);
+}
+
+/* Smooth scrolling for badges container */
+[data-suggestions-section="true"] > div {
+  scroll-behavior: smooth;
+}
+
 /* Clean, modern styling improvements */
 .line-clamp-3 {
   display: -webkit-box;
