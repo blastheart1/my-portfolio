@@ -25,25 +25,41 @@ const projects = [
     tech: ["React", "TypeScript", "Python FastAPI", "LiveKit", "OpenAI Whisper", "WebRTC", "WebSocket", "Vercel", "Render"], 
     link: "https://voice-ai-braincx.vercel.app/"
   },
+
   { 
-    title: "Pilates With Bee", 
-    description: "Built an online Pilates clinic platform for scheduling sessions, managing content, and providing virtual consultations. Integrated headless CMS and automation tools for streamlined client management.", 
-    tech: ["Next.js", "React", "Tailwind CSS", "Sanity CMS", "Zapier", "Vercel"], 
-    link: "https://pilates-w-bee.vercel.app/"
-  },
+    title: "SmartSync Integrator - QuickBooks & Bill.com", 
+    description: "Built a comprehensive integration management hub for connecting QuickBooks Online, Bill.com, and Zapier workflows. Features real-time data synchronization, automated token refresh, financial analytics dashboard, and secure API routing for seamless business automation.", 
+    tech: ["Next.js", "TypeScript", "React", "Tailwind CSS", "QuickBooks API", "Bill.com API", "OAuth 2.0", "Framer Motion", "Vercel"], 
+    link: "https://smartsync-integrator.vercel.app/"
+},
+  
   { 
     title: "VA Portfolio Sample", 
     description: "Professional virtual assistant portfolio website with functional contact form, email automation, and modern UI. Features responsive design, interactive animations, and automated email notifications for client inquiries.", 
     tech: ["Next.js 15", "TypeScript", "Tailwind CSS", "Framer Motion", "Resend API", "GSAP", "Swiper", "Vercel"], 
     link: "https://va-portfolio-sample.vercel.app/"
   },
+  { 
+    title: "Pilates With Bee", 
+    description: "Built an online Pilates clinic platform for scheduling sessions, managing content, and providing virtual consultations. Integrated headless CMS and automation tools for streamlined client management.", 
+    tech: ["Next.js", "React", "Tailwind CSS", "Sanity CMS", "Zapier", "Vercel"], 
+    link: "https://pilates-w-bee.vercel.app/"
+  },
 ];
 
 // Fill tile component for the 6th slot
-function FillTile({ hasMoreProjects }: { hasMoreProjects: boolean }) {
+function FillTile({ hasMoreProjects, onShowAll }: { hasMoreProjects: boolean; onShowAll: () => void }) {
+  const handleClick = () => {
+    console.log('FillTile clicked, hasMoreProjects:', hasMoreProjects);
+    if (hasMoreProjects && onShowAll) {
+      onShowAll();
+    }
+  };
+
   return (
     <div
-      className="group"
+      className="group cursor-pointer"
+      onClick={handleClick}
     >
       <Card className="rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden border border-gray-200 dark:border-gray-700">
         <div 
@@ -59,10 +75,10 @@ function FillTile({ hasMoreProjects }: { hasMoreProjects: boolean }) {
           {/* Content */}
           <div className="relative z-10 flex flex-col items-center justify-center">
             <h3 className="text-lg font-semibold text-white mb-2 font-sf-pro drop-shadow-md">
-              {hasMoreProjects ? "Show All" : "More Projects Coming Soon"}
+              {hasMoreProjects ? "View All Projects" : "More Projects Coming Soon"}
             </h3>
             <p className="text-sm text-white drop-shadow-sm">
-              {hasMoreProjects ? "View all projects" : "Stay tuned for more exciting projects"}
+              {hasMoreProjects ? "Click to view all projects" : "Stay tuned for more exciting projects"}
             </p>
           </div>
         </div>
@@ -152,7 +168,9 @@ export default function ProjectsSection() {
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   
   const displayedProjects = showAll ? projects : projects.slice(0, 5);
-  const hasMoreProjects = projects.length >= 7;
+  const hasMoreProjects = projects.length >= 6;
+  
+  console.log('ProjectsSection - showAll:', showAll, 'hasMoreProjects:', hasMoreProjects, 'projects.length:', projects.length);
   
   // Mobile carousel logic
   const allItems = [...displayedProjects.map(p => ({ ...p, isFillTile: false }))];
@@ -232,6 +250,7 @@ export default function ProjectsSection() {
                   <div key="fill-tile" className="w-full flex-shrink-0 px-4">
                     <FillTile 
                       hasMoreProjects={hasMoreProjects}
+                      onShowAll={() => setShowAll(true)}
                     />
                   </div>
                 );
@@ -307,27 +326,11 @@ export default function ProjectsSection() {
         {!showAll && (
           <FillTile 
             hasMoreProjects={hasMoreProjects}
+            onShowAll={() => setShowAll(true)}
           />
         )}
       </div>
 
-      {/* Desktop View All Button - only show if projects >= 7 */}
-      {hasMoreProjects && (
-        <motion.div
-          className="hidden md:block text-center mt-12"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
-          <button
-            onClick={() => setShowAll(!showAll)}
-            className="px-8 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-full transition-all duration-300 hover:scale-105 font-sf-pro"
-          >
-            {showAll ? "Show Less" : "View All Projects"}
-          </button>
-        </motion.div>
-      )}
     </section>
   );
 }
