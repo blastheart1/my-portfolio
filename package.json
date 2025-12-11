@@ -19,7 +19,7 @@
     "framer-motion": "^12.23.22",
     "gsap": "^3.13.0",
     "lucide-react": "^0.542.0",
-    "next": "15.5.2",
+    "next": "15.5.7",
     "openai": "^5.23.1",
     "portfolio-chatbot": "github:blastheart1/portfolio-chatbot-tensorflow-openai#testing-branch",
     "react": "19.1.0",
