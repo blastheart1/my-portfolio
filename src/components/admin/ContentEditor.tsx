@@ -24,10 +24,13 @@ interface ToolbarProps {
 
 function FormatToolbar({ fieldKey, onInsert }: ToolbarProps) {
   const btns = [
-    { label: 'B',     title: 'Bold',          before: '**', after: '**',  cls: 'font-bold' },
-    { label: 'I',     title: 'Italic',         before: '_',  after: '_',   cls: 'italic' },
-    { label: 'Link',  title: 'Insert link',    before: '[',  after: '](url)', cls: '' },
-    { label: '• List',title: 'Bullet list',    before: '\n• ', after: '',  cls: '' },
+    { label: 'B',      title: 'Bold',           before: '**',   after: '**',     cls: 'font-bold' },
+    { label: 'I',      title: 'Italic',          before: '_',    after: '_',      cls: 'italic' },
+    { label: 'H2',     title: 'Heading 2',       before: '\n## ', after: '',      cls: 'font-semibold' },
+    { label: 'Link',   title: 'Insert link',     before: '[',    after: '](url)', cls: '' },
+    { label: '• List', title: 'Bullet list',     before: '\n- ', after: '',       cls: '' },
+    { label: '1. List',title: 'Numbered list',   before: '\n1. ', after: '',      cls: '' },
+    { label: '❝',      title: 'Blockquote',      before: '\n> ', after: '',       cls: '' },
   ];
   return (
     <div className="flex items-center gap-1 mb-1">

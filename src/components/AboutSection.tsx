@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Download } from "lucide-react";
+import MarkdownBody from "@/components/ui/MarkdownBody";
 
 const FALLBACK_BODY = `A Full-Stack Software Engineer specializing in generative AI, skilled in ReactJS, Next.js, TailwindCSS, Supabase, Python, FastAPI, and TensorFlow, with hands-on experience integrating AI APIs such as OpenAI. Work includes building websites, chatbots, and intelligent applications that merge modern development practices with scalable, future-ready AI solutions. Professional background also spans roles as a Lead QA Manager and IBM ODM developer, delivering enterprise-grade platforms and decision management systems that align technology with business strategy.`;
 
@@ -27,14 +28,13 @@ export default function AboutSection({ initialContent }: { initialContent?: Reco
         </h2>
       </motion.div>
 
-      <motion.p
-        className="text-lg text-muted-foreground leading-relaxed indent-8 text-justify"
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
       >
-        {body}
-      </motion.p>
+        <MarkdownBody>{body}</MarkdownBody>
+      </motion.div>
 
 
       {/* Download Resume Button */}
