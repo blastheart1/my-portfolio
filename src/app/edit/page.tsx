@@ -25,6 +25,12 @@ const TILES = [
     desc: 'Upload and manage media assets.',
     icon: '⊡',
   },
+  {
+    href: '/edit/chatbot',
+    title: 'Chatbot',
+    desc: 'AI provider config, learned examples, and conversation logs.',
+    icon: '◎',
+  },
 ];
 
 export default function EditDashboard() {

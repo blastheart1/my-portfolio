@@ -12,6 +12,7 @@ const TOP_LINKS = [
   { href: '/edit/experience',   label: 'Experience', match: (p: string) => p === '/edit/experience' },
   { href: '/edit/services',     label: 'Services',   match: (p: string) => p === '/edit/services' },
   { href: '/edit/images',       label: 'Images',     match: (p: string) => p === '/edit/images' },
+  { href: '/edit/chatbot',      label: 'Chatbot',    match: (p: string) => p.startsWith('/edit/chatbot') },
 ];
 
 export default function AdminNav() {
