@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Code, Briefcase, Zap, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import type { ServiceTier as DBServiceTier } from "@/lib/content-queries";
 
 interface ServiceTier {
   name: string;
@@ -15,7 +16,22 @@ interface ServiceTier {
   popular?: boolean;
 }
 
-const services: ServiceTier[] = [
+const TIER_ICONS = [<Code key="code" className="w-5 h-5" />, <Briefcase key="brief" className="w-5 h-5" />, <Zap key="zap" className="w-5 h-5" />];
+
+function dbToDisplay(t: DBServiceTier, idx: number): ServiceTier {
+  return {
+    name: t.name,
+    tagline: t.tagline ?? '',
+    outcome: t.outcome ?? '',
+    pricePHP: t.price_php ?? 0,
+    priceUSD: t.price_usd ?? 0,
+    features: t.features,
+    icon: TIER_ICONS[idx % TIER_ICONS.length],
+    popular: t.is_popular,
+  };
+}
+
+const FALLBACK_SERVICES: ServiceTier[] = [
   {
     name: "Starter",
     tagline: "Launch fast, look sharp",
@@ -67,8 +83,11 @@ const services: ServiceTier[] = [
   },
 ];
 
-export default function ServicesSection() {
+export default function ServicesSection({ initialTiers }: { initialTiers?: DBServiceTier[] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const services = initialTiers && initialTiers.length > 0
+    ? initialTiers.map(dbToDisplay)
+    : FALLBACK_SERVICES;
 
   const handleContactClick = () => {
     if (window.Calendly?.showPopupWidget) {

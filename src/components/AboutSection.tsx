@@ -4,8 +4,14 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Download } from "lucide-react";
 
-export default function AboutSection() {
+const FALLBACK_BODY = `A Full-Stack Software Engineer specializing in generative AI, skilled in ReactJS, Next.js, TailwindCSS, Supabase, Python, FastAPI, and TensorFlow, with hands-on experience integrating AI APIs such as OpenAI. Work includes building websites, chatbots, and intelligent applications that merge modern development practices with scalable, future-ready AI solutions. Professional background also spans roles as a Lead QA Manager and IBM ODM developer, delivering enterprise-grade platforms and decision management systems that align technology with business strategy.`;
+
+export default function AboutSection({ initialContent }: { initialContent?: Record<string, string> }) {
   const [showTooltip, setShowTooltip] = useState(false);
+
+  const heading    = initialContent?.heading    ?? 'About me.';
+  const subheading = initialContent?.subheading ?? 'The person behind the code.';
+  const body       = initialContent?.body       ?? FALLBACK_BODY;
 
   return (
     <section id="about" className="py-0 max-w-4xl mx-auto px-6">
@@ -16,30 +22,19 @@ export default function AboutSection() {
         className="mb-8"
       >
         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
-          About me.<br />
-          <span className="text-gray-400 dark:text-gray-500 font-normal">The person behind the code.</span>
+          {heading}<br />
+          <span className="text-gray-400 dark:text-gray-500 font-normal">{subheading}</span>
         </h2>
       </motion.div>
 
       <motion.p
-  className="text-lg text-muted-foreground leading-relaxed indent-8 text-justify"
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.6, delay: 0.2 }}
->
-  A <span className="font-semibold">Full-Stack Software Engineer</span> specializing in 
-  <span className="font-semibold"> generative AI</span>, skilled in 
-  <span className="font-semibold"> ReactJS, Next.js, TailwindCSS, Supabase, Python, FastAPI, and TensorFlow</span>, 
-  with hands-on experience integrating <span className="font-semibold">AI APIs such as OpenAI</span>. 
-  Work includes building <span className="font-semibold">websites, chatbots, and intelligent applications </span> 
-  that merge modern development practices with 
-  <span className="font-semibold"> scalable, future-ready AI solutions</span>. 
-  Professional background also spans roles as a 
-  <span className="font-semibold"> Lead QA Manager</span> and 
-  <span className="font-semibold"> IBM ODM developer</span>, delivering 
-  <span className="font-semibold"> enterprise-grade platforms</span> and 
-  <span className="font-semibold"> decision management systems</span> that align technology with business strategy.
-</motion.p>
+        className="text-lg text-muted-foreground leading-relaxed indent-8 text-justify"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+      >
+        {body}
+      </motion.p>
 
 
       {/* Download Resume Button */}

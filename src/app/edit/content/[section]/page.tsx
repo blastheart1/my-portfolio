@@ -1,7 +1,4 @@
-import ContentEditor from '@/components/admin/ContentEditor';
-import Link from 'next/link';
-
-const SECTIONS = ['hero', 'about', 'experience', 'skills', 'projects', 'services', 'blog', 'contact'];
+import { CONTENT_SECTIONS } from '@/app/edit/layout';
 
 interface Props {
   params: Promise<{ section: string }>;
@@ -16,7 +13,7 @@ async function fetchContent(section: string): Promise<Record<string, string>> {
 export default async function ContentPage({ params }: Props) {
   const { section } = await params;
 
-  if (!SECTIONS.includes(section)) {
+  if (!CONTENT_SECTIONS.includes(section)) {
     return (
       <div className="max-w-2xl">
         <p className="text-sm text-red-500">Unknown section: {section}</p>
@@ -35,23 +32,6 @@ export default async function ContentPage({ params }: Props) {
           </h1>
           <p className="mt-1 text-sm text-gray-500">Edit content fields for this section.</p>
         </div>
-      </div>
-
-      {/* Section nav */}
-      <div className="flex flex-wrap gap-2">
-        {SECTIONS.map(s => (
-          <Link
-            key={s}
-            href={`/edit/content/${s}`}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-              s === section
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-          >
-            {s}
-          </Link>
-        ))}
       </div>
 
       <ClientContentEditor section={section} />

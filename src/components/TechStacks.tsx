@@ -87,26 +87,23 @@ export default function TechStacks() {
 
   return (
     <section id="tech-stacks" className="w-full py-20 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6">
-        {/* Header — constrained to match Projects section alignment */}
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            className="mb-16"
-            initial={{ opacity: 0, y: -20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight">
-              Tech stack.<br />
-              <span className="text-gray-500 dark:text-gray-400 font-normal">Tools I ship with daily.</span>
-            </h2>
-          </motion.div>
-        </div>
+      <div className="max-w-6xl mx-auto px-6">
+        {/* Header */}
+        <motion.div
+          className="mb-16"
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight">
+            Tech stack.<br />
+            <span className="text-gray-500 dark:text-gray-400 font-normal">Tools I ship with daily.</span>
+          </h2>
+        </motion.div>
 
         {/* Scrolling Rows Container */}
         <div className="relative space-y-0">
-          
           {/* Row 1 - Left to Right */}
           <div className="relative overflow-hidden py-8 fade-container">
             <div className="flex animate-scroll-left">
@@ -134,7 +131,6 @@ export default function TechStacks() {
             </div>
           </div>
         </div>
-
       </div>
 
       {/* Custom CSS for smooth scrolling animations and fade effect */}

@@ -41,11 +41,15 @@ async function main() {
 
   const migration = fs.readFileSync(sqlFile, 'utf8');
 
-  // Split on semicolons, skip comments and blank lines
-  const statements = migration
+  // Strip comment lines, split on semicolons, drop blanks
+  const stripped = migration
+    .split('\n')
+    .filter(line => !line.trim().startsWith('--'))
+    .join('\n');
+  const statements = stripped
     .split(';')
     .map(s => s.trim())
-    .filter(s => s.length > 0 && !s.match(/^--/));
+    .filter(s => s.length > 0);
 
   const pool = new Pool({ connectionString: DATABASE_URL });
 
