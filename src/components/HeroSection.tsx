@@ -11,11 +11,6 @@ interface HeroContent {
   cta_url?: string;
 }
 
-declare global {
-  interface Window {
-    Calendly?: { showPopupWidget: (url: string) => void };
-  }
-}
 
 export default function HeroSection({ content = {} }: { content?: HeroContent }) {
   const name        = content.name        ?? "Antonio Luis Santos";

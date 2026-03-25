@@ -40,12 +40,12 @@ export async function POST(request: NextRequest) {
   try {
     const sql = getSql();
     const d = parsed.data;
-    const rows = await sql`
+    const rows = (await sql`
       INSERT INTO service_tiers (name, tagline, outcome, price_php, price_usd, features, is_popular, visible, sort_order)
       VALUES (${d.name}, ${d.tagline}, ${d.outcome}, ${d.price_php}, ${d.price_usd},
               ${d.features as string[]}, ${d.is_popular}, ${d.visible}, ${d.sort_order})
       RETURNING *
-    `;
+    `) as unknown as Record<string, unknown>[];
     revalidatePath('/');
     return NextResponse.json(rows[0], { status: 201 });
   } catch (err) {
