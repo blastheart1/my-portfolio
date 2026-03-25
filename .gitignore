@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# markdown docs (setup guides, plans, notes — not for repo)
+*.md
+!README.md
+docs/
+
+# sql scripts
+*.sql
+
+# ide / editor workspace files
+.cursor/
+*.code-workspace

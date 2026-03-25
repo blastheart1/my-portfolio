@@ -211,7 +211,6 @@ export class OpenAIService {
     // Check for inappropriate content first
     const contentCheck = this.isInappropriateContent(userMessage);
     if (contentCheck.isInappropriate) {
-      console.log(`🚫 OpenAI inappropriate content detected (${contentCheck.type}): "${userMessage}"`);
       let response: string;
       
       if (contentCheck.type === 'profanity') {
@@ -240,8 +239,6 @@ export class OpenAIService {
         "IMPORTANT: If the user gives a short response like 'yes', 'no', 'ok', 'products', etc., use the conversation history to understand what they're responding to and provide a helpful follow-up. " +
         "Always maintain conversation context and build on previous messages naturally.";
 
-      console.log('🔍 OpenAI API Key status:', this.config.apiKey ? 'configured' : 'missing');
-      console.log('🔍 API Key length:', this.config.apiKey ? '***' : '0');
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -346,7 +343,6 @@ export class OpenAIService {
     const cacheKey = this.generateCacheKey(userMessage, conversationHistory);
     const cachedResponse = this.responseCache.get(cacheKey);
     if (cachedResponse) {
-      console.log('⚡ Using cached OpenAI response for:', userMessage);
       this.usageStats.totalRequests++;
       return cachedResponse;
     }
@@ -354,7 +350,6 @@ export class OpenAIService {
     // Check for inappropriate content first
     const contentCheck = this.isInappropriateContent(userMessage);
     if (contentCheck.isInappropriate) {
-      console.log(`🚫 OpenAI portfolio inappropriate content detected (${contentCheck.type}): "${userMessage}"`);
       let response: string;
       
       if (contentCheck.type === 'profanity') {
@@ -382,7 +377,6 @@ export class OpenAIService {
     // Check if the message is in a non-English language
     const isNonEnglish = this.detectNonEnglishLanguage(userMessage);
     if (isNonEnglish) {
-      console.log(`🌍 Non-English language detected: "${userMessage}"`);
       return this.generateLanguageRedirectResponse(userMessage);
     }
 
@@ -390,8 +384,6 @@ export class OpenAIService {
     const conversationContext = this.buildOptimizedConversationContext(conversationHistory);
     
     // Debug logging for context
-    console.log('🧠 Optimized conversation context:', conversationContext);
-    console.log('📊 Context length:', conversationContext.length, 'characters');
     
     // Rate limiting
     await this.enforceRateLimit();
@@ -486,7 +478,6 @@ export class OpenAIService {
    * Clear conversation context (useful for new conversations)
    */
   clearConversationContext(): void {
-    console.log('🧹 Conversation context cleared');
   }
 
   /**
@@ -578,7 +569,6 @@ export class OpenAIService {
     
     if (timeSinceLastRequest < this.rateLimitDelay) {
       const waitTime = this.rateLimitDelay - timeSinceLastRequest;
-      console.log(`⏳ Rate limiting: waiting ${waitTime}ms`);
       await new Promise(resolve => setTimeout(resolve, waitTime));
     }
     
@@ -606,7 +596,6 @@ export class OpenAIService {
       (this.usageStats.averageResponseTime * (this.usageStats.totalRequests - 1) + responseTime) / 
       this.usageStats.totalRequests;
     
-    console.log(`📊 API Stats: ${this.usageStats.totalRequests} requests, ${this.usageStats.totalTokens} tokens, $${this.usageStats.totalCost.toFixed(4)} cost, ${responseTime}ms response time`);
   }
 
   /**
@@ -655,7 +644,6 @@ export class OpenAIService {
    */
   public clearCache(): void {
     this.responseCache.clear();
-    console.log('🧹 OpenAI response cache cleared');
   }
 
   /**
@@ -663,7 +651,6 @@ export class OpenAIService {
    */
   public updateRateLimit(delay: number): void {
     this.rateLimitDelay = Math.max(100, delay); // Minimum 100ms
-    console.log(`⏱️ Rate limit updated to ${this.rateLimitDelay}ms`);
   }
 
   /**
@@ -683,7 +670,6 @@ export class OpenAIService {
     // Truncate if too long
     if (optimizedContent.length > this.maxResponseLength) {
       optimizedContent = this.smartTruncate(optimizedContent, this.maxResponseLength);
-      console.log(`✂️ Response truncated from ${response.content.length} to ${optimizedContent.length} characters`);
     }
     
     // Compress formatting
@@ -748,7 +734,6 @@ export class OpenAIService {
     const uniqueSentences = [...new Set(sentences.map(s => s.trim()))];
     
     if (uniqueSentences.length < sentences.length) {
-      console.log(`🔄 Removed ${sentences.length - uniqueSentences.length} redundant sentences`);
       return uniqueSentences.join('. ').trim();
     }
     
@@ -772,7 +757,6 @@ export class OpenAIService {
     if (settings.responseCompression !== undefined) {
       this.responseCompression = settings.responseCompression;
     }
-    console.log(`⚙️ Response optimization updated: maxLength=${this.maxResponseLength}, maxTokens=${this.maxTokens}, compression=${this.responseCompression}`);
   }
 
   /**

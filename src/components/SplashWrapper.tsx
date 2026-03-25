@@ -33,7 +33,6 @@ export default function SplashWrapper({ children }: SplashWrapperProps) {
   // Monitor when portfolio becomes visible and ensure scroll is working
   useEffect(() => {
     if (splashComplete && !showSplash) {
-      console.log('Portfolio is visible - ensuring scroll works');
       
       const ensureScrollWorks = () => {
         // Final scroll restoration
@@ -49,13 +48,9 @@ export default function SplashWrapper({ children }: SplashWrapperProps) {
         
         // Trigger parallax
         window.dispatchEvent(new Event('scroll'));
-        console.log('Portfolio scroll fully restored');
       };
       
       ensureScrollWorks();
-      setTimeout(ensureScrollWorks, 100);
-      setTimeout(ensureScrollWorks, 500);
-      setTimeout(ensureScrollWorks, 1000);
     }
   }, [splashComplete, showSplash]);
 
@@ -67,7 +62,6 @@ export default function SplashWrapper({ children }: SplashWrapperProps) {
   }, []);
 
   const handleSplashComplete = () => {
-    console.log('SplashWrapper: handleSplashComplete called');
     setSplashComplete(true);
     localStorage.setItem('hasSeenSplash', 'true');
     
@@ -93,26 +87,13 @@ export default function SplashWrapper({ children }: SplashWrapperProps) {
       
       // Force scroll events to restore parallax
       window.dispatchEvent(new Event('scroll'));
-      console.log('Scroll functionality restored');
     };
     
-    // Restore scroll immediately
     restoreScroll();
-    
-    // Dispatch custom event for parallax
-    window.dispatchEvent(new CustomEvent('splash-complete'));
-    
-    // Additional scroll restoration attempts
-    setTimeout(restoreScroll, 100);
-    setTimeout(restoreScroll, 500);
-    
-    // Smooth transition - hide splash immediately
+
     setTimeout(() => {
-      console.log('Hiding splash screen');
       setShowSplash(false);
-      // Final scroll restoration
-      restoreScroll();
-    }, 100); // Very short delay for smooth transition
+    }, 100);
   };
 
   return (

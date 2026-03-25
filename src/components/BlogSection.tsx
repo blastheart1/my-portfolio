@@ -123,17 +123,15 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
   if (loading && posts.length === 0) {
     return (
       <section className={`py-16 px-4 ${className}`}>
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Blog & Case Studies
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-12 px-4 md:px-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
+              Blog & Case Studies.<br />
+              <span className="text-neutral-500 font-normal">Insights on tech and craft.</span>
             </h2>
-            <p className="text-neutral-400 text-lg">
-              Insights on technology and software development
-            </p>
           </div>
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#ff0]"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-brand)] dark:border-green-400"></div>
           </div>
         </div>
       </section>
@@ -143,20 +141,18 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
   if (error) {
     return (
       <section className={`py-16 px-4 ${className}`}>
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Blog & Case Studies
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-12 px-4 md:px-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
+              Blog & Case Studies.<br />
+              <span className="text-neutral-500 font-normal">Insights on tech and craft.</span>
             </h2>
-            <p className="text-neutral-400 text-lg">
-              Insights on technology and software development
-            </p>
           </div>
           <div className="text-center">
             <p className="text-red-400 mb-4">{error}</p>
             <button
               onClick={fetchPosts}
-              className="px-6 py-2 bg-[#ff0] text-black font-semibold rounded-lg hover:bg-[#ff0]/90 transition-colors"
+              className="px-6 py-2 bg-[var(--color-brand)] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
             >
               Retry
             </button>
@@ -168,14 +164,12 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
 
   return (
     <section className={`py-16 px-4 ${className}`}>
-      <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-black dark:text-white mb-4">
-                Blog & Case Studies
+      <div className="max-w-6xl mx-auto">
+            <div className="mb-12 px-4 md:px-6">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight">
+                Blog & Case Studies.<br />
+                <span className="text-neutral-400 dark:text-neutral-500 font-normal">Insights on tech and craft.</span>
               </h2>
-              <p className="text-neutral-400 text-lg">
-                Insights on technology and software development
-              </p>
             </div>
 
         {posts.length === 0 ? (
@@ -184,7 +178,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
             <button
               onClick={generateNewContent}
               disabled={loading}
-              className="px-6 py-2 bg-[#ff0] text-black font-semibold rounded-lg hover:bg-[#ff0]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-[var(--color-brand)] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Generating...' : 'Generate First Content'}
             </button>
@@ -264,7 +258,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                     className={`p-2 rounded-full transition-all duration-300 ${
                       currentPage === 0 || isTransitioning
                         ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
-                        : 'bg-neutral-700 text-blue-500 hover:bg-neutral-600'
+                        : 'bg-neutral-700 text-[var(--color-brand)] hover:bg-neutral-600'
                     }`}
                     aria-label="Previous post"
                   >
@@ -280,7 +274,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                     className={`p-2 rounded-full transition-all duration-300 ${
                       currentPage === posts.length - 1 || isTransitioning
                         ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
-                        : 'bg-neutral-700 text-blue-500 hover:bg-neutral-600'
+                        : 'bg-neutral-700 text-[var(--color-brand)] hover:bg-neutral-600'
                     }`}
                     aria-label="Next post"
                   >
@@ -303,7 +297,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                     className={`p-2 rounded-full transition-all duration-300 ${
                       currentPage === 0 || isTransitioning
                         ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
-                        : 'bg-neutral-700 text-blue-500 hover:bg-neutral-600'
+                        : 'bg-neutral-700 text-[var(--color-brand)] hover:bg-neutral-600'
                     }`}
                     aria-label="Previous page"
                   >
@@ -321,7 +315,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                         disabled={isTransitioning}
                         className={`w-3 h-3 rounded-full transition-all duration-300 ${
                           currentPage === index 
-                            ? 'bg-blue-500 scale-125' 
+                            ? 'bg-[var(--color-brand)] scale-125' 
                             : isTransitioning
                             ? 'bg-neutral-600 cursor-not-allowed'
                             : 'bg-neutral-600 hover:bg-neutral-500'
@@ -338,7 +332,7 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
                     className={`p-2 rounded-full transition-all duration-300 ${
                       currentPage === Math.ceil(posts.length / 3) - 1 || isTransitioning
                         ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' 
-                        : 'bg-neutral-700 text-blue-500 hover:bg-neutral-600'
+                        : 'bg-neutral-700 text-[var(--color-brand)] hover:bg-neutral-600'
                     }`}
                     aria-label="Next page"
                   >
@@ -554,14 +548,14 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
                   href={post.caseStudyLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium text-sm text-blue-500 pb-1 border-b-2 border-neutral-700 group-hover:border-blue-500 group-focus:border-blue-500 transition-all duration-300 ease-in-out focus:outline-hidden hover:text-blue-400"
+                  className="font-medium text-sm text-[var(--color-brand)] pb-1 border-b-2 border-neutral-700 group-hover:border-blue-500 group-focus:border-blue-500 transition-all duration-300 ease-in-out focus:outline-hidden hover:text-blue-400"
                 >
                   View Case Study →
                 </a>
               ) : (
                 <button
                   onClick={() => onReadMore?.(post)}
-                  className="font-medium text-sm text-blue-500 pb-1 border-b-2 border-neutral-700 hover:border-blue-500 focus:border-blue-500 transition-all duration-300 ease-in-out focus:outline-hidden hover:text-blue-400 cursor-pointer"
+                  className="font-medium text-sm text-[var(--color-brand)] pb-1 border-b-2 border-neutral-700 hover:border-blue-500 focus:border-blue-500 transition-all duration-300 ease-in-out focus:outline-hidden hover:text-blue-400 cursor-pointer"
                 >
                   Click to read →
                 </button>

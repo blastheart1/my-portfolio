@@ -6,22 +6,23 @@ import ExperienceSection from "@/components/ExperienceSection";
 import TechStacks from "@/components/TechStacks";
 import ScrollFadeEffect from "@/components/ScrollFadeEffect";
 import SplashWrapper from "@/components/SplashWrapper";
+import LabSection from "@/components/LabSection";
 
 // Lazy load non-critical components
 const ProjectsSection = dynamic(() => import("@/components/ProjectsSection"), {
-  loading: () => <div className="h-96 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0033A0]"></div></div>
+  loading: () => <div className="h-96 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-brand)]"></div></div>
 });
 
 const ServicesSection = dynamic(() => import("@/components/ServicesSection"), {
-  loading: () => <div className="h-96 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0033A0]"></div></div>
+  loading: () => <div className="h-96 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-brand)]"></div></div>
 });
 
 const ContactSection = dynamic(() => import("@/components/ContactSection"), {
-  loading: () => <div className="h-96 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0033A0]"></div></div>
+  loading: () => <div className="h-96 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-brand)]"></div></div>
 });
 
 const BlogSection = dynamic(() => import("@/components/BlogSection"), {
-  loading: () => <div className="h-96 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0033A0]"></div></div>
+  loading: () => <div className="h-96 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-brand)]"></div></div>
 });
 
 export default function Home() {
@@ -52,7 +53,11 @@ export default function Home() {
           <ScrollFadeEffect fadeStartPoint={0.85} fadeIntensity={1.5}>
             <ProjectsSection />
           </ScrollFadeEffect>
-          
+
+          <ScrollFadeEffect fadeStartPoint={0.87} fadeIntensity={1.5}>
+            <LabSection />
+          </ScrollFadeEffect>
+
           <ScrollFadeEffect fadeStartPoint={0.9} fadeIntensity={1.6}>
             <section id="services">
               <ServicesSection />

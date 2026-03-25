@@ -98,7 +98,6 @@ export class TensorFlowService {
         ...userExamples.intents
       ];
 
-      console.log(`📚 Loaded ${staticIntents.intents.length} FAQ intents + ${userExamples.intents.length} learned examples`);
       return { intents: allIntents };
     } catch (error) {
       console.error('Error loading training data:', error);
@@ -332,7 +331,6 @@ export class TensorFlowService {
    */
   private createModel(vocabSize: number, numIntents: number): tf.LayersModel {
     try {
-      console.log(`🏗️ Creating model with vocab size: ${vocabSize}, intents: ${numIntents}`);
       
       // Clear any existing variables to prevent conflicts
       tf.disposeVariables();
@@ -387,7 +385,6 @@ export class TensorFlowService {
         metrics: ['accuracy'],
       });
 
-      console.log('✅ Model created and compiled successfully');
       return model;
       
     } catch (error) {
@@ -403,17 +400,14 @@ export class TensorFlowService {
   async trainModel(): Promise<void> {
     // Prevent multiple simultaneous initializations
     if (this.isInitializing) {
-      console.log('⏳ Model training already in progress, skipping...');
       return;
     }
     
     this.isInitializing = true;
-    console.log('🚀 Starting optimized TensorFlow model training...');
     
     try {
       // Clean up any existing model first
       if (this.model) {
-        console.log('🧹 Cleaning up existing model before training...');
         this.model.dispose();
         this.model = null;
         tf.disposeVariables();
@@ -439,8 +433,6 @@ export class TensorFlowService {
       throw new Error('Failed to create model');
     }
     
-    console.log('🏗️ Model created successfully');
-    console.log(`📊 Vocabulary size: ${this.vocabulary.length}, Intents: ${data.intents.length}`);
     
     // Optimized training parameters for better performance
     let bestLoss = Infinity;
@@ -468,12 +460,10 @@ export class TensorFlowService {
           
           // Log training progress (reduced frequency)
           if (epoch % 10 === 0 || epoch === 0) {
-            console.log(`📊 Epoch ${epoch + 1}: loss=${logs?.loss?.toFixed(4)}, accuracy=${logs?.acc?.toFixed(4)}`);
           }
           
           // Early stopping
           if (patience >= maxPatience) {
-            console.log(`⏹️ Early stopping at epoch ${epoch + 1} (patience: ${patience})`);
             // Note: Early stopping is handled by the training loop, not by returning false
           }
         }
@@ -486,12 +476,10 @@ export class TensorFlowService {
       throw new Error('Model became null during training');
     }
     
-    console.log('✅ Training completed successfully');
     
     // Save model (with error handling)
     try {
       await this.saveModel();
-      console.log('💾 Model saved successfully');
     } catch (saveError) {
       console.error('❌ Error saving model:', saveError);
       const errorMessage = saveError instanceof Error ? saveError.message : String(saveError);
@@ -505,8 +493,6 @@ export class TensorFlowService {
     this.trainingMetrics.endTime = Date.now();
     const trainingTime = (this.trainingMetrics.endTime - this.trainingMetrics.startTime) / 1000;
     
-      console.log(`✅ Training completed in ${trainingTime.toFixed(2)}s`);
-      console.log(`📈 Final metrics: loss=${this.trainingMetrics.finalLoss.toFixed(4)}, accuracy=${this.trainingMetrics.finalAccuracy.toFixed(4)}`);
     } finally {
       this.isInitializing = false;
     }
@@ -524,14 +510,12 @@ export class TensorFlowService {
     const cacheKey = text.toLowerCase().trim();
     const cachedResult = this.responseCache.get(cacheKey);
     if (cachedResult) {
-      console.log('⚡ Using cached response for:', text);
       return cachedResult;
     }
 
     // Check for inappropriate content first
     const contentCheck = this.isInappropriateContent(text);
     if (contentCheck.isInappropriate) {
-      console.log(`🚫 Inappropriate content detected (${contentCheck.type}): "${text}"`);
       return null;
     }
 
@@ -540,12 +524,9 @@ export class TensorFlowService {
     
     // If relevance is too low, don't even try to classify
     if (relevance < this.relevanceThreshold) {
-      console.log(`❌ Low relevance (${relevance.toFixed(2)}) to Luis content: "${text}"`);
       return null;
     }
 
-    console.log(`🔍 Analyzing: "${text}" (relevance: ${relevance.toFixed(2)})`);
-    console.log(`📊 Available intents: ${this.intents.length}`);
 
     // Use tf.tidy for automatic memory management
     const result = tf.tidy(() => {
@@ -563,8 +544,6 @@ export class TensorFlowService {
     const maxIndex = scores.indexOf(Math.max(...scores));
     const confidence = scores[maxIndex];
     
-    console.log(`🎯 Prediction scores: ${scores.map((score, i) => `${this.intents[i]?.tag || 'unknown'}:${score.toFixed(3)}`).join(', ')}`);
-    console.log(`🏆 Best match: ${this.intents[maxIndex]?.tag} (confidence: ${confidence.toFixed(3)})`);
     
     // Enhanced confidence threshold based on relevance
     let adjustedThreshold = this.confidenceThreshold * (0.8 + 0.2 * relevance);
@@ -572,14 +551,11 @@ export class TensorFlowService {
     // Lower threshold for greetings to make them easier to catch
     if (this.isGreeting(text)) {
       adjustedThreshold = Math.min(adjustedThreshold, 0.3); // Much lower threshold for greetings
-      console.log(`👋 Greeting detected, using lower threshold: ${adjustedThreshold.toFixed(2)}`);
     }
     
     if (confidence < adjustedThreshold) {
-      console.log(`❌ Low confidence (${confidence.toFixed(2)}) for: "${text}" (threshold: ${adjustedThreshold.toFixed(2)})`);
       // For generic questions with decent relevance, let AI handle it
       if (relevance >= 0.3 && this.isGenericQuestion(text)) {
-        console.log(`🤖 Generic question detected, letting AI handle: "${text}"`);
         return null; // Let AI handle generic questions
       }
       return null;
@@ -588,7 +564,6 @@ export class TensorFlowService {
     const intent = this.intents[maxIndex];
     const response = intent.responses[Math.floor(Math.random() * intent.responses.length)];
 
-    console.log(`✅ TensorFlow match: "${text}" -> ${intent.tag} (confidence: ${confidence.toFixed(2)}, relevance: ${relevance.toFixed(2)})`);
 
     const classificationResult: ClassificationResult = {
       tag: intent.tag,
@@ -623,7 +598,6 @@ export class TensorFlowService {
    */
   public clearCache(): void {
     this.responseCache.clear();
-    console.log('🧹 Response cache cleared');
   }
 
   /**
@@ -653,9 +627,7 @@ export class TensorFlowService {
     }
 
     try {
-      console.log('💾 Saving model to IndexedDB...');
       await this.model.save('indexeddb://chatbot-model');
-      console.log('✅ Model saved to IndexedDB');
       
       // Save vocabulary and intents metadata
       const metadata = {
@@ -665,7 +637,6 @@ export class TensorFlowService {
       };
       
       localStorage.setItem('chatbot-metadata', JSON.stringify(metadata));
-      console.log('✅ Metadata saved to localStorage');
       
     } catch (error) {
       console.error('❌ Error saving model:', error);
@@ -735,13 +706,11 @@ export class TensorFlowService {
     
     // For low relevance topics, don't respond at all - let OpenAI handle it
     if (relevance < 0.3) {
-      console.log(`❌ Low relevance (${relevance.toFixed(2)}), letting OpenAI handle: "${userInput}"`);
       return null;
     }
     
     // For generic questions with decent relevance, let AI handle it
     if (relevance >= 0.3 && this.isGenericQuestion(userInput)) {
-      console.log(`🤖 Generic question detected in fallback, letting AI handle: "${userInput}"`);
       return null;
     }
     
@@ -813,7 +782,6 @@ export class TensorFlowService {
     }
     
     // For other relevant topics, return null to let OpenAI handle with Luis context
-    console.log(`🤖 Relevant but no direct match, letting OpenAI handle with Luis context: "${userInput}"`);
     return null;
   }
 
@@ -874,7 +842,6 @@ export class TensorFlowService {
       // Retrain model with new data
       await this.trainModel();
       
-      console.log('✅ Added new learning example and retrained model');
       return { success: true };
     } catch (error) {
       console.error('Error adding learning example:', error);
@@ -924,7 +891,6 @@ export class TensorFlowService {
    */
   updateConfidenceThreshold(newThreshold: number): void {
     this.confidenceThreshold = Math.max(0.1, Math.min(1.0, newThreshold));
-    console.log(`🎯 Confidence threshold updated to: ${this.confidenceThreshold}`);
   }
 
   /**
@@ -932,14 +898,12 @@ export class TensorFlowService {
    */
   updateRelevanceThreshold(newThreshold: number): void {
     this.relevanceThreshold = Math.max(0.1, Math.min(1.0, newThreshold));
-    console.log(`🎯 Relevance threshold updated to: ${this.relevanceThreshold}`);
   }
 
   /**
    * Cleanup method for memory management
    */
   public cleanup(): void {
-    console.log('🧹 Cleaning up TensorFlow resources...');
     
     // Dispose model
     if (this.model) {
@@ -969,7 +933,6 @@ export class TensorFlowService {
     // Reset initialization flag
     this.isInitializing = false;
     
-    console.log('✅ TensorFlow cleanup completed');
   }
 
   /**

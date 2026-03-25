@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { } from 'lucide-react';
 import { ChatWindow } from './ChatWindow';
 import { PerformanceMonitor } from './PerformanceMonitor';
 import { PerformanceToggle } from './PerformanceToggle';
@@ -60,16 +59,9 @@ export const Chatbot: React.FC<ChatbotProps> = ({
 
   // Debug API key (remove in production)
   useEffect(() => {
-    console.log('🔍 Environment check:');
-    console.log('  - openaiApiKey prop:', openaiApiKey ? 'provided' : 'not provided');
-    console.log('  - NEXT_PUBLIC_OPENAI_API_KEY:', process.env.NEXT_PUBLIC_OPENAI_API_KEY ? 'found' : 'not found');
-    console.log('  - Final apiKey length:', apiKey ? '***' : '0');
-    console.log('  - Final apiKey status:', apiKey ? 'configured' : 'missing');
     
     if (apiKey && apiKey.length > 20) {
-      console.log('✅ OpenAI API key loaded successfully');
     } else {
-      console.log('⚠️ OpenAI API key issue detected');
     }
   }, [apiKey, openaiApiKey]);
 
@@ -97,7 +89,6 @@ export const Chatbot: React.FC<ChatbotProps> = ({
         
         // Prevent multiple initializations in development
         if (process.env.NODE_ENV === 'development' && tensorflowService.isModelReady()) {
-          console.log('🔄 Development mode: Model already ready, skipping initialization');
           setIsModelReady(true);
           setIsLoading(false);
           return;
@@ -108,12 +99,9 @@ export const Chatbot: React.FC<ChatbotProps> = ({
         
         if (modelLoaded) {
           setIsModelReady(true);
-          console.log('✅ Loaded existing TensorFlow.js model');
         } else {
-          console.log('🤖 Training new TensorFlow.js model...');
           await tensorflowService.trainModel();
           setIsModelReady(true);
-          console.log('✅ TensorFlow.js model trained successfully');
         }
 
         // Load learning count
@@ -131,7 +119,6 @@ export const Chatbot: React.FC<ChatbotProps> = ({
             openai: openaiStats
           };
           setPerformanceStats(combinedStats);
-          console.log('📊 Performance Stats:', combinedStats);
         }
         
         // Performance monitor is hidden by default, can be toggled
@@ -164,10 +151,6 @@ export const Chatbot: React.FC<ChatbotProps> = ({
         openai: openaiStats
       };
       setPerformanceStats(combinedStats);
-      console.log('📊 Updated Performance Stats:', {
-        tensorflow: tensorflowStats,
-        openai: openaiStats
-      });
     };
 
     // Update immediately
@@ -210,7 +193,6 @@ export const Chatbot: React.FC<ChatbotProps> = ({
         const newCount = learningCount + 1;
         setLearningCount(newCount);
         localStorage.setItem('learning-count', newCount.toString());
-        console.log('🧠 Model learned from new example!');
       }
       
       return result;

@@ -50,7 +50,6 @@ export class ResendService {
         throw new Error(result.error || 'Failed to send lead notification');
       }
 
-      console.log('✅ Lead notification email sent successfully:', result);
     } catch (error) {
       console.error('Error sending lead notification email:', error);
       throw error;
@@ -60,7 +59,6 @@ export class ResendService {
   async sendWelcomeEmail(leadData: LeadData): Promise<void> {
     // This is now handled by the API endpoint along with the lead notification
     // The /api/send-lead endpoint sends both emails
-    console.log('✅ Welcome email will be sent via API endpoint');
   }
 }
 

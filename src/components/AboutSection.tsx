@@ -8,15 +8,18 @@ export default function AboutSection() {
   const [showTooltip, setShowTooltip] = useState(false);
 
   return (
-    <section id="about" className="py-0 max-w-4xl mx-auto px-6 text-center">
-      <motion.h2
-        className="text-3xl font-bold mb-6"
+    <section id="about" className="py-0 max-w-4xl mx-auto px-6">
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
+        className="mb-8"
       >
-        About Me
-      </motion.h2>
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
+          About me.<br />
+          <span className="text-gray-400 dark:text-gray-500 font-normal">The person behind the code.</span>
+        </h2>
+      </motion.div>
 
       <motion.p
   className="text-lg text-muted-foreground leading-relaxed indent-8 text-justify"
@@ -51,7 +54,7 @@ export default function AboutSection() {
           download
           target="_blank"
           rel="noopener noreferrer"
-          className="p-3 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-[#0033A0] focus:ring-offset-2 transition"
+          className="p-3 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus:ring-offset-2 transition"
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
           onTouchStart={() => setShowTooltip((prev) => !prev)} // toggle tooltip on mobile tap

@@ -18,7 +18,7 @@ export default function HeroSection() {
           transition={{ duration: 0.5 }}
         >
           Antonio Luis Santos{" "}
-          <span className="text-[#0033A0] text-3xl sm:text-3xl">
+          <span className="text-[var(--color-brand)] text-3xl sm:text-3xl">
             Software Development & QA
           </span>
         </motion.h2>
@@ -44,7 +44,7 @@ export default function HeroSection() {
                 window.open('https://calendly.com/antonioluis-santos1/30min', '_blank', 'noopener,noreferrer');
               }
             }}
-            className="px-6 py-2 bg-[#0033A0] text-white rounded-xl font-medium shadow-lg"
+            className="px-6 py-2 bg-[var(--color-brand)] text-white rounded-xl font-medium shadow-lg"
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             whileHover={{ scale: 1.05, y: -2 }}
@@ -77,16 +77,10 @@ export default function HeroSection() {
 
       {/* Profile Image */}
       <motion.div
-        className="w-48 h-48 sm:w-56 sm:h-56 rounded-full overflow-hidden shadow-lg transform transition-all duration-500 hover:scale-110 hover:shadow-2xl hover:rotate-2 relative group"
+        className="w-48 h-48 sm:w-56 sm:h-56 rounded-full overflow-hidden shadow-lg transition-all duration-500 hover:scale-110 hover:shadow-2xl hover:rotate-2 relative group"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.6 }}
-        whileHover={{ 
-          scale: 1.1, 
-          rotate: 2,
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)"
-        }}
-        whileTap={{ scale: 0.95 }}
       >
         {/* Default Image */}
         <Image

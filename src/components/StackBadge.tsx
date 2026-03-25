@@ -6,7 +6,7 @@ export default function StackBadge({ name }: StackBadgeProps) {
   return (
     <span className="
       px-2 py-0.5 
-      bg-gray-200 text-[#0033A0] 
+      bg-gray-200 text-[var(--color-brand)]
       dark:bg-gray-700 dark:text-white
       rounded-full text-xs font-medium 
       transition hover:bg-gray-300 dark:hover:bg-gray-600

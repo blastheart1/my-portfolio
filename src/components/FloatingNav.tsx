@@ -2,26 +2,30 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, Home, User, Code, FolderOpen, DollarSign, Mail } from "lucide-react";
+import { Menu, Home, User, Briefcase, Code, FolderOpen, FlaskConical, DollarSign, BookOpen, Mail } from "lucide-react";
+import { useScrollY } from "@/contexts/ScrollContext";
 
 const navItems = [
-  { id: "home", label: "Home", icon: Home },
-  { id: "about", label: "About", icon: User },
-  { id: "skills", label: "Skills", icon: Code },
-  { id: "projects", label: "Projects", icon: FolderOpen },
-  { id: "services", label: "Services", icon: DollarSign },
-  { id: "contact", label: "Contact", icon: Mail },
+  { id: "home",       label: "Home",       icon: Home },
+  { id: "about",      label: "About",      icon: User },
+  { id: "experience", label: "Experience", icon: Briefcase },
+  { id: "skills",     label: "Skills",     icon: Code },
+  { id: "projects",   label: "Projects",   icon: FolderOpen },
+  { id: "lab",        label: "Lab",        icon: FlaskConical },
+  { id: "services",   label: "Services",   icon: DollarSign },
+  { id: "blog",       label: "Blog",       icon: BookOpen },
+  { id: "contact",    label: "Contact",    icon: Mail },
 ];
 
 export default function FloatingNav() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
+  const { subscribe } = useScrollY();
 
   useEffect(() => {
-    const handleScroll = () => {
+    const unsubscribe = subscribe((scrollY) => {
       const sections = navItems.map(item => document.getElementById(item.id));
-      const scrollPosition = window.scrollY + 100;
-
+      const scrollPosition = scrollY + 100;
       for (let i = sections.length - 1; i >= 0; i--) {
         const section = sections[i];
         if (section && section.offsetTop <= scrollPosition) {
@@ -29,11 +33,9 @@ export default function FloatingNav() {
           break;
         }
       }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    });
+    return unsubscribe;
+  }, [subscribe]);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -45,31 +47,19 @@ export default function FloatingNav() {
 
   return (
     <>
-      {/* Floating Navigation Button - Hidden on mobile */}
       <motion.button
-        className={`fixed top-6 left-6 z-50 bg-[#0033A0] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hidden md:block ${
-          isOpen ? 'p-2' : 'p-3'
-        }`}
+        className={`fixed top-6 left-6 z-50 bg-[var(--color-brand)] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hidden md:block ${isOpen ? 'p-2' : 'p-3'}`}
+        style={{ willChange: 'transform' }}
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         initial={{ opacity: 0, scale: 0 }}
-        animate={{ 
-          opacity: 1, 
-          scale: isOpen ? 0.8 : 1,
-          x: isOpen ? 8 : 0,
-          y: isOpen ? 8 : 0
-        }}
-        transition={{ 
-          delay: isOpen ? 0 : 1,
-          duration: 0.3,
-          ease: "easeInOut"
-        }}
+        animate={{ opacity: 1, scale: isOpen ? 0.8 : 1, x: isOpen ? 8 : 0, y: isOpen ? 8 : 0 }}
+        transition={{ delay: isOpen ? 0 : 1, duration: 0.3, ease: "easeInOut" }}
       >
         {!isOpen && <Menu className="w-5 h-5" />}
       </motion.button>
 
-      {/* Navigation Menu - Hidden on mobile */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -83,14 +73,13 @@ export default function FloatingNav() {
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeSection === item.id;
-                
                 return (
                   <motion.button
                     key={item.id}
                     onClick={() => scrollToSection(item.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
                       isActive
-                        ? "bg-[#0033A0] text-white"
+                        ? "bg-[var(--color-brand)] text-white"
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                     }`}
                     whileHover={{ x: 4 }}
@@ -114,7 +103,6 @@ export default function FloatingNav() {
         )}
       </AnimatePresence>
 
-      {/* Backdrop - Hidden on mobile */}
       <AnimatePresence>
         {isOpen && (
           <motion.div

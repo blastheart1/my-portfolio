@@ -117,25 +117,19 @@ export default function ContactSection() {
   return (
     <section
       id="contact"
-      className="px-6 py-12 max-w-6xl mx-auto text-center text-foreground"
+      className="px-6 py-12 max-w-6xl mx-auto text-foreground"
     >
-      <motion.h2
-        className="text-3xl font-semibold mb-6"
+      <motion.div
+        className="mb-10"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        Launch a Conversation
-      </motion.h2>
-
-      <motion.p
-        className="text-lg text-gray-700 dark:text-gray-300 mb-8"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        Whether it&apos;s building scalable systems or exploring innovative tech, let&apos;s connect and navigate the galaxy of software development together.
-      </motion.p>
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
+          Launch a conversation.<br />
+          <span className="text-gray-500 dark:text-gray-400 font-normal">Let&apos;s build something together.</span>
+        </h2>
+      </motion.div>
 
       <div className="grid lg:grid-cols-2 gap-12 items-start">
         {/* Contact Form */}
@@ -162,7 +156,7 @@ export default function ContactSection() {
                   <h3 className="text-xl font-semibold mb-2 text-green-600 dark:text-green-400">
                     Message Sent Successfully!
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">
                     Thank you for reaching out. I&apos;ll get back to you within 24 hours.
                   </p>
                   <Button onClick={resetForm} variant="outline">
@@ -268,7 +262,7 @@ export default function ContactSection() {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-[#0033A0] hover:bg-[#002A8A] text-white"
+                    className="w-full bg-[var(--color-brand)] hover:bg-[var(--color-brand-dark,#002A8A)] text-white"
                     aria-describedby="submit-help"
                   >
                     {isSubmitting ? (
@@ -283,7 +277,7 @@ export default function ContactSection() {
                       </>
                     )}
                   </Button>
-                  <p id="submit-help" className="text-xs text-gray-500 mt-2">
+                  <p id="submit-help" className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     All fields are required. Your message will be sent securely.
                   </p>
                 </form>
@@ -301,7 +295,7 @@ export default function ContactSection() {
         >
           <div>
             <h3 className="text-xl font-semibold mb-4">Let&apos;s Connect</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               Prefer a different approach? Reach out through any of these channels:
             </p>
           </div>
@@ -315,12 +309,12 @@ export default function ContactSection() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <div className="w-12 h-12 bg-[#0033A0] rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-[var(--color-brand)] rounded-full flex items-center justify-center">
                 <FaLinkedin className="text-white text-xl" />
               </div>
               <div>
                 <h4 className="font-medium">LinkedIn</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   Professional networking and updates
                 </p>
               </div>
@@ -334,12 +328,12 @@ export default function ContactSection() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <div className="w-12 h-12 bg-[#0033A0] rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-[var(--color-brand)] rounded-full flex items-center justify-center">
                 <FaInstagram className="text-white text-xl" />
               </div>
               <div>
                 <h4 className="font-medium">Instagram</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   Behind-the-scenes and personal updates
                 </p>
               </div>
@@ -351,12 +345,12 @@ export default function ContactSection() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <div className="w-12 h-12 bg-[#0033A0] rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-[var(--color-brand)] rounded-full flex items-center justify-center">
                 <FaEnvelope className="text-white text-xl" />
               </div>
               <div>
                 <h4 className="font-medium">Email</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   antonioluis.santos1@gmail.com
                 </p>
               </div>

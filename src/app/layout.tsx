@@ -15,6 +15,7 @@ const inter = Inter({
 });
 
 export const metadata = {
+  metadataBase: new URL('https://luis.dev'),
   title: 'Luis.dev - Antonio Luis Santos | Full-Stack Developer & QA Specialist',
   description: 'Senior IBM ODM Specialist and QA Team Manager specializing in full-stack development, AI integration, and scalable systems. Building future-ready applications with precision and innovation.',
   keywords: [
@@ -51,21 +52,11 @@ export const metadata = {
     siteName: 'Luis.dev',
     title: 'Luis.dev - Antonio Luis Santos | Full-Stack Developer & QA Specialist',
     description: 'Senior IBM ODM Specialist and QA Team Manager specializing in full-stack development, AI integration, and scalable systems. Expert in React, Next.js, Python, and AI technologies.',
-    images: [
-      {
-        url: 'https://luis.dev/profile-photo2.png',
-        width: 1200,
-        height: 630,
-        alt: 'Antonio Luis Santos - Senior IBM ODM Specialist and QA Team Manager specializing in full-stack development and AI integration',
-        type: 'image/png',
-      },
-    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Luis.dev - Antonio Luis Santos | Full-Stack Developer & QA Specialist',
     description: 'Senior IBM ODM Specialist and QA Team Manager specializing in full-stack development, AI integration, and scalable systems.',
-    images: ['https://luis.dev/profile-photo2.png'],
     creator: '@0xlv1s_',
     site: '@0xlv1s_',
   },
@@ -79,9 +70,6 @@ export const metadata = {
     apple: '/code-light.ico',
   },
   manifest: '/site.webmanifest',
-  verification: {
-    google: 'your-google-verification-code', // Add your Google Search Console verification code
-  },
 };
 
 export const viewport = {

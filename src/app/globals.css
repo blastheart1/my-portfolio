@@ -8,6 +8,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-brand: var(--color-brand);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sf-pro);
@@ -85,6 +86,7 @@ html {
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
   --hero-name: #1a1a1a;
+  --color-brand: #0033A0;
 }
 
 .dark {
@@ -120,6 +122,7 @@ html {
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
   --hero-name: #ffffff;
+  --color-brand: #4ade80;
 }
 
 @layer base {
@@ -133,13 +136,13 @@ html {
     font-variant-numeric: oldstyle-nums;
   }
   
-  /* Improved typography with SF Pro characteristics */
+  /* Standard typography — matches Services section header style */
   h1, h2, h3, h4, h5, h6 {
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
   }
-  
+
   p {
     line-height: 1.6;
     letter-spacing: -0.01em;
@@ -205,8 +208,14 @@ button, a, [role="button"] {
 
 /* Enhanced focus states */
 button:focus-visible, a:focus-visible {
-  outline: 2px solid rgb(59 130 246);
+  outline: 2px solid var(--color-brand);
   outline-offset: 2px;
+}
+
+/* Custom cursor — hides native cursor when class is present */
+html.custom-cursor,
+html.custom-cursor * {
+  cursor: none !important;
 }
 
 /* Clean card styling */

@@ -76,10 +76,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   
   // Debug environment variables
   useEffect(() => {
-    console.log('🔍 Lead Generation Environment Check:');
-    console.log('  - NEXT_PUBLIC_RESEND_API_KEY:', process.env.NEXT_PUBLIC_RESEND_API_KEY ? 'configured' : 'missing');
-    console.log('  - NEXT_PUBLIC_FROM_EMAIL:', process.env.NEXT_PUBLIC_FROM_EMAIL ? 'configured' : 'not set');
-    console.log('  - NEXT_PUBLIC_TO_EMAIL:', process.env.NEXT_PUBLIC_TO_EMAIL ? 'configured' : 'not set');
   }, []);
   
   const resendService = useRef(new ResendService({
@@ -351,7 +347,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       const lastMessage = messages[messages.length - 1];
       
       if (isPositiveResponse && lastMessage && lastMessage.content.includes('Would you like me to reach out')) {
-        console.log('✅ User expressed interest in follow-up discussion');
         // Show the lead form immediately
         setTimeout(() => {
           setShowLeadForm(true);
@@ -360,7 +355,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         setIsTyping(false);
         return; // Exit early - don't process as regular message
       } else if (isNegativeResponse && lastMessage && lastMessage.content.includes('Would you like me to reach out')) {
-        console.log('❌ User declined follow-up discussion');
         // Provide a polite acknowledgment
         setTimeout(() => {
           const acknowledgmentMessage: Message = {
@@ -385,7 +379,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       const isDirectContact = directContactKeywords.some(keyword => userInput.includes(keyword));
       
       if (isDirectContact) {
-        console.log('🎯 Direct contact detected early:', userInput, 'matched keyword:', directContactKeywords.find(k => userInput.includes(k)));
         setDirectFormTriggered(true);
         directFormTriggeredRef.current = true;
       }
@@ -396,7 +389,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
       // First try TensorFlow.js intent recognition (PRIMARY INTELLIGENCE)
       if (tensorflowService.isModelReady()) {
-        console.log('🤖 Using TensorFlow.js as primary intelligence');
         const prediction = await tensorflowService.classifyInput(userMessage.content);
         
         if (prediction) {
@@ -419,7 +411,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           }
         } else {
           // TensorFlow didn't find a good match, try Luis-focused fallback
-          console.log('📚 TensorFlow no match, trying Luis direct answers...');
           const fallbackPrediction = tensorflowService.generateLuisFallback(userMessage.content);
           
           if (fallbackPrediction) {
@@ -463,7 +454,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               }
             } else if (openaiService.isConfigured()) {
             // No direct answer available, use OpenAI with Luis context
-            console.log('🤖 Using OpenAI with Luis context for complex/generic questions...');
               try {
                 const aiResponse = await openaiService.generatePortfolioResponse(userMessage.content, messages);
                 openAiResponse = aiResponse.content;
@@ -498,7 +488,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           }
         }
       } else {
-        console.log('⚠️ TensorFlow model not ready, using simple keyword matching...');
         // Model not ready, try simple keyword matching first
         const simpleMatch = findSimpleFAQMatch(userMessage.content);
         if (simpleMatch) {
@@ -569,7 +558,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           const leadTrigger = leadDetectionService.current.detectLeadOpportunity(userMessage.content);
           
           if (leadTrigger.shouldShowForm) {
-            console.log('🎯 Lead opportunity detected:', leadTrigger);
             // Instead of showing form immediately, ask if they want to discuss further
             setTimeout(() => {
               const followUpMessage: Message = {
@@ -587,7 +575,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             }, 1500);
           }
         } else {
-          console.log('🚫 Skipping lead detection - direct form already triggered for:', userMessage.content);
         }
         
         // Reset the direct form triggered flag for next message (after lead detection timeout)
@@ -654,7 +641,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       // Send welcome email to the lead
       await resendService.current.sendWelcomeEmail(leadData);
       
-      console.log('✅ Lead submitted successfully:', leadData);
       
       // Mark form as successfully submitted
       setFormSubmitted(true);

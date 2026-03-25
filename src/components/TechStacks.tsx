@@ -88,21 +88,21 @@ export default function TechStacks() {
   return (
     <section id="tech-stacks" className="w-full py-20 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
-        {/* Header */}
-        <motion.div
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: -20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Tech Stacks
-          </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Technologies and tools I use to build exceptional digital experiences
-          </p>
-        </motion.div>
+        {/* Header — constrained to match Projects section alignment */}
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            className="mb-16"
+            initial={{ opacity: 0, y: -20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight">
+              Tech stack.<br />
+              <span className="text-gray-500 dark:text-gray-400 font-normal">Tools I ship with daily.</span>
+            </h2>
+          </motion.div>
+        </div>
 
         {/* Scrolling Rows Container */}
         <div className="relative space-y-0">

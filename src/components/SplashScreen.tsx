@@ -32,7 +32,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         const { gsap } = await import('gsap');
         const { Observer } = await import('gsap/Observer');
         const { SplitText } = await import('gsap/SplitText');
-        
+
         gsap.registerPlugin(Observer, SplitText);
 
         const sections = containerRef.current?.querySelectorAll("section");
@@ -40,14 +40,12 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         const headings = gsap.utils.toArray(".section-heading");
         const outerWrappers = gsap.utils.toArray(".outer");
         const innerWrappers = gsap.utils.toArray(".inner");
-        
+
         if (!sections || !images || !headings.length) return;
 
-        const splitHeadings = headings.map((heading: unknown) => 
-          new SplitText(heading as HTMLElement, { 
-            type: "chars,words,lines", 
-            linesClass: "clip-text" 
-          })
+        // Word-level split only — far fewer DOM nodes than char-level
+        const splitHeadings = headings.map((heading: unknown) =>
+          new SplitText(heading as HTMLElement, { type: "words" })
         );
         
         let currentIndex = -1;
@@ -88,19 +86,16 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               yPercent: 0 
             }, 0)
             .fromTo(images && images[index] ? images[index] : null, { yPercent: 15 * dFactor }, { yPercent: 0 }, 0)
-            .fromTo(splitHeadings[index].chars, { 
-                autoAlpha: 0, 
-                yPercent: 150 * dFactor
+            .fromTo(splitHeadings[index].words, {
+                autoAlpha: 0,
+                yPercent: 120 * dFactor
             }, {
                 autoAlpha: 1,
                 yPercent: 0,
-                duration: 0.4, // More responsive text animation
+                duration: 0.5,
                 ease: "power2.out",
-                stagger: {
-                  each: 0.005, // More responsive stagger
-                  from: "random"
-                }
-              }, 0.05); // Earlier start for better responsiveness
+                stagger: 0.06,
+              }, 0.05);
 
           currentIndex = index;
         }
@@ -118,7 +113,6 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               gotoSection(currentIndex + 1, 1);
             } else if (!animating && sections && currentIndex >= sections.length - 1) {
               // On the last section, transition immediately to portfolio
-              console.log('Last section reached - transitioning to portfolio');
               // Disable observer before completing
               observer.disable();
               onComplete?.();
@@ -146,7 +140,6 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
         // Fallback: Auto-complete splash after 30 seconds to prevent getting stuck
         const fallbackTimeout = setTimeout(() => {
-          console.log('Splash fallback triggered - auto completing');
           document.body.classList.remove('splash-active');
           document.documentElement.classList.remove('splash-active');
           document.body.style.overflow = '';
@@ -155,7 +148,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           document.body.style.width = '';
           document.documentElement.style.overflow = '';
           onComplete?.();
-        }, 30000);
+        }, 5000);
 
         // Set cleanup function
         cleanup = () => {
@@ -168,7 +161,6 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           document.removeEventListener('touchmove', handleTouchEvents);
           document.removeEventListener('touchend', handleTouchEvents);
           
-          console.log('Splash cleanup - observer disabled, scroll restored');
         };
 
       } catch (error) {

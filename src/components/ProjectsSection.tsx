@@ -50,7 +50,6 @@ const projects = [
 // Fill tile component for the 6th slot
 function FillTile({ hasMoreProjects, onShowAll }: { hasMoreProjects: boolean; onShowAll: () => void }) {
   const handleClick = () => {
-    console.log('FillTile clicked, hasMoreProjects:', hasMoreProjects);
     if (hasMoreProjects && onShowAll) {
       onShowAll();
     }
@@ -170,7 +169,6 @@ export default function ProjectsSection() {
   const displayedProjects = showAll ? projects : projects.slice(0, 5);
   const hasMoreProjects = projects.length >= 6;
   
-  console.log('ProjectsSection - showAll:', showAll, 'hasMoreProjects:', hasMoreProjects, 'projects.length:', projects.length);
   
   // Mobile carousel logic
   const allItems = [...displayedProjects.map(p => ({ ...p, isFillTile: false }))];
@@ -218,18 +216,16 @@ export default function ProjectsSection() {
   return (
     <section id="projects" className="px-4 md:px-6 py-20 md:py-32 max-w-6xl mx-auto">
       <motion.div
-        className="text-center mb-16"
+        className="mb-16"
         initial={{ opacity: 0, y: -20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
       >
-        <h2 className="text-4xl md:text-5xl font-semibold text-gray-900 dark:text-gray-100 mb-4 tracking-tight font-sf-pro">
-          Projects
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
+          Projects.<br />
+          <span className="text-gray-500 dark:text-gray-400 font-normal">Things I&apos;ve shipped.</span>
         </h2>
-        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          A showcase of my latest work, featuring modern web applications built with cutting-edge technologies.
-        </p>
       </motion.div>
 
       {/* Mobile Carousel */}

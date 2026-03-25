@@ -296,7 +296,6 @@ export const PortfolioChatbot: React.FC<PortfolioChatbotProps> = ({
     try {
       await resendService.sendLeadNotification(leadData);
       await resendService.sendWelcomeEmail(leadData);
-      console.log('✅ Lead submitted successfully:', leadData);
     } catch (error) {
       console.error('❌ Failed to submit lead:', error);
       throw error;
