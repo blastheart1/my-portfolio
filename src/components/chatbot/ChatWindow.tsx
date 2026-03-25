@@ -52,6 +52,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [directFormTriggered, setDirectFormTriggered] = useState(false);
   const directFormTriggeredRef = useRef(false);
+
+  // Conversation logging (opt-in)
+  const [consentState, setConsentState] = useState<'pending' | 'accepted' | 'declined'>('pending');
+  const sessionIdRef = useRef<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [badgeOrder, setBadgeOrder] = useState([
     'Get Quote',
@@ -775,6 +779,49 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     setPendingLearning(null);
   };
 
+  // Restore consent state from localStorage and generate session ID
+  useEffect(() => {
+    const stored = localStorage.getItem('chatbot_consent');
+    if (stored === 'accepted') {
+      setConsentState('accepted');
+      sessionIdRef.current = localStorage.getItem('chatbot_session_id') ?? crypto.randomUUID();
+      localStorage.setItem('chatbot_session_id', sessionIdRef.current);
+    } else if (stored === 'declined') {
+      setConsentState('declined');
+    } else {
+      setConsentState('pending');
+    }
+  }, []);
+
+  // Log conversation to DB whenever messages change (only when consent given)
+  useEffect(() => {
+    if (consentState !== 'accepted' || !sessionIdRef.current || messages.length === 0) return;
+    const loggableMessages = messages.map(m => ({
+      id: m.id,
+      content: m.content,
+      isUser: m.isUser,
+      timestamp: m.timestamp instanceof Date ? m.timestamp.toISOString() : String(m.timestamp),
+      source: m.source,
+    }));
+    fetch('/api/chatbot/conversations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionIdRef.current, messages: loggableMessages }),
+    }).catch(() => { /* silent — logging is best-effort */ });
+  }, [messages, consentState]);
+
+  const handleConsentAccept = () => {
+    sessionIdRef.current = crypto.randomUUID();
+    localStorage.setItem('chatbot_session_id', sessionIdRef.current);
+    localStorage.setItem('chatbot_consent', 'accepted');
+    setConsentState('accepted');
+  };
+
+  const handleConsentDecline = () => {
+    localStorage.setItem('chatbot_consent', 'declined');
+    setConsentState('declined');
+  };
+
   // Initialize and update mobile detection
   useEffect(() => {
     // Set initial value
@@ -888,6 +935,34 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             )}
             <div ref={messagesEndRef} />
           </div>
+
+          {/* Conversation Logging Consent Banner */}
+          {consentState === 'pending' && messages.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="px-3 py-2 bg-gray-50 border-t border-gray-200 text-xs text-gray-600"
+            >
+              <p className="mb-1.5">
+                May I log this conversation to help improve future responses?
+                No personal data is stored beyond what you type here.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleConsentAccept}
+                  className="px-2 py-0.5 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                >
+                  Allow
+                </button>
+                <button
+                  onClick={handleConsentDecline}
+                  className="px-2 py-0.5 rounded border border-gray-300 hover:bg-gray-100 transition-colors"
+                >
+                  No thanks
+                </button>
+              </div>
+            </motion.div>
+          )}
 
           {/* Learning Prompt */}
           {showLearningPrompt && (

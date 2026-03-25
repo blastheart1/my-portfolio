@@ -84,18 +84,42 @@ export class TensorFlowService {
   /**
    * Load data from both static intents and user examples
    */
+  /**
+   * Fetch approved examples from Neon DB (server-side persisted learning).
+   * Returns [] gracefully on network/parse error so training never blocks.
+   */
+  private async fetchApprovedExamplesFromDB(): Promise<IntentData[]> {
+    try {
+      const res = await fetch('/api/chatbot/examples');
+      if (!res.ok) return [];
+      const rows = await res.json() as Array<{ id: string; tag: string; user_input: string; ai_response: string }>;
+      return rows.map(row => ({
+        tag: row.tag || `learned_db_${row.id}`,
+        patterns: [row.user_input],
+        responses: [row.ai_response],
+      }));
+    } catch {
+      return [];
+    }
+  }
+
   private async loadAllData(): Promise<TrainingData> {
     try {
       // Load static intents from faq.json (the comprehensive dataset)
       const staticIntents = await import('./data/faq.json');
-      
-      // Load user examples
+
+      // Load user examples from localStorage
       const userExamples = await import('./data/user_examples.json');
-      
-      // Combine both datasets
+
+      // Load approved examples from Neon DB (fire parallel, don't block on failure)
+      const dbExamples = await this.fetchApprovedExamplesFromDB();
+
+      // localStorage examples first (user's own device learning),
+      // then DB-approved examples (shared / admin-curated)
       const allIntents = [
         ...staticIntents.intents,
-        ...userExamples.intents
+        ...userExamples.intents,
+        ...dbExamples,
       ];
 
       return { intents: allIntents };
@@ -838,7 +862,19 @@ export class TensorFlowService {
       };
       
       localStorage.setItem('user_examples', JSON.stringify(updatedExamples));
-      
+
+      // Dual-write to Neon DB (fire-and-forget — never blocks local retraining)
+      // New examples land as approved=false until admin approves them in /edit/chatbot
+      fetch('/api/chatbot/examples', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_input: inputValidation.sanitizedInput || userInput,
+          ai_response: openAiResponse,
+          tag: newTag,
+        }),
+      }).catch(err => console.warn('[TF] Failed to persist example to DB:', err));
+
       // Retrain model with new data
       await this.trainModel();
       
