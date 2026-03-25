@@ -5,7 +5,7 @@ const COOKIE_NAME = 'admin_session';
 
 function getSecret(): Uint8Array {
   const secret = process.env.JWT_SECRET;
-  if (!secret) return new TextEncoder().encode('fallback-not-set');
+  if (!secret) throw new Error('JWT_SECRET is not set');
   return new TextEncoder().encode(secret);
 }
 
@@ -15,8 +15,9 @@ export async function proxy(request: NextRequest) {
   // Skip all auth in development
   if (process.env.NODE_ENV === 'development') return NextResponse.next();
 
-  // Allow login page through
+  // Allow login page and auth endpoints through
   if (pathname === '/edit/login') return NextResponse.next();
+  if (pathname.startsWith('/api/admin/auth/')) return NextResponse.next();
 
   const token = request.cookies.get(COOKIE_NAME)?.value;
 
