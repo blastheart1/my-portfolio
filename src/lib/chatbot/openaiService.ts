@@ -3,6 +3,7 @@
  *
  * Client-side AI service — thin wrapper around the server-side
  * /api/chatbot/generate route. Handles:
+ *  - Guard rails (prompt injection pre-filter — Layer 2 after ChatWindow)
  *  - Content filtering (profanity, personal questions)
  *  - Language detection (Tagalog / non-English redirect)
  *  - Response caching (LRU, 50 entries)
@@ -12,6 +13,7 @@
  * The actual AI provider selection (OpenAI vs Claude) and knowledge
  * injection happen server-side via /api/chatbot/generate.
  */
+import { checkGuardRails, logGuardRailEvent, getBlockResponse } from './guardRails';
 
 export interface OpenAIConfig {
   apiKey: string; // kept for backward compat; no longer used for direct calls
@@ -175,6 +177,19 @@ export class OpenAIService {
     if (cached) {
       this.usageStats.totalRequests++;
       return cached;
+    }
+
+    // Guard rail pre-filter (Layer 2 — after ChatWindow, before content filter + TF.js/AI)
+    // Server-side is authoritative; this avoids unnecessary network calls on obvious attacks.
+    const guardResult = checkGuardRails(userMessage);
+    if (guardResult.tier === 'BLOCK') {
+      logGuardRailEvent(guardResult, { source: 'client', userInput: userMessage });
+      const resp: OpenAIResponse = {
+        content: getBlockResponse(guardResult.category),
+        usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+      };
+      this.cacheResponse(cacheKey, resp);
+      return resp;
     }
 
     // Content filter

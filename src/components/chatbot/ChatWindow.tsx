@@ -8,6 +8,7 @@ import { LeadForm, LeadData } from './LeadForm';
 import { ResendService } from '@/lib/chatbot/resendService';
 import { LeadDetectionService } from '@/lib/chatbot/leadDetectionService';
 import { QuickSuggestions } from './QuickSuggestions';
+import { checkGuardRails, logGuardRailEvent, getBlockResponse } from '@/lib/chatbot/guardRails';
 
 interface ChatWindowProps {
   isOpen: boolean;
@@ -385,6 +386,26 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       if (isDirectContact) {
         setDirectFormTriggered(true);
         directFormTriggeredRef.current = true;
+      }
+
+      // ── Guard Rail: Client-side pre-filter ─────────────────────────────────
+      // Block injection attempts before TF.js or AI are invoked.
+      // Server-side is the authoritative layer; this is an early UX optimization.
+      const guardResult = checkGuardRails(userMessage.content);
+      if (guardResult.tier === 'BLOCK') {
+        logGuardRailEvent(guardResult, { source: 'client', userInput: userMessage.content });
+        const guardResponse: Message = {
+          id: generateUniqueId(),
+          content: getBlockResponse(guardResult.category),
+          isUser: false,
+          timestamp: new Date(),
+          source: 'faq',
+          confidence: 1.0,
+          relevance: 1.0,
+        };
+        setMessages(prev => [...prev, guardResponse]);
+        setIsTyping(false);
+        return;
       }
 
       let response: Message;

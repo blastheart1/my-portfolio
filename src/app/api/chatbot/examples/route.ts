@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSql } from '@/lib/neon';
+import { checkGuardRails, logGuardRailEvent } from '@/lib/chatbot/guardRails';
 
 export const runtime = 'nodejs';
 
@@ -70,6 +71,24 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: 'Invalid input', details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  // ── Guard Rail: DB write protection ────────────────────────────────────────
+  // Injection patterns must not be saved as training examples — they would be
+  // trained into TF.js and served as responses when approved.
+  const inputGuard = checkGuardRails(parsed.data.user_input);
+  const responseGuard = checkGuardRails(parsed.data.ai_response);
+  if (inputGuard.tier === 'BLOCK' || responseGuard.tier === 'BLOCK') {
+    const flagged = inputGuard.tier === 'BLOCK' ? inputGuard : responseGuard;
+    logGuardRailEvent(flagged, {
+      source: 'db_write',
+      userInput: parsed.data.user_input,
+      ip,
+    });
+    return NextResponse.json(
+      { error: 'Content flagged for review.' },
       { status: 400 }
     );
   }
