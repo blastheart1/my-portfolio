@@ -139,6 +139,24 @@ export async function getAllMediaAssets(): Promise<MediaAsset[]> {
   }
 }
 
+// ─── Site Settings ───────────────────────────────────────────────────────────
+
+export async function getSplashEnabled(): Promise<boolean> {
+  try {
+    const sql = getSql();
+    type Row = { field_value: string | null };
+    const rows = (await sql`
+      SELECT field_value FROM section_content
+      WHERE section_id = 'settings' AND field_key = 'splash_enabled'
+      LIMIT 1
+    `) as unknown as Row[];
+    if (!rows.length) return true; // default on if no setting exists
+    return rows[0].field_value !== 'false';
+  } catch {
+    return true; // default on if DB unavailable
+  }
+}
+
 // ─── Admin helpers ─────────────────────────────────────────────────────────
 
 export async function getAllSections(): Promise<SectionRow[]> {

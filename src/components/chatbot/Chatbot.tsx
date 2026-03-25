@@ -213,7 +213,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({
         src="/LuisBot.png"
         alt="Luis AI Chatbot"
         onClick={toggleChat}
-        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 w-16 h-16 md:w-20 md:h-20 cursor-pointer z-40"
+        className="fixed bottom-20 right-4 md:bottom-6 md:right-6 w-16 h-16 md:w-20 md:h-20 cursor-pointer z-40"
         style={{ filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' }}
         whileHover={{ 
           scale: 1.1,

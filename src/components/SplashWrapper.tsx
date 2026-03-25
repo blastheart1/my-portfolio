@@ -5,78 +5,42 @@ import SplashScreen from './SplashScreen';
 
 interface SplashWrapperProps {
   children: React.ReactNode;
+  splashEnabled?: boolean;
 }
 
-export default function SplashWrapper({ children }: SplashWrapperProps) {
-  const [showSplash, setShowSplash] = useState(true);
+export default function SplashWrapper({ children, splashEnabled = true }: SplashWrapperProps) {
+  const [showSplash, setShowSplash]       = useState(false);
   const [splashComplete, setSplashComplete] = useState(false);
-  // Removed showOverlay as it's not used in current implementation
   const portfolioRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Check if user has seen splash before (optional - you can remove this)
+    if (!splashEnabled) {
+      // Splash disabled via admin — skip immediately
+      setSplashComplete(true);
+      return;
+    }
+
     const hasSeenSplash = localStorage.getItem('hasSeenSplash');
     if (hasSeenSplash === 'true') {
-      setShowSplash(false);
       setSplashComplete(true);
+      return;
     }
-    
-    // Cleanup function to ensure scroll is always restored
+
+    setShowSplash(true);
+
     return () => {
       document.body.classList.remove('splash-active');
       document.documentElement.classList.remove('splash-active');
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
     };
-  }, []);
+  }, [splashEnabled]);
 
-  // Monitor when portfolio becomes visible and ensure scroll is working
+  // Restore scroll once splash is done
   useEffect(() => {
     if (splashComplete && !showSplash) {
-      
-      const ensureScrollWorks = () => {
-        // Final scroll restoration
-        document.body.classList.remove('splash-active');
-        document.documentElement.classList.remove('splash-active');
-        document.body.style.overflow = 'auto';
-        document.body.style.position = '';
-        document.body.style.height = '';
-        document.body.style.width = '';
-        document.body.style.top = '';
-        document.body.style.left = '';
-        document.documentElement.style.overflow = 'auto';
-        
-        // Trigger parallax
-        window.dispatchEvent(new Event('scroll'));
-      };
-      
-      ensureScrollWorks();
-    }
-  }, [splashComplete, showSplash]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      // Cleanup function if needed
-    };
-  }, []);
-
-  const handleSplashComplete = () => {
-    setSplashComplete(true);
-    localStorage.setItem('hasSeenSplash', 'true');
-    
-    // Prevent Framer Motion from restarting by setting a flag
-    if (typeof window !== 'undefined') {
-      (window as Window & { portfolioTransitionComplete?: boolean }).portfolioTransitionComplete = true;
-    }
-    
-    // Aggressively restore scroll functionality
-    const restoreScroll = () => {
-      // Remove any remaining splash classes
       document.body.classList.remove('splash-active');
       document.documentElement.classList.remove('splash-active');
-      
-      // Clear any inline styles that might block scroll
       document.body.style.overflow = 'auto';
       document.body.style.position = '';
       document.body.style.height = '';
@@ -84,16 +48,26 @@ export default function SplashWrapper({ children }: SplashWrapperProps) {
       document.body.style.top = '';
       document.body.style.left = '';
       document.documentElement.style.overflow = 'auto';
-      
-      // Force scroll events to restore parallax
       window.dispatchEvent(new Event('scroll'));
-    };
-    
-    restoreScroll();
+    }
+  }, [splashComplete, showSplash]);
 
-    setTimeout(() => {
-      setShowSplash(false);
-    }, 100);
+  const handleSplashComplete = () => {
+    setSplashComplete(true);
+    localStorage.setItem('hasSeenSplash', 'true');
+
+    document.body.classList.remove('splash-active');
+    document.documentElement.classList.remove('splash-active');
+    document.body.style.overflow = 'auto';
+    document.body.style.position = '';
+    document.body.style.height = '';
+    document.body.style.width = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.documentElement.style.overflow = 'auto';
+    window.dispatchEvent(new Event('scroll'));
+
+    setTimeout(() => setShowSplash(false), 100);
   };
 
   return (
@@ -101,39 +75,23 @@ export default function SplashWrapper({ children }: SplashWrapperProps) {
       {showSplash && (
         <>
           <SplashScreen onComplete={handleSplashComplete} />
-          {/* Touch-blocking overlay to prevent portfolio interaction */}
-          <div 
+          <div
             className="fixed inset-0 z-[9998] bg-transparent"
-            onTouchStart={(e) => e.preventDefault()}
-            onTouchMove={(e) => e.preventDefault()}
-            onTouchEnd={(e) => e.preventDefault()}
+            onTouchStart={e => e.preventDefault()}
+            onTouchMove={e => e.preventDefault()}
+            onTouchEnd={e => e.preventDefault()}
             style={{ touchAction: 'none' }}
           />
         </>
       )}
-      
-      {/* No overlay - clean transition */}
-      
-      <div 
+
+      <div
         ref={portfolioRef}
-        key="portfolio-content"
-        className={`transition-opacity duration-500 ease-out ${
-          splashComplete ? 'opacity-100' : 'opacity-0'
-        }`}
-        style={{
-          position: 'relative',
-          zIndex: splashComplete ? 1 : 0
-        }}
+        className={`transition-opacity duration-500 ease-out ${splashComplete ? 'opacity-100' : 'opacity-0'}`}
+        style={{ position: 'relative', zIndex: splashComplete ? 1 : 0 }}
       >
         {children}
       </div>
-      
-      <style jsx>{`
-        @keyframes fadeOut {
-          from { opacity: 1; }
-          to { opacity: 0; }
-        }
-      `}</style>
     </div>
   );
 }

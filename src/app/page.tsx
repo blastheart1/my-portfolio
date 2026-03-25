@@ -12,6 +12,7 @@ import {
   getServiceTiers,
   getSectionContent,
   getSectionVisibility,
+  getSplashEnabled,
 } from "@/lib/content-queries";
 
 // Force server-render on every request so DB edits show immediately
@@ -35,18 +36,19 @@ const BlogSection = lazyLoad(() => import("@/components/BlogSection"), {
 });
 
 export default async function Home() {
-  const [experienceEntries, serviceTiers, heroContent, aboutContent, visibility] = await Promise.all([
+  const [experienceEntries, serviceTiers, heroContent, aboutContent, visibility, splashEnabled] = await Promise.all([
     getExperienceEntries(),
     getServiceTiers(),
     getSectionContent('hero'),
     getSectionContent('about'),
     getSectionVisibility(),
+    getSplashEnabled(),
   ]);
 
   const show = (id: string) => visibility[id] !== false;
 
   return (
-    <SplashWrapper>
+    <SplashWrapper splashEnabled={splashEnabled}>
       <main className="relative z-0 bg-background text-foreground min-h-screen flex flex-col">
         <ParallaxBackground />
 

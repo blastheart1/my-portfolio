@@ -16,7 +16,7 @@ const inter = Inter({
 
 export const metadata = {
   metadataBase: new URL('https://luis.dev'),
-  title: 'Luis.dev - Antonio Luis Santos | Full-Stack Developer & QA Specialist',
+  title: 'Code by Luis',
   description: 'Senior IBM ODM Specialist and QA Team Manager specializing in full-stack development, AI integration, and scalable systems. Building future-ready applications with precision and innovation.',
   keywords: [
     'Antonio Luis Santos', 
@@ -49,13 +49,13 @@ export const metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://luis.dev',
-    siteName: 'Luis.dev',
-    title: 'Luis.dev - Antonio Luis Santos | Full-Stack Developer & QA Specialist',
+    siteName: 'CodeByLuis.Dev',
+    title: 'Code by Luis',
     description: 'Senior IBM ODM Specialist and QA Team Manager specializing in full-stack development, AI integration, and scalable systems. Expert in React, Next.js, Python, and AI technologies.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Luis.dev - Antonio Luis Santos | Full-Stack Developer & QA Specialist',
+    title: 'Code by Luis',
     description: 'Senior IBM ODM Specialist and QA Team Manager specializing in full-stack development, AI integration, and scalable systems.',
     creator: '@0xlv1s_',
     site: '@0xlv1s_',
