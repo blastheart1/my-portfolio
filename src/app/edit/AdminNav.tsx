@@ -10,6 +10,7 @@ const TOP_LINKS = [
   { href: '/edit/sections',     label: 'Sections',   match: (p: string) => p === '/edit/sections' },
   { href: '/edit/content/hero', label: 'Content',    match: (p: string) => p.startsWith('/edit/content') },
   { href: '/edit/experience',   label: 'Experience', match: (p: string) => p === '/edit/experience' },
+  { href: '/edit/projects',     label: 'Projects',   match: (p: string) => p === '/edit/projects' },
   { href: '/edit/services',     label: 'Services',   match: (p: string) => p === '/edit/services' },
   { href: '/edit/images',       label: 'Images',     match: (p: string) => p === '/edit/images' },
   { href: '/edit/chatbot',      label: 'Chatbot',    match: (p: string) => p.startsWith('/edit/chatbot') },

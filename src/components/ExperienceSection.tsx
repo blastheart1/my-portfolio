@@ -94,7 +94,7 @@ function toDisplay(e: ExperienceEntry): DisplayEntry {
   };
 }
 
-export default function ExperienceSection({ initialEntries }: { initialEntries?: ExperienceEntry[] }) {
+export default function ExperienceSection({ initialEntries, heading, subheading }: { initialEntries?: ExperienceEntry[]; heading?: string; subheading?: string }) {
   const [showMore, setShowMore] = useState(false);
 
   const hasDbData = initialEntries && initialEntries.length > 0;
@@ -119,8 +119,8 @@ export default function ExperienceSection({ initialEntries }: { initialEntries?:
         transition={{ duration: 0.5 }}
       >
         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
-          Experience.<br />
-          <span className="text-gray-500 dark:text-gray-400 font-normal">What I&apos;ve built and where.</span>
+          {heading || 'Experience.'}<br />
+          <span className="text-gray-500 dark:text-gray-400 font-normal">{subheading || "What I've built and where."}</span>
         </h2>
       </motion.div>
 

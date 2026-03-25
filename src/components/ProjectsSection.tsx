@@ -5,7 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import StackBadge from "./StackBadge";
 
-const projects = [
+import type { ProjectRow } from "@/lib/content-queries";
+
+type DisplayProject = { title: string; description: string; tech: string[]; link: string };
+
+const FALLBACK_PROJECTS: DisplayProject[] = [
   {
     title: "Advanced Chatbot",
     description:
@@ -39,10 +43,10 @@ const projects = [
     tech: ["Next.js 15", "TypeScript", "Tailwind CSS", "Framer Motion", "Resend API", "GSAP", "Swiper", "Vercel"], 
     link: "https://va-portfolio-sample.vercel.app/"
   },
-  { 
-    title: "Pilates With Bee", 
-    description: "Built an online Pilates clinic platform for scheduling sessions, managing content, and providing virtual consultations. Integrated headless CMS and automation tools for streamlined client management.", 
-    tech: ["Next.js", "React", "Tailwind CSS", "Sanity CMS", "Zapier", "Vercel"], 
+  {
+    title: "Pilates With Bee",
+    description: "Built an online Pilates clinic platform for scheduling sessions, managing content, and providing virtual consultations. Integrated headless CMS and automation tools for streamlined client management.",
+    tech: ["Next.js", "React", "Tailwind CSS", "Sanity CMS", "Zapier", "Vercel"],
     link: "https://pilates-w-bee.vercel.app/"
   },
 ];
@@ -122,7 +126,7 @@ function ProjectDescription({ description }: { description: string }) {
   );
 }
 
-function ProjectCard({ project }: { project: typeof projects[0] }) {
+function ProjectCard({ project }: { project: DisplayProject }) {
   return (
     <div className="group block h-full">
       <Card className="rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col h-full p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
@@ -160,12 +164,30 @@ function ProjectCard({ project }: { project: typeof projects[0] }) {
   );
 }
 
-export default function ProjectsSection() {
+export default function ProjectsSection({
+  initialProjects,
+  heading,
+  subheading,
+}: {
+  initialProjects?: ProjectRow[];
+  heading?: string;
+  subheading?: string;
+} = {}) {
   const [showAll, setShowAll] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  
+
+  const projects: DisplayProject[] =
+    initialProjects && initialProjects.length > 0
+      ? initialProjects.map((p) => ({
+          title: p.title,
+          description: p.description ?? '',
+          tech: p.tech ?? [],
+          link: p.link ?? '',
+        }))
+      : FALLBACK_PROJECTS;
+
   const displayedProjects = showAll ? projects : projects.slice(0, 5);
   const hasMoreProjects = projects.length >= 6;
   
@@ -223,8 +245,8 @@ export default function ProjectsSection() {
         transition={{ duration: 0.6 }}
       >
         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
-          Projects.<br />
-          <span className="text-gray-500 dark:text-gray-400 font-normal">Things I&apos;ve shipped.</span>
+          {heading || 'Projects.'}<br />
+          <span className="text-gray-500 dark:text-gray-400 font-normal">{subheading || "Things I've shipped."}</span>
         </h2>
       </motion.div>
 

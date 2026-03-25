@@ -23,17 +23,19 @@ const FALLBACK_SECTIONS: Section[] = [
 
 function SplashToggle() {
   const [enabled, setEnabled]   = useState<boolean | null>(null);
+  const [version, setVersion]   = useState<number>(1);
   const [saving, setSaving]     = useState(false);
+  const [bumping, setBumping]   = useState(false);
   const [status, setStatus]     = useState<'idle' | 'saved' | 'error'>('idle');
 
   useEffect(() => {
     fetch('/api/admin/settings')
       .then(r => r.json())
       .then(data => {
-        // default true if not set
         setEnabled(data?.splash_enabled !== 'false');
+        setVersion(parseInt(data?.splash_version ?? '1', 10) || 1);
       })
-      .catch(() => setEnabled(true));
+      .catch(() => { setEnabled(true); setVersion(1); });
   }, []);
 
   const toggle = async (next: boolean) => {
@@ -51,21 +53,47 @@ function SplashToggle() {
       setTimeout(() => setStatus('idle'), 2000);
     } catch {
       setStatus('error');
-      setEnabled(!next); // revert optimistic
+      setEnabled(!next);
     } finally {
       setSaving(false);
     }
   };
 
+  const bumpVersion = async () => {
+    setBumping(true);
+    const next = version + 1;
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'splash_version', value: String(next) }),
+      });
+      if (!res.ok) throw new Error();
+      setVersion(next);
+      setStatus('saved');
+      setTimeout(() => setStatus('idle'), 2000);
+    } catch {
+      setStatus('error');
+    } finally {
+      setBumping(false);
+    }
+  };
+
+  const previewSplash = () => {
+    // Clear the versioned key so the next page visit shows the splash
+    localStorage.removeItem(`hasSeenSplash_v${version}`);
+    window.open('/', '_blank');
+  };
+
   if (enabled === null) return null;
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5">
+    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 space-y-3">
       <div className="flex items-center justify-between">
         <div>
           <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">GSAP Splash Screen</p>
           <p className="text-xs text-gray-500 mt-0.5">
-            Full-screen animated intro shown once per visitor.
+            Full-screen animated intro shown once per visitor (v{version}).
             {!enabled && <span className="ml-1 text-amber-500">Visitors skip straight to portfolio.</span>}
           </p>
         </div>
@@ -90,6 +118,26 @@ function SplashToggle() {
           </button>
         </div>
       </div>
+      {enabled && (
+        <div className="flex items-center gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
+          <button
+            type="button"
+            onClick={previewSplash}
+            className="text-xs px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            Preview splash ↗
+          </button>
+          <button
+            type="button"
+            disabled={bumping}
+            onClick={bumpVersion}
+            className="text-xs px-3 py-1.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50 disabled:opacity-50 transition-colors"
+          >
+            {bumping ? 'Bumping…' : 'Re-show to all visitors'}
+          </button>
+          <span className="text-xs text-gray-400">Bumping increments the version so returning visitors see it again.</span>
+        </div>
+      )}
     </div>
   );
 }

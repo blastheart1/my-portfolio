@@ -23,7 +23,7 @@ interface FormErrors {
   message?: string;
 }
 
-export default function ContactSection() {
+export default function ContactSection({ heading, subheading }: { heading?: string; subheading?: string } = {}) {
   const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
@@ -126,8 +126,8 @@ export default function ContactSection() {
         transition={{ duration: 0.5 }}
       >
         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
-          Launch a conversation.<br />
-          <span className="text-gray-500 dark:text-gray-400 font-normal">Let&apos;s build something together.</span>
+          {heading || 'Launch a conversation.'}<br />
+          <span className="text-gray-500 dark:text-gray-400 font-normal">{subheading || "Let's build something together."}</span>
         </h2>
       </motion.div>
 

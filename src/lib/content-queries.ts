@@ -141,6 +141,84 @@ export async function getAllMediaAssets(): Promise<MediaAsset[]> {
 
 // ─── Site Settings ───────────────────────────────────────────────────────────
 
+// ─── Section Headings (all sections, single query) ───────────────────────────
+
+export interface SectionHeadings {
+  heading: string;
+  subheading: string;
+}
+
+export async function getAllSectionHeadings(): Promise<Record<string, SectionHeadings>> {
+  try {
+    const sql = getSql();
+    const rows = (await sql`
+      SELECT section_id, field_key, field_value
+      FROM section_content
+      WHERE field_key IN ('heading', 'subheading')
+    `) as Row[];
+
+    const result: Record<string, SectionHeadings> = {};
+    for (const row of rows) {
+      const sid = row.section_id as string;
+      const key = row.field_key as string;
+      const val = (row.field_value as string | null) ?? '';
+      if (!result[sid]) result[sid] = { heading: '', subheading: '' };
+      if (key === 'heading') result[sid].heading = val;
+      if (key === 'subheading') result[sid].subheading = val;
+    }
+    return result;
+  } catch {
+    return {};
+  }
+}
+
+export async function getSplashVersion(): Promise<number> {
+  try {
+    const sql = getSql();
+    type Row = { field_value: string | null };
+    const rows = (await sql`
+      SELECT field_value FROM section_content
+      WHERE section_id = 'settings' AND field_key = 'splash_version'
+      LIMIT 1
+    `) as unknown as Row[];
+    if (!rows.length) return 1;
+    return parseInt(rows[0].field_value ?? '1', 10) || 1;
+  } catch {
+    return 1;
+  }
+}
+
+// ─── Projects ────────────────────────────────────────────────────────────────
+
+export interface ProjectRow {
+  id: string;
+  title: string;
+  description: string | null;
+  tech: string[];
+  link: string | null;
+  image_url: string | null;
+  sort_order: number;
+  visible: boolean;
+}
+
+export async function getProjects(): Promise<ProjectRow[]> {
+  try {
+    const sql = getSql();
+    return (await sql`
+      SELECT * FROM projects
+      WHERE visible = true
+      ORDER BY sort_order ASC
+    `) as unknown as ProjectRow[];
+  } catch {
+    return [];
+  }
+}
+
+export async function getAllProjects(): Promise<ProjectRow[]> {
+  const sql = getSql();
+  return (await sql`SELECT * FROM projects ORDER BY sort_order ASC`) as unknown as ProjectRow[];
+}
+
 export async function getSplashEnabled(): Promise<boolean> {
   try {
     const sql = getSql();
