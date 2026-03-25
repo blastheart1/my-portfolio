@@ -33,7 +33,7 @@ export async function PATCH(
   try {
     const sql = getSql();
     const d = parsed.data;
-    const rows = await sql`
+    const rows = (await sql`
       UPDATE service_tiers SET
         name        = COALESCE(${d.name ?? null}, name),
         tagline     = COALESCE(${d.tagline ?? null}, tagline),
@@ -47,7 +47,7 @@ export async function PATCH(
         updated_at  = now()
       WHERE id = ${id}
       RETURNING *
-    `;
+    `) as unknown as Record<string, unknown>[];
     if (!rows.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     revalidatePath('/');
     return NextResponse.json(rows[0]);
