@@ -20,6 +20,12 @@ const TILES = [
     icon: '◈',
   },
   {
+    href: '/edit/projects',
+    title: 'Projects',
+    desc: 'Add, edit, and remove portfolio projects.',
+    icon: '◧',
+  },
+  {
     href: '/edit/images',
     title: 'Images',
     desc: 'Upload and manage media assets.',

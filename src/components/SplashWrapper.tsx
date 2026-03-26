@@ -6,9 +6,10 @@ import SplashScreen from './SplashScreen';
 interface SplashWrapperProps {
   children: React.ReactNode;
   splashEnabled?: boolean;
+  splashVersion?: number;
 }
 
-export default function SplashWrapper({ children, splashEnabled = true }: SplashWrapperProps) {
+export default function SplashWrapper({ children, splashEnabled = true, splashVersion = 1 }: SplashWrapperProps) {
   const [showSplash, setShowSplash]       = useState(false);
   const [splashComplete, setSplashComplete] = useState(false);
   const portfolioRef = useRef<HTMLDivElement>(null);
@@ -20,7 +21,8 @@ export default function SplashWrapper({ children, splashEnabled = true }: Splash
       return;
     }
 
-    const hasSeenSplash = localStorage.getItem('hasSeenSplash');
+    const key = `hasSeenSplash_v${splashVersion}`;
+    const hasSeenSplash = localStorage.getItem(key);
     if (hasSeenSplash === 'true') {
       setSplashComplete(true);
       return;
@@ -54,7 +56,8 @@ export default function SplashWrapper({ children, splashEnabled = true }: Splash
 
   const handleSplashComplete = () => {
     setSplashComplete(true);
-    localStorage.setItem('hasSeenSplash', 'true');
+    const key = `hasSeenSplash_v${splashVersion}`;
+    localStorage.setItem(key, 'true');
 
     document.body.classList.remove('splash-active');
     document.documentElement.classList.remove('splash-active');

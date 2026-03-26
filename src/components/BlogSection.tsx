@@ -7,9 +7,11 @@ import { useModal } from '@/contexts/ModalContext';
 
 interface BlogSectionProps {
   className?: string;
+  heading?: string;
+  subheading?: string;
 }
 
-export default function BlogSection({ className = '' }: BlogSectionProps) {
+export default function BlogSection({ className = '', heading, subheading }: BlogSectionProps) {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -126,8 +128,8 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
         <div className="max-w-6xl mx-auto">
           <div className="mb-12 px-4 md:px-6">
             <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
-              Blog & Case Studies.<br />
-              <span className="text-neutral-500 font-normal">Insights on tech and craft.</span>
+              {heading || 'Blog & Case Studies.'}<br />
+              <span className="text-neutral-500 font-normal">{subheading || 'Insights on tech and craft.'}</span>
             </h2>
           </div>
           <div className="flex items-center justify-center h-64">
@@ -144,8 +146,8 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
         <div className="max-w-6xl mx-auto">
           <div className="mb-12 px-4 md:px-6">
             <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
-              Blog & Case Studies.<br />
-              <span className="text-neutral-500 font-normal">Insights on tech and craft.</span>
+              {heading || 'Blog & Case Studies.'}<br />
+              <span className="text-neutral-500 font-normal">{subheading || 'Insights on tech and craft.'}</span>
             </h2>
           </div>
           <div className="text-center">
@@ -167,8 +169,8 @@ export default function BlogSection({ className = '' }: BlogSectionProps) {
       <div className="max-w-6xl mx-auto">
             <div className="mb-12 px-4 md:px-6">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight">
-                Blog & Case Studies.<br />
-                <span className="text-neutral-400 dark:text-neutral-500 font-normal">Insights on tech and craft.</span>
+                {heading || 'Blog & Case Studies.'}<br />
+                <span className="text-neutral-400 dark:text-neutral-500 font-normal">{subheading || 'Insights on tech and craft.'}</span>
               </h2>
             </div>
 

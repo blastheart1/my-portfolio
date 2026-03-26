@@ -13,6 +13,9 @@ import {
   getSectionContent,
   getSectionVisibility,
   getSplashEnabled,
+  getSplashVersion,
+  getAllSectionHeadings,
+  getProjects,
 } from "@/lib/content-queries";
 
 // Force server-render on every request so DB edits show immediately
@@ -36,19 +39,22 @@ const BlogSection = lazyLoad(() => import("@/components/BlogSection"), {
 });
 
 export default async function Home() {
-  const [experienceEntries, serviceTiers, heroContent, aboutContent, visibility, splashEnabled] = await Promise.all([
+  const [experienceEntries, serviceTiers, heroContent, aboutContent, visibility, splashEnabled, splashVersion, headings, projectRows] = await Promise.all([
     getExperienceEntries(),
     getServiceTiers(),
     getSectionContent('hero'),
     getSectionContent('about'),
     getSectionVisibility(),
     getSplashEnabled(),
+    getSplashVersion(),
+    getAllSectionHeadings(),
+    getProjects(),
   ]);
 
   const show = (id: string) => visibility[id] !== false;
 
   return (
-    <SplashWrapper splashEnabled={splashEnabled}>
+    <SplashWrapper splashEnabled={splashEnabled} splashVersion={splashVersion}>
       <main className="relative z-0 bg-background text-foreground min-h-screen flex flex-col">
         <ParallaxBackground />
 
@@ -65,21 +71,32 @@ export default async function Home() {
 
           {show('experience') && (
             <ScrollFadeEffect fadeStartPoint={0.75} fadeIntensity={1.3}>
-              <ExperienceSection initialEntries={experienceEntries} />
+              <ExperienceSection
+                initialEntries={experienceEntries}
+                heading={headings.experience?.heading}
+                subheading={headings.experience?.subheading}
+              />
             </ScrollFadeEffect>
           )}
 
           {show('skills') && (
             <ScrollFadeEffect fadeStartPoint={0.8} fadeIntensity={1.4}>
               <section id="skills">
-                <TechStacks />
+                <TechStacks
+                  heading={headings.skills?.heading}
+                  subheading={headings.skills?.subheading}
+                />
               </section>
             </ScrollFadeEffect>
           )}
 
           {show('projects') && (
             <ScrollFadeEffect fadeStartPoint={0.85} fadeIntensity={1.5}>
-              <ProjectsSection />
+              <ProjectsSection
+                initialProjects={projectRows}
+                heading={headings.projects?.heading}
+                subheading={headings.projects?.subheading}
+              />
             </ScrollFadeEffect>
           )}
 
@@ -90,7 +107,11 @@ export default async function Home() {
           {show('services') && (
             <ScrollFadeEffect fadeStartPoint={0.9} fadeIntensity={1.6}>
               <section id="services">
-                <ServicesSection initialTiers={serviceTiers} />
+                <ServicesSection
+                  initialTiers={serviceTiers}
+                  heading={headings.services?.heading}
+                  subheading={headings.services?.subheading}
+                />
               </section>
             </ScrollFadeEffect>
           )}
@@ -98,12 +119,20 @@ export default async function Home() {
           {show('blog') && (
             <ScrollFadeEffect fadeStartPoint={0.95} fadeIntensity={1.7}>
               <section id="blog">
-                <BlogSection />
+                <BlogSection
+                  heading={headings.blog?.heading}
+                  subheading={headings.blog?.subheading}
+                />
               </section>
             </ScrollFadeEffect>
           )}
 
-          {show('contact') && <ContactSection />}
+          {show('contact') && (
+            <ContactSection
+              heading={headings.contact?.heading}
+              subheading={headings.contact?.subheading}
+            />
+          )}
         </div>
 
         <footer className="py-12 text-center text-sm text-muted-foreground relative z-10 mt-auto">

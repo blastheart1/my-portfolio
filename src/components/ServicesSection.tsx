@@ -83,7 +83,7 @@ const FALLBACK_SERVICES: ServiceTier[] = [
   },
 ];
 
-export default function ServicesSection({ initialTiers }: { initialTiers?: DBServiceTier[] }) {
+export default function ServicesSection({ initialTiers, heading, subheading }: { initialTiers?: DBServiceTier[]; heading?: string; subheading?: string }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const services = initialTiers && initialTiers.length > 0
     ? initialTiers.map(dbToDisplay)
@@ -123,8 +123,8 @@ export default function ServicesSection({ initialTiers }: { initialTiers?: DBSer
         viewport={{ once: true }}
       >
         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
-          Pick your scope.<br />
-          <span className="text-gray-600 dark:text-gray-300 font-normal">I handle the rest.</span>
+          {heading || 'Pick your scope.'}<br />
+          <span className="text-gray-600 dark:text-gray-300 font-normal">{subheading || 'I handle the rest.'}</span>
         </h2>
       </motion.div>
 

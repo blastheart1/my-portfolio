@@ -52,7 +52,12 @@ const allTechStacks: TechStack[] = [
   { name: "ngrok", category: "DevOps & Cloud" },
 ];
 
-export default function TechStacks() {
+interface TechStacksProps {
+  heading?: string;
+  subheading?: string;
+}
+
+export default function TechStacks({ heading, subheading }: TechStacksProps = {}) {
   // Split tech stacks into 3 rows
   const getRowTech = (startIndex: number): TechStack[] => {
     const rowSize = 10;
@@ -97,8 +102,8 @@ export default function TechStacks() {
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight">
-            Tech stack.<br />
-            <span className="text-gray-500 dark:text-gray-400 font-normal">Tools I ship with daily.</span>
+            {heading || 'Tech stack.'}<br />
+            <span className="text-gray-500 dark:text-gray-400 font-normal">{subheading || 'Tools I ship with daily.'}</span>
           </h2>
         </motion.div>
 
