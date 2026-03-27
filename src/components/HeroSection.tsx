@@ -9,15 +9,21 @@ interface HeroContent {
   description?: string;
   cta_label?: string;
   cta_url?: string;
+  photo_default_url?: string;
+  photo_hover_url?: string;
+  photo_dark_url?: string;
 }
 
 
 export default function HeroSection({ content = {} }: { content?: HeroContent }) {
-  const name        = content.name        ?? "Antonio Luis Santos";
-  const subtitle    = content.subtitle    ?? "Software Development & QA";
-  const description = content.description ?? "Full-Stack, AI, and scalable systems – building future-ready applications that deliver results.";
-  const ctaLabel    = content.cta_label   ?? "Schedule a Call";
-  const ctaUrl      = content.cta_url     ?? "https://calendly.com/antonioluis-santos1/30min";
+  const name         = content.name             ?? "Antonio Luis Santos";
+  const subtitle     = content.subtitle         ?? "Software Development & QA";
+  const description  = content.description      ?? "Full-Stack, AI, and scalable systems – building future-ready applications that deliver results.";
+  const ctaLabel     = content.cta_label        ?? "Schedule a Call";
+  const ctaUrl       = content.cta_url          ?? "https://calendly.com/antonioluis-santos1/30min";
+  const photoDefault = content.photo_default_url ?? "/profile-photo2.png";
+  const photoHover   = content.photo_hover_url   ?? "/square-profile-photo.jpeg";
+  const photoDark    = content.photo_dark_url     ?? "/profile-photo2.png";
 
   const handleCta = () => {
     if (window.Calendly?.showPopupWidget) {
@@ -70,35 +76,41 @@ export default function HeroSection({ content = {} }: { content?: HeroContent })
         </div>
       </div>
 
-      {/* Profile Image */}
+      {/* Profile Image — 3-layer stack */}
       <motion.div
         className="w-48 h-48 sm:w-56 sm:h-56 rounded-full overflow-hidden shadow-lg transition-all duration-500 hover:scale-110 hover:shadow-2xl hover:rotate-2 relative group"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.6 }}
       >
+        {/* Layer 1: Default — always visible base */}
         <Image
-          src="/profile-photo2.png"
+          src={photoDefault}
           alt={`${name} - Senior IBM ODM Specialist and QA Team Manager specializing in full-stack development, AI integration, and scalable systems`}
           width={224}
           height={224}
-          className="object-cover object-center w-full h-full transition-all duration-500 group-hover:opacity-0 group-hover:scale-110"
+          className="object-cover object-center w-full h-full"
           priority
-          placeholder="blur"
-          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
           sizes="(max-width: 768px) 192px, 224px"
           quality={90}
         />
-        <Image
-          src="/square-profile-photo.jpeg"
-          alt={`${name} - Professional headshot`}
-          width={224}
-          height={224}
-          className="object-cover object-center w-full h-full transition-all duration-500 absolute inset-0 opacity-0 group-hover:opacity-100 group-hover:scale-110"
-          placeholder="blur"
-          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-          sizes="(max-width: 768px) 192px, 224px"
-          quality={90}
+
+        {/* Layer 2: Dark mode — crossfades in when dark class applies */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={photoDark}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-0 dark:opacity-100 transition-opacity duration-700"
+        />
+
+        {/* Layer 3: Hover — clip-path wipe reveals left→right */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={photoHover}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center transition-[clip-path] duration-500 ease-in-out [clip-path:inset(0_100%_0_0)] group-hover:[clip-path:inset(0_0%_0_0)]"
         />
       </motion.div>
     </section>

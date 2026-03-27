@@ -129,7 +129,9 @@ export default function CustomCursor() {
           zIndex: 99999,
           willChange: "transform",
           opacity: 0, // shown via JS only on pointer:fine
-          mixBlendMode: "difference",
+          // Dual outline: white inner ring keeps dot visible on dark/blue,
+          // translucent dark outer ring keeps it visible on light/white
+          boxShadow: "0 0 0 1.5px rgba(255,255,255,0.9), 0 0 0 3px rgba(0,0,0,0.15)",
           transition: "transform 0.08s ease",
         }}
       />
