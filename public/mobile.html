@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>CODE BY LUIS | AI Systems Engineer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@400;500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "on-secondary-fixed": "#00164e",
+          "primary-fixed-dim": "#ffb5a0",
+          "surface-container-low": "#1c1b1b",
+          "secondary-container": "#173ea1",
+          "primary": "#ffb5a0",
+          "error": "#ffb4ab",
+          "on-primary-fixed": "#3b0900",
+          "primary-container": "#ff5625",
+          "inverse-on-surface": "#313030",
+          "tertiary-fixed-dim": "#c3c7cb",
+          "surface-container": "#201f1f",
+          "on-primary-container": "#541100",
+          "surface-container-highest": "#353534",
+          "on-background": "#e5e2e1",
+          "on-tertiary-fixed": "#171c1f",
+          "on-surface-variant": "#e7bdb2",
+          "tertiary-fixed": "#dfe3e7",
+          "surface-container-lowest": "#0e0e0e",
+          "surface": "#131313",
+          "on-surface": "#e5e2e1",
+          "tertiary": "#c3c7cb",
+          "on-tertiary": "#2c3134",
+          "on-primary": "#601400",
+          "error-container": "#93000a",
+          "surface-variant": "#353534",
+          "primary-fixed": "#ffdbd1",
+          "outline": "#ad887e",
+          "outline-variant": "#5d4038",
+          "on-secondary-container": "#9db2ff",
+          "secondary-fixed": "#dce1ff",
+          "on-tertiary-fixed-variant": "#43474b",
+          "on-error-container": "#ffdad6",
+          "surface-bright": "#3a3939",
+          "surface-container-high": "#2a2a2a",
+          "on-secondary": "#00287c",
+          "on-error": "#690005",
+          "inverse-surface": "#e5e2e1",
+          "secondary-fixed-dim": "#b5c4ff",
+          "tertiary-container": "#8d9195",
+          "secondary": "#b5c4ff",
+          "on-tertiary-container": "#252a2d",
+          "on-secondary-fixed-variant": "#173ea1",
+          "surface-dim": "#131313",
+          "on-primary-fixed-variant": "#872000",
+          "background": "#131313",
+          "surface-tint": "#ffb5a0",
+          "inverse-primary": "#b12d00"
+        },
+        borderRadius: {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        fontFamily: {
+          "headline": ["Space Grotesk"],
+          "body": ["Inter"],
+          "label": ["Space Grotesk"]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body {
+    background-color: #050505;
+    color: #e5e2e1;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    overflow-x: hidden;
+  }
+  /* Bottom nav padding only on mobile */
+  @media (max-width: 767px) {
+    body { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
+  }
+  .font-headline { font-family: 'Space Grotesk', sans-serif; }
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  .glass-panel {
+    background: rgba(19, 19, 19, 0.4);
+    backdrop-filter: blur(20px);
+  }
+  .telemetry-grid {
+    background-image: radial-gradient(rgba(255, 69, 0, 0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* -- Scroll Frames -- */
+  .scroll-frame {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem 1.25rem 5rem;
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    will-change: opacity, transform;
+  }
+  .scroll-frame.frame-active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    z-index: 25;
+  }
+  .scroll-frame.frame-exit {
+    opacity: 0;
+    transform: translateY(-24px);
+    pointer-events: none;
+  }
+
+  /* -- Frame progress dots -- */
+  .frame-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: rgba(255, 86, 37, 0.25);
+    transition: all 0.35s ease;
+    flex-shrink: 0;
+  }
+  .frame-dot.dot-active {
+    background: #ff5625;
+    height: 20px;
+    border-radius: 3px;
+    box-shadow: 0 0 8px rgba(255,86,37,0.6);
+  }
+
+  /* -- Safe area utilities -- */
+  .pt-safe { padding-top: max(0.75rem, env(safe-area-inset-top)); }
+  .pb-safe { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+
+  /* -- Sticky viewport -- */
+  .sticky-viewport {
+    height: 100dvh;
+    height: calc(var(--vh, 1vh) * 100);
+  }
+
+  /* -- Scanline overlay -- */
+  .scanlines {
+    background: linear-gradient(
+      rgba(18,16,16,0) 50%,
+      rgba(0,0,0,0.18) 50%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255,0,0,0.04),
+      rgba(0,255,0,0.01),
+      rgba(0,0,255,0.04)
+    );
+    background-size: 100% 2px, 3px 100%;
+  }
+
+  /* -- 2. What I Build: scroll-from-right entries -- */
+  .build-row {
+    opacity: 0;
+    transform: translateX(80px);
+    transition: opacity 0.7s cubic-bezier(.22,1,.36,1), transform 0.7s cubic-bezier(.22,1,.36,1);
+  }
+  .build-row.build-visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* -- 4. Experience hover popup (alternating dialogue) -- */
+  .exp-item { position: relative; }
+  .exp-popup {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    width: 30.6rem;
+    opacity: 0;
+    transform: translateY(6px);
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    z-index: 60;
+  }
+  /* Odd items (1st, 3rd, 5th): popup upper-right */
+  .exp-item:nth-child(odd) .exp-popup {
+    left: auto;
+    right: -0.5rem;
+  }
+  /* Even items (2nd, 4th): popup upper-left */
+  .exp-item:nth-child(even) .exp-popup {
+    left: -0.5rem;
+    right: auto;
+  }
+  /* Speech bubble tail */
+  .exp-popup::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    width: 12px;
+    height: 12px;
+    background: #141414;
+    border-right: 1px solid rgba(255,86,37,0.3);
+    border-bottom: 1px solid rgba(255,86,37,0.3);
+    transform: rotate(45deg);
+  }
+  .exp-item:nth-child(odd) .exp-popup::after { right: 1.25rem; left: auto; }
+  .exp-item:nth-child(even) .exp-popup::after { left: 1.25rem; right: auto; }
+
+  .exp-item:hover .exp-popup,
+  .exp-item:focus-within .exp-popup {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  @media (hover: none) {
+    .exp-item:active .exp-popup {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+  }
+
+  /* -- 5. Danger tape -- realistic 3D ribbon with inline SVG pattern.
+     SVG gives seamless diagonal stripes + edge shading for physical tape look.
+     The strip element is rotated via transform:rotate() for the crossing effect. */
+  .danger-tape,
+  .danger-tape-reverse {
+    /* Inline SVG: 40x40 tile with 45-degree orange/black stripes */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23ff5625'/%3E%3Cpath d='M-10 30L30-10L40 0L0 40z' fill='%230a0a0a'/%3E%3Cpath d='M30 50L70 10L60 0L20 40z' fill='%230a0a0a'/%3E%3C/svg%3E");
+    background-size: 40px 40px;
+    background-repeat: repeat;
+    /* 3D ribbon: highlight on top edge, shadow on bottom */
+    border-top: 1px solid rgba(255,255,255,0.25);
+    border-bottom: 1px solid rgba(0,0,0,0.5);
+    box-shadow:
+      0 3px 6px rgba(0,0,0,0.5),
+      0 -1px 2px rgba(255,255,255,0.08),
+      inset 0 1px 0 rgba(255,255,255,0.15),
+      inset 0 -1px 0 rgba(0,0,0,0.3);
+  }
+
+  /* -- Respect reduced motion -- */
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-frame {
+      transition: opacity 0.2s ease;
+      transform: none !important;
+    }
+    .frame-dot { transition: none; }
+    .build-row {
+      transition: opacity 0.2s ease;
+      transform: none !important;
+    }
+    .danger-tape, .danger-tape-reverse { animation: none; }
+  }
+
+  body { min-height: max(884px, 100dvh); }
+</style>
+</head>
+<body class="bg-[#050505]">
+
+<!-- --- Loading Telemetry Bar --- -->
+<div class="fixed top-0 left-0 w-full h-1 z-[100] bg-zinc-900" aria-hidden="true">
+  <div class="h-full bg-primary-container shadow-[0_0_15px_rgba(255,86,37,0.8)] transition-all duration-1000" id="load-bar" style="width:64%"></div>
+  <div class="absolute top-2 right-4 font-headline text-[9px] tracking-[0.18em] text-primary-container uppercase hidden sm:block">
+    System Preload: 64% / Initializing AI Stack
+  </div>
+</div>
+
+<!-- --- Top App Bar --- -->
+<header class="fixed top-0 w-full z-50 bg-black/50 backdrop-blur-xl flex justify-between items-center px-4 md:px-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+        style="padding-top: max(0.875rem, env(safe-area-inset-top)); padding-bottom: 0.875rem;">
+  <div class="flex items-center gap-2">
+    <span class="material-symbols-outlined text-orange-600 text-[1.1rem]" aria-hidden="true">terminal</span>
+    <h1 class="text-[0.9rem] font-bold tracking-[-0.03em] text-white font-headline uppercase">CODE BY LUIS</h1>
+  </div>
+  <nav class="hidden md:flex gap-8 items-center font-headline tracking-tighter uppercase text-xs" aria-label="Primary">
+    <a class="text-orange-600 hover:text-orange-500 transition-colors duration-300" href="#">Engine</a>
+    <a class="text-zinc-500 hover:text-orange-500 transition-colors duration-300" href="#stack">Telemetry</a>
+    <a class="text-zinc-500 hover:text-orange-500 transition-colors duration-300" href="#projects">Hangar</a>
+    <a class="text-zinc-500 hover:text-orange-500 transition-colors duration-300" href="#contact">Contact</a>
+  </nav>
+  <button class="flex items-center justify-center text-orange-600 md:hidden"
+          style="min-width:44px;min-height:44px;" aria-label="Open menu">
+    <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+  </button>
+</header>
+
+<!-- --- Main Scrollytelling Container --- -->
+<main class="relative">
+
+  <!-- ======================================
+       HERO -- Sticky Canvas (6-frame scrollytelling)
+       Height = 6 x ~680px of scroll travel
+  ====================================== -->
+  <section class="relative telemetry-grid" style="height: 4100px;" id="hero-section">
+    <div class="sticky top-0 w-full overflow-hidden sticky-viewport" id="sticky-canvas">
+
+      <!-- Ambient gradient -->
+      <div class="absolute inset-0 bg-gradient-to-b from-transparent via-orange-950/10 to-transparent pointer-events-none" aria-hidden="true"></div>
+      <!-- Scanline overlay -->
+      <div class="absolute inset-0 scanlines pointer-events-none opacity-40" aria-hidden="true"></div>
+
+      <!-- --- Telemetry HUD -- Left (sm+) --- -->
+      <div class="absolute left-5 top-1/2 -translate-y-1/2 flex-col gap-10 z-20 hidden sm:flex" aria-hidden="true">
+        <div class="space-y-1 border-l border-primary-container/30 pl-3" id="hud-stack">
+          <p class="font-headline text-[9px] tracking-widest text-zinc-500 uppercase">System Stack</p>
+          <p class="font-headline text-sm font-bold text-white uppercase tracking-tighter" id="hud-stack-val">Next.js / Python</p>
+        </div>
+        <div class="space-y-1 border-l border-primary-container/30 pl-3">
+          <p class="font-headline text-[9px] tracking-widest text-zinc-500 uppercase">Deploy Target</p>
+          <p class="font-headline text-sm font-bold text-white uppercase tracking-tighter">Vercel / AWS</p>
+        </div>
+        <div class="space-y-1 border-l border-primary-container/30 pl-3">
+          <p class="font-headline text-[9px] tracking-widest text-zinc-500 uppercase">Agent Status</p>
+          <p class="font-headline text-sm font-bold text-orange-600 uppercase tracking-tighter">Live / Active</p>
+        </div>
+      </div>
+
+      <!-- --- Frame Progress Dots -- Right (6 dots now) --- -->
+      <div class="absolute right-3 md:right-7 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30" aria-label="Scroll progress" role="progressbar">
+        <div class="frame-dot dot-active" id="dot-0"></div>
+        <div class="frame-dot" id="dot-1"></div>
+        <div class="frame-dot" id="dot-2"></div>
+        <div class="frame-dot" id="dot-3"></div>
+        <div class="frame-dot" id="dot-4"></div>
+        <div class="frame-dot" id="dot-5"></div>
+      </div>
+
+      <!-- ===================================
+           FRAME 1 -- Hero Identity
+      =================================== -->
+      <div class="scroll-frame frame-active text-center" id="frame-0">
+        <div class="mb-3">
+          <span class="inline-block px-3 py-1.5 glass-panel border border-white/10 font-headline tracking-[0.25em] uppercase text-orange-600"
+                style="font-size:0.625rem;">
+            AI Full Stack Engineer
+          </span>
+        </div>
+
+        <h2 class="font-headline font-black uppercase text-white leading-[0.9] tracking-[-0.04em]"
+            style="font-size: clamp(3.25rem, 16vw, 8rem);">
+          CODE<br/><span class="text-orange-600">BY LUIS</span>
+        </h2>
+
+        <p class="mt-5 text-zinc-400 leading-relaxed max-w-[20rem] mx-auto" style="font-size: clamp(0.875rem, 3.5vw, 1rem);">
+          Building intelligent systems that automate, integrate, and scale at production velocity.
+        </p>
+
+        <div class="mt-6 flex gap-2 justify-center flex-wrap">
+          <span class="px-3 py-1.5 glass-panel border border-white/10 font-headline tracking-[0.22em] uppercase" style="font-size:0.625rem;">Generative AI</span>
+          <span class="px-3 py-1.5 glass-panel border border-white/10 font-headline tracking-[0.22em] uppercase" style="font-size:0.625rem;">Full Stack</span>
+          <span class="px-3 py-1.5 glass-panel border border-white/10 font-headline tracking-[0.22em] uppercase" style="font-size:0.625rem;">Automation</span>
+        </div>
+
+        <!-- Scroll cue -->
+        <div class="absolute flex flex-col items-center gap-3" style="bottom: calc(5rem + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%);">
+          <span class="font-headline tracking-widest text-zinc-500 uppercase" style="font-size:0.5625rem;">Engage Scroll</span>
+          <div class="w-px h-10 bg-gradient-to-b from-orange-600 to-transparent"></div>
+        </div>
+      </div>
+
+      <!-- ===================================
+           FRAME 2 -- Driver Profile (NEW)
+           Name, description, 7 years
+      =================================== -->
+      <div class="scroll-frame text-center" id="frame-1">
+        <p class="font-headline text-orange-600 tracking-[0.35em] uppercase mb-4" style="font-size:0.625rem;">
+          Driver Profile
+        </p>
+
+        <h2 class="font-headline font-black uppercase text-white leading-[0.88] tracking-[-0.04em]"
+            style="font-size: clamp(2.5rem, 12vw, 6rem);">
+          Antonio Luis<br/>Santos
+        </h2>
+
+        <div class="mt-5 flex items-center justify-center gap-3">
+          <span class="inline-block w-8 h-px bg-orange-600"></span>
+          <span class="font-headline tracking-[0.25em] text-zinc-400 uppercase" style="font-size:0.6875rem;">7 Years in the IT Industry</span>
+          <span class="inline-block w-8 h-px bg-orange-600"></span>
+        </div>
+
+        <p class="mt-6 text-zinc-400 leading-relaxed max-w-[20rem] mx-auto" style="font-size: clamp(0.8125rem, 3vw, 0.9375rem);">
+          Full-Stack Software Engineer specializing in Generative AI. Building scalable applications, intelligent automation, and enterprise-grade decision systems.
+        </p>
+
+        <div class="mt-6 flex gap-2 justify-center flex-wrap">
+          <span class="px-3 py-1.5 glass-panel border border-white/10 font-headline tracking-[0.22em] uppercase" style="font-size:0.625rem;">Full-Stack</span>
+          <span class="px-3 py-1.5 glass-panel border border-white/10 font-headline tracking-[0.22em] uppercase" style="font-size:0.625rem;">Generative AI</span>
+          <span class="px-3 py-1.5 glass-panel border border-white/10 font-headline tracking-[0.22em] uppercase" style="font-size:0.625rem;">QA Lead</span>
+        </div>
+      </div>
+
+      <!-- ===================================
+           FRAME 3 -- What I Build (scroll-from-right entries)
+      =================================== -->
+      <div class="scroll-frame" id="frame-2">
+        <div class="w-full max-w-[22rem] mx-auto">
+          <p class="font-headline text-orange-600 tracking-widest uppercase mb-5 text-center" style="font-size:0.625rem;">
+            03 // What I Build
+          </p>
+
+          <div class="space-y-3" id="build-list">
+
+            <div class="build-row flex items-center gap-4 p-4 bg-zinc-900/70 border border-white/5 backdrop-blur-sm">
+              <div class="w-9 h-9 bg-primary-container/10 border border-primary-container/30 flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-orange-600" style="font-size:1.1rem;" aria-hidden="true">psychology</span>
+              </div>
+              <div>
+                <p class="font-headline text-sm font-semibold text-white uppercase tracking-tight">Generative AI Systems</p>
+                <p class="text-zinc-500 mt-0.5" style="font-size:0.6875rem;">LLM-powered, context-aware applications</p>
+              </div>
+            </div>
+
+            <div class="build-row flex items-center gap-4 p-4 bg-zinc-900/70 border border-white/5 backdrop-blur-sm">
+              <div class="w-9 h-9 bg-primary-container/10 border border-primary-container/30 flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-orange-600" style="font-size:1.1rem;" aria-hidden="true">autorenew</span>
+              </div>
+              <div>
+                <p class="font-headline text-sm font-semibold text-white uppercase tracking-tight">Workflow Automation</p>
+                <p class="text-zinc-500 mt-0.5" style="font-size:0.6875rem;">Custom pipelines &amp; integrations</p>
+              </div>
+            </div>
+
+            <div class="build-row flex items-center gap-4 p-4 bg-zinc-900/70 border border-white/5 backdrop-blur-sm">
+              <div class="w-9 h-9 bg-primary-container/10 border border-primary-container/30 flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-orange-600" style="font-size:1.1rem;" aria-hidden="true">hub</span>
+              </div>
+              <div>
+                <p class="font-headline text-sm font-semibold text-white uppercase tracking-tight">API Integrations</p>
+                <p class="text-zinc-500 mt-0.5" style="font-size:0.6875rem;">QuickBooks, Bill.com, CRMs &amp; more</p>
+              </div>
+            </div>
+
+            <div class="build-row flex items-center gap-4 p-4 bg-zinc-900/70 border border-white/5 backdrop-blur-sm">
+              <div class="w-9 h-9 bg-primary-container/10 border border-primary-container/30 flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-orange-600" style="font-size:1.1rem;" aria-hidden="true">layers</span>
+              </div>
+              <div>
+                <p class="font-headline text-sm font-semibold text-white uppercase tracking-tight">Full-Stack Platforms</p>
+                <p class="text-zinc-500 mt-0.5" style="font-size:0.6875rem;">React, Next.js, FastAPI, Supabase</p>
+              </div>
+            </div>
+
+            <div class="build-row flex items-center gap-4 p-4 bg-zinc-900/70 border border-white/5 backdrop-blur-sm">
+              <div class="w-9 h-9 bg-primary-container/10 border border-primary-container/30 flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-orange-600" style="font-size:1.1rem;" aria-hidden="true">rule</span>
+              </div>
+              <div>
+                <p class="font-headline text-sm font-semibold text-white uppercase tracking-tight">Enterprise Decision Systems</p>
+                <p class="text-zinc-500 mt-0.5" style="font-size:0.6875rem;">IBM ODM business rule engines</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================
+           FRAME 4 -- Tech Telemetry (30% bigger fonts)
+      =================================== -->
+      <div class="scroll-frame" id="frame-3" data-nav="stack">
+        <div class="w-full max-w-[24rem] mx-auto">
+          <p class="font-headline text-orange-600 tracking-widest uppercase mb-4 text-center" style="font-size:0.625rem;">
+            04 // Tech Telemetry
+          </p>
+
+          <!-- Monospace readout -- 30% bigger: 0.625rem -> 0.8125rem -->
+          <div class="bg-zinc-900/80 border border-white/5 p-4 leading-relaxed" style="font-family:'ui-monospace',monospace;font-size:0.8125rem;color:#71717a;">
+            <div class="text-orange-600 tracking-widest mb-2" style="font-size:0.73rem;">STACK_LOG_V2.0</div>
+            <div><span class="text-zinc-600">&gt;</span> <span class="text-zinc-300">FRONTEND</span>: React &middot; Next.js &middot; TS &middot; Tailwind &middot; GSAP</div>
+            <div><span class="text-zinc-600">&gt;</span> <span class="text-zinc-300">BACKEND</span>: Python &middot; FastAPI &middot; Node &middot; Express &middot; PostgreSQL</div>
+            <div><span class="text-zinc-600">&gt;</span> <span class="text-zinc-300">DATA</span>: Supabase &middot; Drizzle ORM &middot; MySQL &middot; Neon</div>
+            <div><span class="text-zinc-600">&gt;</span> <span class="text-zinc-300">INFRA</span>: Docker &middot; AWS &middot; Vercel &middot; Google Cloud</div>
+            <div><span class="text-zinc-600">&gt;</span> <span class="text-zinc-300">AI</span>: OpenAI &middot; Claude API &middot; TensorFlow &middot; Whisper</div>
+            <div><span class="text-zinc-600">&gt;</span> <span class="text-zinc-300">TEST</span>: Playwright &middot; Vitest &middot; IBM ODM</div>
+            <div class="mt-2 text-orange-600">&gt; STATUS: ALL_SYSTEMS_NOMINAL</div>
+          </div>
+
+          <!-- Tech pill grid -- 30% bigger: 0.5rem -> 0.65rem -->
+          <div class="mt-3 grid grid-cols-4 gap-1.5">
+            <div class="text-center py-2 bg-zinc-900/50 border border-white/5 font-headline text-zinc-400 uppercase" style="font-size:0.65rem;letter-spacing:0.05em;">React</div>
+            <div class="text-center py-2 bg-zinc-900/50 border border-white/5 font-headline text-zinc-400 uppercase" style="font-size:0.65rem;letter-spacing:0.05em;">Next.js</div>
+            <div class="text-center py-2 bg-zinc-900/50 border border-white/5 font-headline text-zinc-400 uppercase" style="font-size:0.65rem;letter-spacing:0.05em;">Python</div>
+            <div class="text-center py-2 bg-zinc-900/50 border border-white/5 font-headline text-zinc-400 uppercase" style="font-size:0.65rem;letter-spacing:0.05em;">FastAPI</div>
+            <div class="text-center py-2 bg-zinc-900/50 border border-white/5 font-headline text-zinc-400 uppercase" style="font-size:0.65rem;letter-spacing:0.05em;">OpenAI</div>
+            <div class="text-center py-2 bg-zinc-900/50 border border-white/5 font-headline text-zinc-400 uppercase" style="font-size:0.65rem;letter-spacing:0.05em;">Claude</div>
+            <div class="text-center py-2 bg-zinc-900/50 border border-white/5 font-headline text-zinc-400 uppercase" style="font-size:0.65rem;letter-spacing:0.05em;">Docker</div>
+            <div class="text-center py-2 bg-zinc-900/50 border border-white/5 font-headline text-zinc-400 uppercase" style="font-size:0.65rem;letter-spacing:0.05em;">Vercel</div>
+            <div class="text-center py-2 bg-zinc-900/50 border border-white/5 font-headline text-zinc-400 uppercase" style="font-size:0.65rem;letter-spacing:0.05em;">GSAP</div>
+            <div class="text-center py-2 bg-zinc-900/50 border border-white/5 font-headline text-zinc-400 uppercase" style="font-size:0.65rem;letter-spacing:0.05em;">Supabase</div>
+            <div class="text-center py-2 bg-zinc-900/50 border border-white/5 font-headline text-zinc-400 uppercase" style="font-size:0.65rem;letter-spacing:0.05em;">AWS</div>
+            <div class="text-center py-2 bg-zinc-900/50 border border-white/5 font-headline text-zinc-400 uppercase" style="font-size:0.65rem;letter-spacing:0.05em;">Playwright</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================
+           FRAME 5 -- Experience (with years + hover popups)
+      =================================== -->
+      <div class="scroll-frame" id="frame-4">
+        <div class="w-full max-w-[22rem] mx-auto">
+          <p class="font-headline text-orange-600 tracking-widest uppercase mb-5 text-center" style="font-size:0.625rem;">
+            05 // Experience
+          </p>
+
+          <div class="space-y-3">
+
+            <!-- 1: AI Full Stack Engineer (odd -> popup upper-right) -->
+            <div class="exp-item flex gap-4 p-4 border-l-2 border-primary-container/50 bg-zinc-900/40 cursor-pointer" tabindex="0">
+              <div class="flex-1">
+                <p class="font-headline text-sm font-semibold text-white uppercase tracking-tight">IT &amp; Web Dev Integrations Specialist</p>
+                <p class="text-orange-600 font-headline mt-0.5" style="font-size:0.6875rem;">Bruntwork Co. / Luxury Construction Co.</p>
+                <p class="text-zinc-600 font-headline mt-0.5" style="font-size:0.625rem;">2024 &mdash; Present</p>
+              </div>
+              <div class="exp-popup">
+                <div class="bg-[#141414] border border-orange-600/30 p-4 text-left shadow-lg shadow-black/60">
+                  <p class="font-headline text-orange-600 tracking-[0.2em] uppercase mb-1.5" style="font-size:0.5625rem;">Details</p>
+                  <p class="text-zinc-300 leading-relaxed" style="font-size:0.7rem;">Focused on building scalable automation and API-driven systems across CRM, financial, marketing, and internal platforms. Heavy user of Zapier, creating and maintaining 1,000+ automation workflows. Hands-on development and maintenance of Intuit and Bill.com integrations. Proficient in Python, debugging, and CLI-based workflows, leveraging modern AI technologies to streamline operations.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2: Sr. ODM Specialist & QA Mgr (even -> popup upper-left) -->
+            <div class="exp-item flex gap-4 p-4 border-l-2 border-white/10 bg-zinc-900/40 cursor-pointer" tabindex="0">
+              <div class="flex-1">
+                <p class="font-headline text-sm font-semibold text-white uppercase tracking-tight">Sr. IBM ODM Specialist &amp; QA Mgr</p>
+                <p class="text-zinc-400 font-headline mt-0.5" style="font-size:0.6875rem;">Bell Canada</p>
+                <p class="text-zinc-600 font-headline mt-0.5" style="font-size:0.625rem;">2024 &mdash; Present</p>
+              </div>
+              <div class="exp-popup">
+                <div class="bg-[#141414] border border-orange-600/30 p-4 text-left shadow-lg shadow-black/60">
+                  <p class="font-headline text-orange-600 tracking-[0.2em] uppercase mb-1.5" style="font-size:0.5625rem;">Details</p>
+                  <p class="text-zinc-300 leading-relaxed" style="font-size:0.7rem;">Lead QA for a large-scale digital billboard platform. Processing ~400 user story tickets per quarter with ~10 defect tickets raised, addressed, and resolved. Maintaining less than 3% error rate per quarter across the team.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3: Sr. IBM ODM Developer (odd -> popup upper-right) -->
+            <div class="exp-item flex gap-4 p-4 border-l-2 border-white/10 bg-zinc-900/40 cursor-pointer" tabindex="0">
+              <div class="flex-1">
+                <p class="font-headline text-sm font-semibold text-white uppercase tracking-tight">Sr. IBM ODM Developer</p>
+                <p class="text-zinc-400 font-headline mt-0.5" style="font-size:0.6875rem;">Bell Canada</p>
+                <p class="text-zinc-600 font-headline mt-0.5" style="font-size:0.625rem;">2023 &mdash; 2024</p>
+              </div>
+              <div class="exp-popup">
+                <div class="bg-[#141414] border border-orange-600/30 p-4 text-left shadow-lg shadow-black/60">
+                  <p class="font-headline text-orange-600 tracking-[0.2em] uppercase mb-1.5" style="font-size:0.5625rem;">Details</p>
+                  <p class="text-zinc-300 leading-relaxed" style="font-size:0.7rem;">Led end-to-end development of IBM ODM BRMS solutions. Handled ~200 user story tickets per quarter, ensuring close to 100% compliance with business and technical requirements for digital billboard advertising systems.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4: ODM Developer (even -> popup upper-left) -->
+            <div class="exp-item flex gap-4 p-4 border-l-2 border-white/10 bg-zinc-900/40 cursor-pointer" tabindex="0">
+              <div class="flex-1">
+                <p class="font-headline text-sm font-semibold text-white uppercase tracking-tight">ODM Developer / BRMS Engineer</p>
+                <p class="text-zinc-400 font-headline mt-0.5" style="font-size:0.6875rem;">Bell Canada</p>
+                <p class="text-zinc-600 font-headline mt-0.5" style="font-size:0.625rem;">2020 &mdash; 2023</p>
+              </div>
+              <div class="exp-popup">
+                <div class="bg-[#141414] border border-orange-600/30 p-4 text-left shadow-lg shadow-black/60">
+                  <p class="font-headline text-orange-600 tracking-[0.2em] uppercase mb-1.5" style="font-size:0.5625rem;">Details</p>
+                  <p class="text-zinc-300 leading-relaxed" style="font-size:0.7rem;">Contributed to design and development of enterprise applications using IBM ODM BRMS. Built and maintained business rule sets for automated decision-making workflows.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5: Subject Matter Expert (odd -> popup upper-right) -->
+            <div class="exp-item flex gap-4 p-4 border-l-2 border-white/10 bg-zinc-900/40 cursor-pointer" tabindex="0">
+              <div class="flex-1">
+                <p class="font-headline text-sm font-semibold text-white uppercase tracking-tight">Subject Matter Expert</p>
+                <p class="text-zinc-400 font-headline mt-0.5" style="font-size:0.6875rem;">Bell Mobility</p>
+                <p class="text-zinc-600 font-headline mt-0.5" style="font-size:0.625rem;">2019 &mdash; 2020</p>
+              </div>
+              <div class="exp-popup">
+                <div class="bg-[#141414] border border-orange-600/30 p-4 text-left shadow-lg shadow-black/60">
+                  <p class="font-headline text-orange-600 tracking-[0.2em] uppercase mb-1.5" style="font-size:0.5625rem;">Details</p>
+                  <p class="text-zinc-300 leading-relaxed" style="font-size:0.7rem;">Trusted technical and process resource for Bell Mobility contact centre, driving accuracy, efficiency, and consistent service delivery.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================
+           FRAME 6 -- CTA
+      =================================== -->
+      <div class="scroll-frame text-center" id="frame-5">
+        <p class="font-headline text-orange-600 tracking-[0.35em] uppercase mb-5" style="font-size:0.625rem;">
+          Status: Ready for Launch
+        </p>
+
+        <h2 class="font-headline font-black text-white uppercase tracking-tight leading-[0.92]"
+            style="font-size: clamp(2.75rem, 13vw, 6rem);">
+          Let's Build<br/>Intelligent<br/>Systems.
+        </h2>
+
+        <p class="mt-5 text-zinc-400 max-w-[18rem] mx-auto leading-relaxed" style="font-size: clamp(0.8125rem, 3vw, 0.9375rem);">
+          Manila, Philippines &mdash; Remote for US-based clients
+        </p>
+
+        <a href="mailto:contact@codebyluis.dev"
+           class="inline-flex items-center gap-3 mt-8 px-8 py-4 bg-white text-black font-headline font-black uppercase tracking-tighter hover:bg-primary-container hover:text-white transition-all duration-300"
+           style="font-size:0.875rem;min-height:44px;">
+          Initiate Contact
+          <span class="material-symbols-outlined" style="font-size:1rem;" aria-hidden="true">arrow_forward</span>
+        </a>
+      </div>
+
+      <!-- --- Telemetry HUD -- Bottom Right (sm+) --- -->
+      <div class="absolute right-4 md:right-8 flex flex-col items-end gap-1 z-20 text-right hidden sm:flex"
+           style="bottom: calc(5.5rem + env(safe-area-inset-bottom));" aria-hidden="true">
+        <div class="font-headline text-[9px] text-orange-600 mb-1">TELEMETRY_LOG_V2.0</div>
+        <div class="leading-tight text-zinc-600" style="font-family:'ui-monospace',monospace;font-size:0.5625rem;">
+          &gt; LOCATION: QC_PH<br/>
+          &gt; CLIENT: US_REMOTE<br/>
+          &gt; ROLE: AI_ENG<br/>
+          &gt; VELOCITY: MAX
+        </div>
+      </div>
+
+    </div><!-- /sticky-canvas -->
+  </section><!-- /hero-section -->
+
+  <!-- ==========================================
+       FEATURE BENTO GRID
+  ========================================== -->
+  <section class="relative z-40 bg-[#050505] px-4 md:px-6 py-20 md:py-32">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+
+      <!-- Performance Card -->
+      <div class="md:col-span-8 group relative overflow-hidden bg-surface-container-lowest p-8 md:p-12 transition-all duration-500 hover:bg-surface-container-low border-t border-white/5">
+        <div class="relative z-10">
+          <p class="font-headline text-orange-600 tracking-widest uppercase mb-4" style="font-size:0.625rem;">01 // Optimization</p>
+          <h3 class="font-headline font-bold text-white uppercase tracking-tighter text-3xl md:text-5xl max-w-lg">
+            AI Systems at <span class="italic font-light">Full</span> Velocity.
+          </h3>
+          <p class="mt-5 text-zinc-400 max-w-md leading-relaxed" style="font-size: clamp(0.875rem, 3vw, 1rem);">
+            Every agent is production-hardened. Intelligent pipelines and edge deployment ensure your AI-powered systems operate at maximum throughput.
+          </p>
+        </div>
+        <div class="absolute -right-20 -bottom-20 w-72 h-72 md:w-80 md:h-80 opacity-5 group-hover:opacity-10 transition-opacity" aria-hidden="true">
+          <span class="material-symbols-outlined text-white" style="font-size:20rem;">psychology</span>
+        </div>
+      </div>
+
+      <!-- Metric Card -->
+      <div class="md:col-span-4 bg-surface-container-low p-7 md:p-8 flex flex-col justify-between border-t border-white/5" style="min-height:9rem;">
+        <div class="flex justify-between items-start">
+          <span class="material-symbols-outlined text-orange-600 text-4xl" aria-hidden="true">bolt</span>
+          <span class="font-headline text-zinc-500 uppercase tracking-widest" style="font-size:0.625rem;">Live Output</span>
+        </div>
+        <div>
+          <div class="text-5xl md:text-6xl font-headline font-black text-white" aria-label="99 Lighthouse Score">99</div>
+          <div class="font-headline tracking-widest text-zinc-400 uppercase" style="font-size:0.75rem;">Lighthouse Score</div>
+        </div>
+      </div>
+
+      <!-- Code Aesthetic Card -->
+      <div class="md:col-span-4 aspect-square bg-zinc-900 overflow-hidden group relative" aria-hidden="true">
+        <div class="absolute inset-0 p-5" style="font-family:'ui-monospace',monospace;font-size:0.5625rem;color:#52525b;line-height:1.7;">
+          <div class="text-orange-600 mb-2 tracking-widest" style="font-size:0.5rem;">// ai_agent.py</div>
+          <div>class <span class="text-zinc-300">AIAgent</span>:</div>
+          <div class="pl-4">def <span class="text-zinc-300">__init__</span>(self, llm):</div>
+          <div class="pl-8">self.llm = llm</div>
+          <div class="pl-8">self.tools = []</div>
+          <div class="mt-2 pl-4">def <span class="text-zinc-300">run</span>(self, ctx):</div>
+          <div class="pl-8">resp = self.llm</div>
+          <div class="pl-12">.chat(ctx)</div>
+          <div class="pl-8">return self</div>
+          <div class="pl-12">.execute(resp)</div>
+          <div class="mt-3 text-orange-600">&gt; DEPLOYED</div>
+          <div class="text-zinc-700">&gt; MONITORING...</div>
+        </div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[#050505]/70 to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-l from-[#050505]/40 to-transparent"></div>
+      </div>
+
+      <!-- CTA Logic Card -->
+      <div class="md:col-span-8 bg-primary-container p-8 md:p-12 flex flex-col justify-center relative overflow-hidden">
+        <h3 class="font-headline font-black text-on-primary-container uppercase tracking-tighter text-3xl md:text-5xl relative z-10">
+          Intelligent<br/>Architecture.
+        </h3>
+        <div class="mt-7 flex gap-4 relative z-10 flex-wrap">
+          <a href="#projects"
+             class="inline-flex items-center gap-2 px-7 md:px-8 py-3 bg-black text-white font-headline tracking-widest uppercase hover:scale-105 transition-transform"
+             style="font-size:0.75rem;min-height:44px;">
+            View Projects
+          </a>
+        </div>
+        <div class="absolute -bottom-8 -right-8 font-headline font-black text-black/5 leading-none select-none" style="font-size:12rem;" aria-hidden="true">
+          AI
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==========================================
+       PROJECTS -- Selected Work
+  ========================================== -->
+  <section class="relative z-40 bg-[#050505] px-4 md:px-6 pb-20 md:pb-32" id="projects">
+    <div class="max-w-7xl mx-auto">
+      <p class="font-headline text-orange-600 tracking-widest uppercase mb-6" style="font-size:0.625rem;">05 // Selected Work</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+
+        <a href="#" class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
+          <div class="flex justify-between items-start mb-4">
+            <span class="font-headline text-zinc-600 uppercase tracking-widest" style="font-size:0.5625rem;">01</span>
+            <span class="material-symbols-outlined text-zinc-700 group-hover:text-orange-600 transition-colors" style="font-size:1.1rem;" aria-hidden="true">arrow_outward</span>
+          </div>
+          <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">Advanced Chatbot</h4>
+          <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">AI &middot; OpenAI &middot; FastAPI</p>
+        </a>
+
+        <a href="#" class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
+          <div class="flex justify-between items-start mb-4">
+            <span class="font-headline text-zinc-600 uppercase tracking-widest" style="font-size:0.5625rem;">02</span>
+            <span class="material-symbols-outlined text-zinc-700 group-hover:text-orange-600 transition-colors" style="font-size:1.1rem;" aria-hidden="true">arrow_outward</span>
+          </div>
+          <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">Resume Analyzer</h4>
+          <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">NLP &middot; Python &middot; React</p>
+        </a>
+
+        <a href="#" class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
+          <div class="flex justify-between items-start mb-4">
+            <span class="font-headline text-zinc-600 uppercase tracking-widest" style="font-size:0.5625rem;">03</span>
+            <span class="material-symbols-outlined text-zinc-700 group-hover:text-orange-600 transition-colors" style="font-size:1.1rem;" aria-hidden="true">arrow_outward</span>
+          </div>
+          <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">Voice Assistant</h4>
+          <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">Speech &middot; AI &middot; Node.js</p>
+        </a>
+
+        <a href="#" class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
+          <div class="flex justify-between items-start mb-4">
+            <span class="font-headline text-zinc-600 uppercase tracking-widest" style="font-size:0.5625rem;">04</span>
+            <span class="material-symbols-outlined text-zinc-700 group-hover:text-orange-600 transition-colors" style="font-size:1.1rem;" aria-hidden="true">arrow_outward</span>
+          </div>
+          <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">SmartSync Integrator</h4>
+          <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">API &middot; Automation &middot; CRM</p>
+        </a>
+
+        <a href="#" class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
+          <div class="flex justify-between items-start mb-4">
+            <span class="font-headline text-zinc-600 uppercase tracking-widest" style="font-size:0.5625rem;">05</span>
+            <span class="material-symbols-outlined text-zinc-700 group-hover:text-orange-600 transition-colors" style="font-size:1.1rem;" aria-hidden="true">arrow_outward</span>
+          </div>
+          <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">VA Portfolio</h4>
+          <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">Next.js &middot; Supabase &middot; AI</p>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       FINAL IMPACT CTA — Sticky + Danger Tape Unravel
+       3x viewport height for scroll travel
+  ========================================== -->
+  <section class="relative" style="height: 400vh;" id="contact-wrapper">
+    <div class="sticky top-0 flex flex-col items-center justify-center px-6 overflow-hidden" style="height:100dvh;" id="contact">
+
+      <!-- Danger tape strips — realistic 3D ribbons crossing the section -->
+      <div class="absolute inset-0 pointer-events-none z-30" id="tape-cage" aria-hidden="true">
+        <div class="danger-tape absolute" style="top:5%; left:-15%; width:140%; height:5vh; transform:rotate(-12deg); transform-origin:left center;"></div>
+        <div class="danger-tape-reverse absolute" style="top:18%; left:-15%; width:140%; height:5vh; transform:rotate(8deg); transform-origin:left center;"></div>
+        <div class="danger-tape absolute" style="top:33%; left:-15%; width:140%; height:5vh; transform:rotate(-5deg); transform-origin:left center;"></div>
+        <div class="danger-tape-reverse absolute" style="top:48%; left:-15%; width:140%; height:5vh; transform:rotate(15deg); transform-origin:left center;"></div>
+        <div class="danger-tape absolute" style="top:60%; left:-15%; width:140%; height:5vh; transform:rotate(-10deg); transform-origin:left center;"></div>
+        <div class="danger-tape-reverse absolute" style="top:73%; left:-15%; width:140%; height:5vh; transform:rotate(6deg); transform-origin:left center;"></div>
+        <div class="danger-tape absolute" style="top:88%; left:-15%; width:140%; height:5vh; transform:rotate(-14deg); transform-origin:left center;"></div>
+      </div>
+
+      <!-- Background gradient -->
+      <div class="absolute inset-0 bg-gradient-to-t from-orange-600/10 to-transparent pointer-events-none" aria-hidden="true"></div>
+
+      <div class="text-center relative z-10">
+        <p class="font-headline text-orange-600 tracking-[0.4em] uppercase mb-6" style="font-size:0.625rem;">Status: Ready for Launch</p>
+        <h2 class="font-headline font-black text-white uppercase tracking-tight"
+            style="font-size: clamp(2.75rem, 12vw, 6rem); line-height: 0.95;">
+          Let's Build<br/>The Future.
+        </h2>
+        <a href="mailto:contact@codebyluis.dev" id="cta-initiate"
+           class="inline-flex items-center gap-4 mt-10 px-10 py-5 bg-white text-black font-headline font-black uppercase tracking-tighter hover:bg-primary-container hover:text-white transition-colors duration-300"
+           style="font-size:clamp(0.8125rem,3vw,1.125rem);min-height:44px;opacity:0;pointer-events:none;">
+          Initiate Contact
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+        </a>
+      </div>
+
+      <!-- Bottom HUD -->
+      <div class="absolute left-0 w-full px-5 md:px-12 flex justify-between items-end opacity-40"
+           style="bottom: calc(6rem + env(safe-area-inset-bottom));" aria-hidden="true">
+        <div class="font-headline tracking-widest text-zinc-500 uppercase" style="font-size:0.5625rem;">Ref: LB-2025-AI-ENGINE</div>
+        <div class="font-headline tracking-widest text-zinc-500 uppercase hidden sm:block" style="font-size:0.5625rem;">Lat: 14.5995 N / Lng: 120.9842 E</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- --- Bottom Nav Bar (mobile only) --- -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-zinc-900/80 backdrop-blur-2xl shadow-2xl shadow-orange-900/20 border-t border-white/5 flex justify-around items-center md:hidden"
+     style="padding-top:0.625rem; padding-bottom: max(0.875rem, env(safe-area-inset-bottom));"
+     aria-label="Primary navigation">
+
+  <a href="#" aria-label="Home" aria-current="page"
+     class="flex flex-col items-center gap-0.5 text-orange-600 cursor-pointer"
+     style="min-width:44px;min-height:44px;justify-content:center;">
+    <span class="material-symbols-outlined" style="font-size:1.25rem;" aria-hidden="true">home_max</span>
+    <span class="font-headline uppercase tracking-wide" style="font-size:0.5rem;">Home</span>
+  </a>
+
+  <a href="#projects" aria-label="Projects"
+     class="flex flex-col items-center gap-0.5 text-zinc-400 hover:text-white transition-all cursor-pointer"
+     style="min-width:44px;min-height:44px;justify-content:center;">
+    <span class="material-symbols-outlined" style="font-size:1.25rem;" aria-hidden="true">rocket_launch</span>
+    <span class="font-headline uppercase tracking-wide" style="font-size:0.5rem;">Projects</span>
+  </a>
+
+  <a href="#stack" aria-label="Tech Stack"
+     class="flex flex-col items-center gap-0.5 text-zinc-400 hover:text-white transition-all cursor-pointer"
+     style="min-width:44px;min-height:44px;justify-content:center;">
+    <span class="material-symbols-outlined" style="font-size:1.25rem;" aria-hidden="true">terminal</span>
+    <span class="font-headline uppercase tracking-wide" style="font-size:0.5rem;">Stack</span>
+  </a>
+
+  <a href="#contact" aria-label="Contact"
+     class="flex flex-col items-center gap-0.5 text-zinc-400 hover:text-white transition-all cursor-pointer"
+     style="min-width:44px;min-height:44px;justify-content:center;">
+    <span class="material-symbols-outlined" style="font-size:1.25rem;" aria-hidden="true">contact_support</span>
+    <span class="font-headline uppercase tracking-wide" style="font-size:0.5rem;">Contact</span>
+  </a>
+
+</nav>
+
+<!-- --- Footer (mobile only, full page) --- -->
+<footer class="w-full px-6 bg-[#050505] flex flex-col justify-center items-center gap-6 border-t border-white/5 md:hidden" style="min-height:100dvh;">
+  <div class="flex flex-col gap-1.5 text-center">
+    <h4 class="text-orange-600 font-bold font-headline uppercase tracking-[0.2em]" style="font-size:0.75rem;">CODE BY LUIS</h4>
+    <p class="text-zinc-600 font-headline uppercase tracking-[0.18em]" style="font-size:0.5625rem;">&copy;2025 CODE BY LUIS | ENGINEERED FOR INTELLIGENCE</p>
+  </div>
+  <div class="flex gap-10 font-headline uppercase tracking-[0.18em]" style="font-size:0.6875rem;">
+    <a class="text-zinc-600 hover:text-orange-500 transition-all flex items-center" style="min-height:44px;" href="#" aria-label="Telemetry page">Telemetry</a>
+    <a class="text-white underline decoration-orange-600 hover:text-orange-500 transition-all flex items-center" style="min-height:44px;" href="https://github.com/blastheart1" aria-label="GitHub profile">GitHub</a>
+    <a class="text-zinc-600 hover:text-orange-500 transition-all flex items-center" style="min-height:44px;" href="#contact" aria-label="Contact section">Contact</a>
+  </div>
+</footer>
+
+<!-- --- Back to Top (desktop only, appears at bottom) --- -->
+<button id="back-to-top" aria-label="Back to top"
+        class="fixed z-50 hidden md:flex items-center gap-2 left-1/2 -translate-x-1/2 px-6 py-3 bg-orange-600 text-white font-headline text-xs font-bold uppercase tracking-widest hover:bg-orange-500 transition-all duration-300 opacity-0 pointer-events-none"
+        style="bottom: 2rem; border-radius: 0.25rem;">
+  <span class="material-symbols-outlined" style="font-size:1rem;" aria-hidden="true">arrow_upward</span>
+  Back to Top
+</button>
+
+<!-- --- Scroll Engine --- -->
+<script>
+(function () {
+  'use strict';
+
+  // -- CSS custom property for dvh fallback --
+  function setVh() {
+    document.documentElement.style.setProperty('--vh', window.innerHeight * 0.01 + 'px');
+  }
+  setVh();
+  window.addEventListener('resize', setVh, { passive: true });
+
+  // -- Elements --
+  var section    = document.getElementById('hero-section');
+  var frames     = document.querySelectorAll('.scroll-frame');
+  var dots       = document.querySelectorAll('.frame-dot');
+  var loadBar    = document.getElementById('load-bar');
+  var frameCount = frames.length; // 6
+  var current    = 0;
+
+  // -- Build rows (frame 3) -- slide from right --
+  var buildRows     = document.querySelectorAll('.build-row');
+  var buildRevealed = false;
+
+  // -- Final CTA section: tape unravel + button fade --
+  var contactWrapper = document.getElementById('contact-wrapper');
+  var tapeCage       = document.getElementById('tape-cage');
+  var tapeStrips     = tapeCage ? tapeCage.children : [];
+  var ctaInitiate    = document.getElementById('cta-initiate');
+
+  // Store original transforms for each strip
+  for (var s = 0; s < tapeStrips.length; s++) {
+    tapeStrips[s].dataset.origTransform = tapeStrips[s].style.transform || '';
+  }
+
+  function activateFrame(next) {
+    if (next === current) return;
+
+    // Exit current
+    frames[current].classList.remove('frame-active');
+    frames[current].classList.add('frame-exit');
+    dots[current].classList.remove('dot-active');
+
+    (function (idx) {
+      setTimeout(function () {
+        frames[idx].classList.remove('frame-exit');
+      }, 650);
+    })(current);
+
+    current = next;
+
+    // Enter next
+    frames[current].classList.add('frame-active');
+    dots[current].classList.add('dot-active');
+
+    // Update HUD stack label per frame
+    var hudLabels = ['Next.js / Python', 'Antonio Luis Santos', 'AI / Automation', 'Full Stack / AI', 'Bell Canada / BW', 'AI / Production'];
+    var hudEl = document.getElementById('hud-stack-val');
+    if (hudEl) hudEl.textContent = hudLabels[current] || '';
+
+    // -- 2. What I Build: trigger slide-from-right when frame-2 activates --
+    if (current === 2 && !buildRevealed) {
+      buildRevealed = true;
+      buildRows.forEach(function(row, i) {
+        setTimeout(function() {
+          row.classList.add('build-visible');
+        }, i * 150);
+      });
+    }
+  }
+
+  function onScroll() {
+    var sectionTop    = section.offsetTop;
+    var sectionHeight = section.offsetHeight;
+    var viewportH     = window.innerHeight;
+    var scrollY       = window.scrollY || window.pageYOffset;
+
+    var travelable = sectionHeight - viewportH;
+    var progress   = Math.max(0, Math.min(1, (scrollY - sectionTop) / travelable));
+
+    // Map progress -> frame index (0-5)
+    var idx = Math.min(frameCount - 1, Math.floor(progress * frameCount));
+    activateFrame(idx);
+
+    // Animate load bar: 64% -> 100%
+    if (loadBar) {
+      loadBar.style.width = Math.round(64 + progress * 36) + '%';
+    }
+
+    // -- Tape unravel on final CTA section --
+    if (contactWrapper && tapeCage) {
+      var wrapperTop = contactWrapper.offsetTop;
+      var wrapperH   = contactWrapper.offsetHeight;
+      var travel     = wrapperH - viewportH;
+      var raw        = (scrollY - wrapperTop) / travel;
+      var tp         = Math.max(0, Math.min(1, raw));
+
+      // Tape unravels over 0-50% of scroll, button fades in 45-70%, rest is dwell
+      var stripCount = tapeStrips.length;
+      for (var j = 0; j < stripCount; j++) {
+        var stripStart = (j / stripCount) * 0.35;
+        var stripEnd   = stripStart + 0.25;
+        var stripT     = Math.max(0, Math.min(1, (tp - stripStart) / (stripEnd - stripStart)));
+
+        var dir = (j % 2 === 0) ? 1 : -1;
+        tapeStrips[j].style.transform = tapeStrips[j].dataset.origTransform + ' translateX(' + (stripT * dir * 140) + '%)';
+        tapeStrips[j].style.opacity = 1 - stripT;
+      }
+
+      // CTA button: fade in 45%-70%, fully visible from 70% onward (30% dwell)
+      var ctaT = Math.max(0, Math.min(1, (tp - 0.45) / 0.25));
+      ctaInitiate.style.opacity = ctaT;
+      ctaInitiate.style.pointerEvents = ctaT > 0.5 ? 'auto' : 'none';
+    }
+
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Complete load bar after 2.5s
+  setTimeout(function () {
+    if (loadBar && window.scrollY < 100) loadBar.style.width = '100%';
+  }, 2500);
+
+  // -- Keyboard navigation --
+  document.addEventListener('keydown', function (e) {
+    var sectionTop = section.offsetTop;
+    var sectionH   = section.offsetHeight;
+    var viewportH  = window.innerHeight;
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+      var targetP = (current + 1) / frameCount + 0.01;
+      window.scrollTo({ top: sectionTop + targetP * (sectionH - viewportH), behavior: 'smooth' });
+    }
+    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      if (current === 0) return;
+      var targetP2 = (current - 1) / frameCount + 0.01;
+      window.scrollTo({ top: sectionTop + targetP2 * (sectionH - viewportH), behavior: 'smooth' });
+    }
+  });
+
+  // -- Nav links: scroll to correct frame position for in-sticky targets --
+  // Frame map: 0=Hero, 1=Profile, 2=WhatIBuild, 3=TechTelemetry(stack), 4=Experience, 5=CTA
+  var navFrameMap = { stack: 3 };
+
+  document.querySelectorAll('a[href="#stack"]').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      var targetFrame = navFrameMap.stack;
+      var sectionTop = section.offsetTop;
+      var sectionH   = section.offsetHeight;
+      var viewportH  = window.innerHeight;
+      var targetProgress = (targetFrame / frameCount) + 0.01;
+      window.scrollTo({ top: sectionTop + targetProgress * (sectionH - viewportH), behavior: 'smooth' });
+    });
+  });
+
+  // -- Back to Top button (desktop): show when near page bottom --
+  var bttBtn = document.getElementById('back-to-top');
+  if (bttBtn) {
+    function checkBtt() {
+      var scrollY   = window.scrollY || window.pageYOffset;
+      var docHeight = document.documentElement.scrollHeight;
+      var winHeight = window.innerHeight;
+      var nearBottom = scrollY + winHeight >= docHeight - 200;
+
+      if (nearBottom) {
+        bttBtn.style.opacity = '1';
+        bttBtn.style.pointerEvents = 'auto';
+      } else {
+        bttBtn.style.opacity = '0';
+        bttBtn.style.pointerEvents = 'none';
+      }
+    }
+    window.addEventListener('scroll', checkBtt, { passive: true });
+    checkBtt();
+
+    bttBtn.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+})();
+</script>
+
+</body>
+</html>

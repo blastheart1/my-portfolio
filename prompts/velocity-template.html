@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CODE BY LUIS | VELOCITY ENGINE</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@400;500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-lowest": "#0e0e0e",
+            "surface-container-low": "#1c1b1b",
+            "surface-container": "#201f1f",
+            "surface-container-high": "#2a2a2a",
+            "surface-container-highest": "#353534",
+            "surface": "#131313",
+            "primary": "#ffb5a0",
+            "primary-container": "#ff5625",
+            "on-primary-container": "#541100",
+            "on-surface": "#e5e2e1",
+            "outline": "#ad887e",
+          },
+          fontFamily: {
+            headline: ["Space Grotesk"],
+            body: ["Inter"],
+          },
+        },
+      },
+    }
+</script>
+<style>
+    body {
+        background-color: #050505;
+        color: #e5e2e1;
+        font-family: 'Inter', sans-serif;
+        overflow-x: hidden;
+    }
+    .font-headline { font-family: 'Space Grotesk', sans-serif; }
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .glass-panel {
+        background: rgba(19, 19, 19, 0.4);
+        backdrop-filter: blur(20px);
+    }
+    .telemetry-grid {
+        background-image: radial-gradient(rgba(255, 69, 0, 0.1) 1px, transparent 1px);
+        background-size: 40px 40px;
+    }
+
+    /* === 2. What I Build — scroll storytelling === */
+    .build-entry {
+        opacity: 0;
+        transform: translateX(120px);
+        transition: opacity 0.8s cubic-bezier(.22,1,.36,1), transform 0.8s cubic-bezier(.22,1,.36,1);
+    }
+    .build-entry.visible {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    /* === 4. Experience hover popup === */
+    .exp-card { position: relative; }
+    .exp-popup {
+        position: absolute;
+        left: 50%;
+        bottom: calc(100% + 12px);
+        transform: translateX(-50%) translateY(8px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s, transform 0.3s;
+        width: max(300px, 100%);
+        z-index: 60;
+    }
+    .exp-card:hover .exp-popup {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+        pointer-events: auto;
+    }
+
+    /* === 5. Danger tape === */
+    @keyframes tapeScroll {
+        0%   { background-position: 0 0; }
+        100% { background-position: 80px 0; }
+    }
+    .danger-tape {
+        background: repeating-linear-gradient(
+            -45deg,
+            #ff5625,
+            #ff5625 10px,
+            #0a0a0a 10px,
+            #0a0a0a 20px
+        );
+        background-size: 80px 100%;
+        animation: tapeScroll 1.5s linear infinite;
+    }
+    .danger-tape-reverse {
+        background: repeating-linear-gradient(
+            45deg,
+            #ff5625,
+            #ff5625 10px,
+            #0a0a0a 10px,
+            #0a0a0a 20px
+        );
+        background-size: 80px 100%;
+        animation: tapeScroll 1.5s linear infinite reverse;
+    }
+</style>
+</head>
+<body class="bg-[#050505]">
+
+<!-- Loading Telemetry Bar -->
+<div class="fixed top-0 left-0 w-full h-1 z-[100] bg-zinc-900">
+    <div class="h-full bg-primary-container w-[64%] shadow-[0_0_15px_rgba(255,86,37,0.8)]"></div>
+    <div class="absolute top-2 right-6 font-headline text-[10px] tracking-[0.2em] text-primary-container uppercase">
+        System Preload: 64% / Buffering Velocity Frames
+    </div>
+</div>
+
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-xl flex justify-between items-center px-6 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+    <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-orange-600">speed</span>
+        <h1 class="text-xl font-bold tracking-[-0.05em] text-white font-headline uppercase">CODE BY LUIS</h1>
+    </div>
+    <nav class="hidden md:flex gap-8 items-center font-headline tracking-tighter uppercase text-xs">
+        <a class="text-orange-600 hover:text-orange-500 transition-colors duration-300" href="#">Engine</a>
+        <a class="text-zinc-500 hover:text-orange-500 transition-colors duration-300" href="#">Telemetry</a>
+        <a class="text-zinc-500 hover:text-orange-500 transition-colors duration-300" href="#">Hangar</a>
+        <a class="text-zinc-500 hover:text-orange-500 transition-colors duration-300" href="#">Contact</a>
+    </nav>
+    <button class="scale-95 active:duration-75 text-orange-600 md:hidden">
+        <span class="material-symbols-outlined">menu</span>
+    </button>
+</header>
+
+<!-- ============================================================ -->
+<!-- HERO — Sticky Canvas with 3 Frames                           -->
+<!-- ============================================================ -->
+<main class="relative">
+<section id="hero" class="h-[5000px] relative telemetry-grid">
+<div class="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
+
+    <!-- Background Ambient -->
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-orange-950/10 to-transparent pointer-events-none"></div>
+
+    <!-- Left HUD -->
+    <div class="absolute left-8 top-1/2 -translate-y-1/2 flex flex-col gap-12 z-20 hidden md:flex">
+        <div class="space-y-1 border-l border-primary-container/30 pl-4">
+            <p class="font-headline text-[10px] tracking-widest text-zinc-500 uppercase">System Architecture</p>
+            <p class="font-headline text-lg font-bold text-white uppercase tracking-tighter">Next.js / React / Python</p>
+        </div>
+        <div class="space-y-1 border-l border-primary-container/30 pl-4">
+            <p class="font-headline text-[10px] tracking-widest text-zinc-500 uppercase">Core Velocity</p>
+            <p class="font-headline text-lg font-bold text-white uppercase tracking-tighter">60 FPS Stable</p>
+        </div>
+        <div class="space-y-1 border-l border-primary-container/30 pl-4">
+            <p class="font-headline text-[10px] tracking-widest text-zinc-500 uppercase">Deployment Status</p>
+            <p class="font-headline text-lg font-bold text-orange-600 uppercase tracking-tighter">Live / Active</p>
+        </div>
+    </div>
+
+    <!-- Main Canvas -->
+    <div class="relative w-full max-w-6xl aspect-video flex items-center justify-center">
+        <!-- Frame 1: Engine Startup -->
+        <img id="frame1" alt="F1 Telemetry Interface"
+             class="absolute inset-0 w-full h-full object-contain mix-blend-screen transition-opacity duration-700"
+             src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyK_KssNXFk3ZAHtsqlsQGgJJbLF5tPn5SXZiZqqsvQF0CpLMt2gWHaBOBaqwJ3HLELZmUYmGgzZDBWKVP5WfKLtKfLPkD8hUNZYGF7A9QHWwMa-CF5J8S1gpJ96fSuwm4ysdV1Rq28rv1DmhMcID_85EhMJHtEvkiJOaXN3NP41JQi_7KaH3l4nURqM6xQR5iFcf01HVd-JKdqxC08ttLOyyIHUsjIfiHiOyuOPPgKh0PBXmuXFLTeI68zHvQbZsBQyKxlbdxsOg"/>
+        <!-- Frame 2: Identity Card (NEW) -->
+        <div id="frame2" class="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-700 pointer-events-none">
+            <div class="text-center">
+                <p class="font-headline text-orange-600 text-xs tracking-[0.4em] uppercase mb-4">Driver Profile</p>
+                <h2 class="font-headline text-6xl md:text-8xl font-black text-white uppercase tracking-[-0.04em] leading-[0.9]">
+                    Antonio Luis<br/>Santos
+                </h2>
+                <div class="mt-6 flex items-center justify-center gap-6">
+                    <span class="inline-block w-12 h-[1px] bg-orange-600"></span>
+                    <span class="font-headline text-sm tracking-[0.3em] text-zinc-400 uppercase">7 Years in the IT Industry</span>
+                    <span class="inline-block w-12 h-[1px] bg-orange-600"></span>
+                </div>
+                <p class="mt-8 max-w-xl mx-auto text-zinc-400 leading-relaxed text-base">
+                    Full-Stack Software Engineer specializing in Generative AI. I build scalable applications, intelligent automation, and enterprise-grade systems that merge modern development with future-ready AI solutions.
+                </p>
+                <div class="mt-8 flex gap-4 justify-center">
+                    <span class="px-3 py-1 glass-panel border border-white/10 text-[10px] font-headline tracking-[0.3em] uppercase">Full-Stack</span>
+                    <span class="px-3 py-1 glass-panel border border-white/10 text-[10px] font-headline tracking-[0.3em] uppercase">Generative AI</span>
+                    <span class="px-3 py-1 glass-panel border border-white/10 text-[10px] font-headline tracking-[0.3em] uppercase">QA Lead</span>
+                </div>
+            </div>
+        </div>
+        <!-- Frame 3: The Machine -->
+        <img id="frame3" alt="F1 Aerodynamics"
+             class="absolute inset-0 w-full h-full object-contain opacity-0 mix-blend-lighten pointer-events-none transition-opacity duration-700"
+             src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcjSI9AaCQlEckQcXsBpydQZZSRVhmX6hSSkgMHm9IKTwdOjKq9X9Bemx2hnahiqgPTcNkAIC9AgB5Z_sJwUaYarAjSSoL3Xkyplhftos8cTw8D2O5uI1A5x3LTdGcj3Jxa1pXXa1xZOGQdcHFRIvT8Trvyrmgc3jL0GlG7gBbcXq4k4MgKM59HhXiijONarB27hICFt5CzLGdZFL0e26LqjWkWvSLSXskZCQHJUY1ezsmut1j9AWO8JkwNrVm_2FLVrTVJZtxH6U"/>
+        <!-- Scanlines -->
+        <div class="absolute inset-0 z-10 pointer-events-none">
+            <div class="w-full h-full border border-white/5 overflow-hidden">
+                <div class="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] pointer-events-none"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Text Overlays -->
+    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30">
+        <!-- Overlay 1: Pinnacle Engineering -->
+        <div id="overlay1" class="text-center transition-all duration-1000">
+            <h2 class="font-headline text-7xl md:text-9xl font-black tracking-[-0.05em] uppercase text-white">
+                Pinnacle <br/> <span class="text-orange-600">Engineering</span>
+            </h2>
+            <div class="mt-8 flex gap-4 justify-center">
+                <span class="px-3 py-1 glass-panel border border-white/10 text-[10px] font-headline tracking-[0.3em] uppercase">Low Latency</span>
+                <span class="px-3 py-1 glass-panel border border-white/10 text-[10px] font-headline tracking-[0.3em] uppercase">High Output</span>
+            </div>
+        </div>
+        <!-- Scroll Indicator -->
+        <div id="scrollIndicator" class="absolute bottom-12 flex flex-col items-center gap-4 transition-opacity duration-500">
+            <span class="font-headline text-[10px] tracking-widest text-zinc-500 uppercase">Engage Scroll</span>
+            <div class="w-[1px] h-12 bg-gradient-to-b from-orange-600 to-transparent"></div>
+        </div>
+    </div>
+
+    <!-- Right HUD -->
+    <div class="absolute right-8 bottom-24 flex flex-col items-end gap-2 z-20 text-right hidden md:flex">
+        <div class="font-headline text-xs text-orange-600 mb-2">TELEMETRY_LOG_V2.0</div>
+        <div class="font-mono text-[10px] text-zinc-600 leading-tight">
+            &gt; CLOCK_SPEED: 4.8GHZ<br/>
+            &gt; COMPILING_ASSETS... OK<br/>
+            &gt; OPTIMIZING_DOM... OK<br/>
+            &gt; VELOCITY_STABLE_AT_60FPS
+        </div>
+    </div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 2. WHAT I BUILD — Scroll Storytelling                        -->
+<!-- ============================================================ -->
+<section id="whatIBuild" class="relative z-40 bg-[#050505] py-32 px-6 overflow-hidden">
+    <div class="max-w-5xl mx-auto">
+        <p class="font-headline text-orange-600 text-xs tracking-[0.4em] uppercase mb-4">02 // Output Manifest</p>
+        <h2 class="font-headline text-5xl md:text-7xl font-black text-white uppercase tracking-tighter mb-24">
+            What I <span class="text-orange-600">Build</span>
+        </h2>
+
+        <div class="space-y-20">
+            <!-- Entry 1 -->
+            <div class="build-entry flex flex-col md:flex-row items-start gap-8">
+                <div class="shrink-0 w-16 h-16 flex items-center justify-center border border-orange-600/30 bg-orange-600/5">
+                    <span class="material-symbols-outlined text-orange-600 text-3xl">web</span>
+                </div>
+                <div>
+                    <h3 class="font-headline text-2xl font-bold text-white uppercase tracking-tight">Full-Stack Web Applications</h3>
+                    <p class="mt-3 text-zinc-400 leading-relaxed max-w-xl">
+                        End-to-end platforms built with Next.js, React, and Python — from database schema to pixel-perfect UI. Optimized for performance, SEO, and scalability.
+                    </p>
+                </div>
+            </div>
+            <!-- Entry 2 -->
+            <div class="build-entry flex flex-col md:flex-row items-start gap-8">
+                <div class="shrink-0 w-16 h-16 flex items-center justify-center border border-orange-600/30 bg-orange-600/5">
+                    <span class="material-symbols-outlined text-orange-600 text-3xl">psychology</span>
+                </div>
+                <div>
+                    <h3 class="font-headline text-2xl font-bold text-white uppercase tracking-tight">Generative AI Systems</h3>
+                    <p class="mt-3 text-zinc-400 leading-relaxed max-w-xl">
+                        Intelligent applications powered by LLMs — chatbots, automated workflows, content generation engines, and AI-augmented tools that transform business operations.
+                    </p>
+                </div>
+            </div>
+            <!-- Entry 3 -->
+            <div class="build-entry flex flex-col md:flex-row items-start gap-8">
+                <div class="shrink-0 w-16 h-16 flex items-center justify-center border border-orange-600/30 bg-orange-600/5">
+                    <span class="material-symbols-outlined text-orange-600 text-3xl">rule</span>
+                </div>
+                <div>
+                    <h3 class="font-headline text-2xl font-bold text-white uppercase tracking-tight">Enterprise Decision Systems</h3>
+                    <p class="mt-3 text-zinc-400 leading-relaxed max-w-xl">
+                        IBM ODM business rule management solutions — automating complex decision logic at enterprise scale for telecom and digital media platforms.
+                    </p>
+                </div>
+            </div>
+            <!-- Entry 4 -->
+            <div class="build-entry flex flex-col md:flex-row items-start gap-8">
+                <div class="shrink-0 w-16 h-16 flex items-center justify-center border border-orange-600/30 bg-orange-600/5">
+                    <span class="material-symbols-outlined text-orange-600 text-3xl">integration_instructions</span>
+                </div>
+                <div>
+                    <h3 class="font-headline text-2xl font-bold text-white uppercase tracking-tight">API Integrations & Automation</h3>
+                    <p class="mt-3 text-zinc-400 leading-relaxed max-w-xl">
+                        Connecting systems that don't talk to each other — QuickBooks, Bill.com, CRMs, and custom APIs wired into seamless automated pipelines.
+                    </p>
+                </div>
+            </div>
+            <!-- Entry 5 -->
+            <div class="build-entry flex flex-col md:flex-row items-start gap-8">
+                <div class="shrink-0 w-16 h-16 flex items-center justify-center border border-orange-600/30 bg-orange-600/5">
+                    <span class="material-symbols-outlined text-orange-600 text-3xl">verified_user</span>
+                </div>
+                <div>
+                    <h3 class="font-headline text-2xl font-bold text-white uppercase tracking-tight">QA & Testing Frameworks</h3>
+                    <p class="mt-3 text-zinc-400 leading-relaxed max-w-xl">
+                        End-to-end testing pipelines with Playwright, automated quality gates, and team-wide QA processes that ensure enterprise reliability before deployment.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 3. TECH TELEMETRY / STACK LOG — 30% Bigger Fonts             -->
+<!-- ============================================================ -->
+<section id="techTelemetry" class="relative z-40 bg-[#050505] px-6 py-32 border-t border-white/5">
+    <div class="max-w-7xl mx-auto">
+        <p class="font-headline text-orange-600 text-xs tracking-[0.4em] uppercase mb-4">03 // Stack Log</p>
+        <h2 class="font-headline text-5xl md:text-7xl font-black text-white uppercase tracking-tighter mb-16">
+            Tech <span class="text-orange-600">Telemetry</span>
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <!-- Frontend -->
+            <div>
+                <h3 class="font-headline text-orange-600 text-sm tracking-[0.3em] uppercase mb-6 border-b border-orange-600/20 pb-3">Frontend</h3>
+                <div class="flex flex-wrap gap-3">
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">React</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">Next.js</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">TypeScript</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">JavaScript</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">TailwindCSS</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">GSAP</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">Framer Motion</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">HTML5</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">CSS3</span>
+                </div>
+            </div>
+            <!-- Backend -->
+            <div>
+                <h3 class="font-headline text-orange-600 text-sm tracking-[0.3em] uppercase mb-6 border-b border-orange-600/20 pb-3">Backend</h3>
+                <div class="flex flex-wrap gap-3">
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">Python</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">FastAPI</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">Node.js</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">Express</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">PostgreSQL</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">Supabase</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">Drizzle ORM</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">PHP</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">MySQL</span>
+                </div>
+            </div>
+            <!-- AI & DevOps -->
+            <div>
+                <h3 class="font-headline text-orange-600 text-sm tracking-[0.3em] uppercase mb-6 border-b border-orange-600/20 pb-3">AI & DevOps</h3>
+                <div class="flex flex-wrap gap-3">
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">OpenAI</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">Claude API</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">TensorFlow</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">Docker</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">AWS</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">Vercel</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">Git</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">Playwright</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">IBM ODM</span>
+                    <span class="px-4 py-2 glass-panel border border-white/10 font-headline text-[15px] tracking-wider text-white uppercase">Google Cloud</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 4. EXPERIENCE — Timeline with Hover Popups                   -->
+<!-- ============================================================ -->
+<section id="experience" class="relative z-40 bg-[#050505] px-6 py-32 border-t border-white/5">
+    <div class="max-w-6xl mx-auto">
+        <p class="font-headline text-orange-600 text-xs tracking-[0.4em] uppercase mb-4">04 // Race Log</p>
+        <h2 class="font-headline text-5xl md:text-7xl font-black text-white uppercase tracking-tighter mb-20">
+            Experience
+        </h2>
+
+        <!-- Timeline -->
+        <div class="relative">
+            <!-- Timeline line -->
+            <div class="absolute left-0 right-0 top-1/2 h-[1px] bg-zinc-800 hidden md:block"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-8 md:gap-4 relative">
+                <!-- Entry 1 -->
+                <div class="exp-card flex flex-col items-center text-center group cursor-pointer">
+                    <div class="w-4 h-4 rounded-full bg-orange-600 border-4 border-[#050505] relative z-10 mb-4 group-hover:scale-150 transition-transform"></div>
+                    <p class="font-headline text-lg font-bold text-white uppercase tracking-tight">Sr. ODM Specialist & QA Lead</p>
+                    <p class="font-headline text-xs text-orange-600 tracking-[0.2em] uppercase mt-1">2024 &mdash; Present</p>
+                    <p class="text-zinc-500 text-xs mt-1">Bell Canada</p>
+                    <!-- Hover Popup -->
+                    <div class="exp-popup">
+                        <div class="glass-panel border border-orange-600/20 p-5 text-left">
+                            <p class="font-headline text-orange-600 text-[10px] tracking-[0.3em] uppercase mb-2">Details</p>
+                            <p class="text-zinc-300 text-sm leading-relaxed">Lead QA for a large-scale, customer-facing digital billboard platform. Focus on accuracy, reliability, and seamless delivery while fostering a culture of collaboration and accountability across teams.</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Entry 2 -->
+                <div class="exp-card flex flex-col items-center text-center group cursor-pointer">
+                    <div class="w-4 h-4 rounded-full bg-orange-600/60 border-4 border-[#050505] relative z-10 mb-4 group-hover:scale-150 transition-transform"></div>
+                    <p class="font-headline text-lg font-bold text-white uppercase tracking-tight">Sr. IBM ODM Developer</p>
+                    <p class="font-headline text-xs text-orange-600 tracking-[0.2em] uppercase mt-1">2023 &mdash; 2024</p>
+                    <p class="text-zinc-500 text-xs mt-1">Bell Canada</p>
+                    <div class="exp-popup">
+                        <div class="glass-panel border border-orange-600/20 p-5 text-left">
+                            <p class="font-headline text-orange-600 text-[10px] tracking-[0.3em] uppercase mb-2">Details</p>
+                            <p class="text-zinc-300 text-sm leading-relaxed">Led end-to-end development of IBM ODM BRMS solutions, aligning complex business rules with technical requirements for digital billboard advertising systems.</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Entry 3 -->
+                <div class="exp-card flex flex-col items-center text-center group cursor-pointer">
+                    <div class="w-4 h-4 rounded-full bg-orange-600/40 border-4 border-[#050505] relative z-10 mb-4 group-hover:scale-150 transition-transform"></div>
+                    <p class="font-headline text-lg font-bold text-white uppercase tracking-tight">ODM Developer / BRMS Engineer</p>
+                    <p class="font-headline text-xs text-orange-600 tracking-[0.2em] uppercase mt-1">2020 &mdash; 2023</p>
+                    <p class="text-zinc-500 text-xs mt-1">Bell Canada</p>
+                    <div class="exp-popup">
+                        <div class="glass-panel border border-orange-600/20 p-5 text-left">
+                            <p class="font-headline text-orange-600 text-[10px] tracking-[0.3em] uppercase mb-2">Details</p>
+                            <p class="text-zinc-300 text-sm leading-relaxed">Contributed to design and development of enterprise applications using IBM ODM BRMS. Built and maintained business rule sets for automated decision-making workflows.</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Entry 4 -->
+                <div class="exp-card flex flex-col items-center text-center group cursor-pointer">
+                    <div class="w-4 h-4 rounded-full bg-orange-600/25 border-4 border-[#050505] relative z-10 mb-4 group-hover:scale-150 transition-transform"></div>
+                    <p class="font-headline text-lg font-bold text-white uppercase tracking-tight">Subject Matter Expert</p>
+                    <p class="font-headline text-xs text-orange-600 tracking-[0.2em] uppercase mt-1">2019 &mdash; 2020</p>
+                    <p class="text-zinc-500 text-xs mt-1">Bell Mobility</p>
+                    <div class="exp-popup">
+                        <div class="glass-panel border border-orange-600/20 p-5 text-left">
+                            <p class="font-headline text-orange-600 text-[10px] tracking-[0.3em] uppercase mb-2">Details</p>
+                            <p class="text-zinc-300 text-sm leading-relaxed">Trusted technical and process resource for Bell Mobility contact centre, driving accuracy, efficiency, and consistent service delivery across the organization.</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Entry 5: Origin -->
+                <div class="exp-card flex flex-col items-center text-center group cursor-pointer">
+                    <div class="w-4 h-4 rounded-full bg-zinc-600 border-4 border-[#050505] relative z-10 mb-4 group-hover:scale-150 transition-transform"></div>
+                    <p class="font-headline text-lg font-bold text-white uppercase tracking-tight">"Hello, World!"</p>
+                    <p class="font-headline text-xs text-orange-600 tracking-[0.2em] uppercase mt-1">2009</p>
+                    <p class="text-zinc-500 text-xs mt-1">My Pentium 4</p>
+                    <div class="exp-popup">
+                        <div class="glass-panel border border-orange-600/20 p-5 text-left">
+                            <p class="font-headline text-orange-600 text-[10px] tracking-[0.3em] uppercase mb-2">Origin Story</p>
+                            <p class="text-zinc-300 text-sm leading-relaxed">First line of code — C on a Pentium 4-powered PC. The spark that started everything.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- Feature Bento Grid                                           -->
+<!-- ============================================================ -->
+<section class="relative z-40 bg-[#050505] px-6 py-32">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div class="md:col-span-8 group relative overflow-hidden bg-surface-container-lowest p-12 transition-all duration-500 hover:bg-surface-container-low border-t border-white/5">
+            <div class="relative z-10">
+                <p class="font-headline text-orange-600 text-xs tracking-widest uppercase mb-4">05 // Optimization</p>
+                <h3 class="font-headline text-5xl font-bold text-white uppercase tracking-tighter max-w-lg">
+                    Engineered for <span class="italic font-light">extreme</span> speed delivery.
+                </h3>
+                <p class="mt-6 text-zinc-400 max-w-md leading-relaxed">
+                    Every byte is accounted for. Utilizing custom build pipelines and edge computing to ensure your vision reaches the user at terminal velocity.
+                </p>
+            </div>
+            <div class="absolute -right-20 -bottom-20 w-80 h-80 opacity-5 group-hover:opacity-10 transition-opacity">
+                <span class="material-symbols-outlined text-[20rem] text-white">rocket_launch</span>
+            </div>
+        </div>
+        <div class="md:col-span-4 bg-surface-container-low p-8 flex flex-col justify-between border-t border-white/5">
+            <div class="flex justify-between items-start">
+                <span class="material-symbols-outlined text-orange-600 text-4xl">bolt</span>
+                <span class="font-headline text-xs text-zinc-500 uppercase tracking-widest">Live Output</span>
+            </div>
+            <div>
+                <div class="text-6xl font-headline font-black text-white">99</div>
+                <div class="font-headline text-sm tracking-widest text-zinc-400 uppercase">Lighthouse Score</div>
+            </div>
+        </div>
+        <div class="md:col-span-4 aspect-square bg-zinc-900 overflow-hidden group">
+            <img alt="Carbon Fiber Detail" class="w-full h-full object-cover grayscale transition-transform duration-700 group-hover:scale-110 group-hover:grayscale-0"
+                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuCO8oFUcnztqDR-J7MAMM3cXIX8eL4U0Vh_uRocPtzXPmBQHP5XNxI8RxGpZELp3r1eKF0hUgjbP0KjNZT6rUJJg73ozUSVw2OV7R0BjNpRwr6vKyi8cVqwjQ1dzGFbF45UT5k-o53bpmHfZB1g8HzP4w7gFJ7olQYiE51nA3UeYj1lXKKxDfloERvChFsYE1ql_Z2e6Sb66FUdo28Qi3kswSOuG7Dub3yd7RH8NmZpBGAwlRBHjmNYcWORtXjMMR7jzsEQySUYcqo"/>
+        </div>
+        <div class="md:col-span-8 bg-primary-container p-12 flex flex-col justify-center relative overflow-hidden">
+            <h3 class="font-headline text-5xl font-black text-on-primary-container uppercase tracking-tighter relative z-10">
+                Pure technical <br/> superiority.
+            </h3>
+            <div class="mt-8 flex gap-6 relative z-10">
+                <button class="px-8 py-3 bg-black text-white font-headline text-xs tracking-widest uppercase hover:scale-105 transition-transform">
+                    View Blueprints
+                </button>
+            </div>
+            <div class="absolute -bottom-8 -right-8 font-headline text-[15rem] font-black text-black/5 leading-none select-none">F1</div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 5. FINAL SECTION — Sticky + Danger Tape + CTA Fade-in        -->
+<!-- ============================================================ -->
+<section id="launchSection" class="h-[300vh] relative">
+    <div class="sticky top-0 h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
+        <!-- Danger Tape Top -->
+        <div id="tapeTop" class="absolute top-0 left-0 w-full overflow-hidden z-20" style="height:0">
+            <div class="danger-tape w-full h-6"></div>
+        </div>
+        <!-- Danger Tape Bottom -->
+        <div id="tapeBottom" class="absolute bottom-0 left-0 w-full overflow-hidden z-20" style="height:0">
+            <div class="danger-tape-reverse w-full h-6"></div>
+        </div>
+
+        <!-- Gradient Bg -->
+        <div class="absolute inset-0 bg-gradient-to-t from-orange-600/10 to-transparent"></div>
+
+        <div class="text-center relative z-10">
+            <p class="font-headline text-orange-600 text-xs tracking-[0.4em] uppercase mb-6">Status: Ready for Launch</p>
+            <h2 class="font-headline text-6xl md:text-8xl font-black text-white uppercase tracking-tight mb-12">
+                Let's Build <br/>The Future.
+            </h2>
+            <a id="ctaButton" class="inline-flex items-center gap-4 px-12 py-5 bg-white text-black font-headline text-lg font-black uppercase tracking-tighter hover:bg-orange-600 hover:text-white transition-all duration-300" href="#" style="opacity:0">
+                Initiate Contact
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
+        </div>
+
+        <!-- Bottom HUD -->
+        <div class="absolute bottom-12 left-0 w-full px-12 flex justify-between items-end opacity-40">
+            <div class="font-headline text-[10px] tracking-widest text-zinc-500 uppercase">Ref: LB-2024-ENGINE</div>
+            <div class="font-headline text-[10px] tracking-widest text-zinc-500 uppercase">Lat: 14.6760 N / Lng: 121.0437 E</div>
+        </div>
+    </div>
+</section>
+</main>
+
+<!-- BottomNavBar -->
+<nav class="fixed bottom-8 z-50 flex gap-6 items-center left-1/2 -translate-x-1/2 rounded-full px-4 py-2 bg-zinc-900/40 backdrop-blur-2xl shadow-2xl shadow-orange-900/20">
+    <a class="bg-orange-600 text-white rounded-full p-2 scale-110 hover:scale-125 transition-all" href="#">
+        <span class="material-symbols-outlined">home_max</span>
+    </a>
+    <a class="text-zinc-400 p-2 hover:text-white hover:scale-110 transition-all" href="#">
+        <span class="material-symbols-outlined">rocket_launch</span>
+    </a>
+    <a class="text-zinc-400 p-2 hover:text-white hover:scale-110 transition-all" href="#">
+        <span class="material-symbols-outlined">terminal</span>
+    </a>
+    <a class="text-zinc-400 p-2 hover:text-white hover:scale-110 transition-all" href="#">
+        <span class="material-symbols-outlined">contact_support</span>
+    </a>
+</nav>
+
+<!-- Footer -->
+<footer class="w-full py-12 px-8 bg-[#050505] flex flex-col md:flex-row justify-between items-center gap-8 border-t border-white/5">
+    <div class="flex flex-col gap-2">
+        <h4 class="text-orange-600 font-bold font-headline uppercase text-xs tracking-[0.2em]">CODE BY LUIS</h4>
+        <p class="text-zinc-600 font-headline uppercase text-[10px] tracking-[0.2em]">&copy;2024 CODE BY LUIS | ENGINEERED FOR SPEED</p>
+    </div>
+    <div class="flex gap-12 font-headline uppercase text-xs tracking-[0.2em]">
+        <a class="text-zinc-600 hover:text-orange-500 transition-all" href="#">Telemetry</a>
+        <a class="text-white underline decoration-orange-600 hover:text-orange-500 transition-all" href="#">GitHub</a>
+        <a class="text-zinc-600 hover:text-orange-500 transition-all" href="#">LinkedIn</a>
+    </div>
+</footer>
+
+<!-- ============================================================ -->
+<!-- JavaScript: All scroll-driven behavior                       -->
+<!-- ============================================================ -->
+<script>
+(function() {
+    'use strict';
+
+    // ---- 1. Hero 3-Frame Scroll Controller ----
+    const hero = document.getElementById('hero');
+    const frame1 = document.getElementById('frame1');
+    const frame2 = document.getElementById('frame2');
+    const frame3 = document.getElementById('frame3');
+    const overlay1 = document.getElementById('overlay1');
+    const scrollIndicator = document.getElementById('scrollIndicator');
+
+    // ---- 2. What I Build — IntersectionObserver ----
+    const buildEntries = document.querySelectorAll('.build-entry');
+    const buildObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+            if (entry.isIntersecting) {
+                // Stagger delay based on DOM order
+                const idx = Array.from(buildEntries).indexOf(entry.target);
+                setTimeout(() => {
+                    entry.target.classList.add('visible');
+                }, idx * 120);
+                buildObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15 });
+    buildEntries.forEach(el => buildObserver.observe(el));
+
+    // ---- 5. Launch Section — Tape + CTA ----
+    const launchSection = document.getElementById('launchSection');
+    const tapeTop = document.getElementById('tapeTop');
+    const tapeBottom = document.getElementById('tapeBottom');
+    const ctaButton = document.getElementById('ctaButton');
+
+    function onScroll() {
+        const scrollY = window.scrollY;
+
+        // --- Hero frame transitions ---
+        if (hero) {
+            const heroTop = hero.offsetTop;
+            const heroHeight = hero.offsetHeight;
+            const stickyHeight = window.innerHeight;
+            const scrollRange = heroHeight - stickyHeight;
+            const progress = Math.max(0, Math.min(1, (scrollY - heroTop) / scrollRange));
+
+            // Frame 1: visible 0-30%, fades out 30-40%
+            // Frame 2 (identity): fades in 25-35%, visible 35-60%, fades out 60-70%
+            // Frame 3: fades in 65-75%, visible 75-100%
+            // Overlay1 (Pinnacle): visible 0-25%, fades out 25-35%
+
+            if (progress < 0.30) {
+                frame1.style.opacity = 1;
+            } else if (progress < 0.40) {
+                frame1.style.opacity = 1 - ((progress - 0.30) / 0.10);
+            } else {
+                frame1.style.opacity = 0;
+            }
+
+            if (progress < 0.25) {
+                frame2.style.opacity = 0;
+            } else if (progress < 0.35) {
+                frame2.style.opacity = (progress - 0.25) / 0.10;
+            } else if (progress < 0.60) {
+                frame2.style.opacity = 1;
+            } else if (progress < 0.70) {
+                frame2.style.opacity = 1 - ((progress - 0.60) / 0.10);
+            } else {
+                frame2.style.opacity = 0;
+            }
+
+            if (progress < 0.65) {
+                frame3.style.opacity = 0;
+            } else if (progress < 0.75) {
+                frame3.style.opacity = (progress - 0.65) / 0.10;
+            } else {
+                frame3.style.opacity = 1;
+            }
+
+            // Overlay text
+            if (progress < 0.25) {
+                overlay1.style.opacity = 1;
+                overlay1.style.transform = 'translateY(0)';
+            } else if (progress < 0.35) {
+                const t = (progress - 0.25) / 0.10;
+                overlay1.style.opacity = 1 - t;
+                overlay1.style.transform = `translateY(${-40 * t}px)`;
+            } else {
+                overlay1.style.opacity = 0;
+            }
+
+            // Scroll indicator
+            scrollIndicator.style.opacity = progress < 0.1 ? 1 : Math.max(0, 1 - ((progress - 0.1) / 0.1));
+        }
+
+        // --- Launch section: tape unravel + CTA opacity ---
+        if (launchSection) {
+            const launchTop = launchSection.offsetTop;
+            const launchHeight = launchSection.offsetHeight;
+            const stickyH = window.innerHeight;
+            const launchScroll = scrollY - launchTop;
+            const launchRange = launchHeight - stickyH;
+            const launchProgress = Math.max(0, Math.min(1, launchScroll / launchRange));
+
+            // Tape: grows from 0 to 24px height over 0-60% progress
+            const tapeHeight = Math.min(24, launchProgress * 40);
+            tapeTop.style.height = tapeHeight + 'px';
+            tapeBottom.style.height = tapeHeight + 'px';
+
+            // CTA: opacity from 0 to 1 over 30%-80% progress
+            if (launchProgress < 0.3) {
+                ctaButton.style.opacity = 0;
+            } else if (launchProgress < 0.8) {
+                ctaButton.style.opacity = (launchProgress - 0.3) / 0.5;
+            } else {
+                ctaButton.style.opacity = 1;
+            }
+        }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll(); // init
+})();
+</script>
+</body></html>
