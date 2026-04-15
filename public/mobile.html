@@ -220,28 +220,21 @@
   .exp-popup {
     position: absolute;
     bottom: calc(100% + 8px);
-    width: 30.6rem;
+    left: 0;
+    right: 0;
+    width: auto;
     opacity: 0;
     transform: translateY(6px);
     pointer-events: none;
     transition: opacity 0.25s, transform 0.25s;
     z-index: 60;
   }
-  /* Odd items (1st, 3rd, 5th): popup upper-right */
-  .exp-item:nth-child(odd) .exp-popup {
-    left: auto;
-    right: -0.5rem;
-  }
-  /* Even items (2nd, 4th): popup upper-left */
-  .exp-item:nth-child(even) .exp-popup {
-    left: -0.5rem;
-    right: auto;
-  }
-  /* Speech bubble tail */
+  /* Speech bubble tail — centered on mobile */
   .exp-popup::after {
     content: '';
     position: absolute;
     bottom: -6px;
+    left: 1.25rem;
     width: 12px;
     height: 12px;
     background: #141414;
@@ -249,8 +242,14 @@
     border-bottom: 1px solid rgba(255,86,37,0.3);
     transform: rotate(45deg);
   }
-  .exp-item:nth-child(odd) .exp-popup::after { right: 1.25rem; left: auto; }
-  .exp-item:nth-child(even) .exp-popup::after { left: 1.25rem; right: auto; }
+  /* Desktop: wider popups with alternating position */
+  @media (min-width: 768px) {
+    .exp-popup { width: 30.6rem; left: auto; right: auto; }
+    .exp-item:nth-child(odd) .exp-popup { left: auto; right: -0.5rem; }
+    .exp-item:nth-child(even) .exp-popup { left: -0.5rem; right: auto; }
+    .exp-item:nth-child(odd) .exp-popup::after { right: 1.25rem; left: auto; }
+    .exp-item:nth-child(even) .exp-popup::after { left: 1.25rem; right: auto; }
+  }
 
   .exp-item:hover .exp-popup,
   .exp-item:focus-within .exp-popup {
@@ -285,6 +284,13 @@
       inset 0 -1px 0 rgba(0,0,0,0.3);
   }
 
+  /* -- Bento grid: sticky scroll-driven slide-in from off-screen right -- */
+  .bento-card {
+    opacity: 0;
+    transform: translateX(110vw);
+    will-change: transform, opacity;
+  }
+
   /* -- Respect reduced motion -- */
   @media (prefers-reduced-motion: reduce) {
     .scroll-frame {
@@ -293,6 +299,7 @@
     }
     .frame-dot { transition: none; }
     .build-row { transform: none !important; opacity: 1 !important; }
+    .bento-card { opacity: 1 !important; transform: translateX(0) !important; }
     .star { animation: none; transform: none !important; }
     #hud-grid { animation: none; }
     .danger-tape, .danger-tape-reverse { animation: none; }
@@ -572,7 +579,7 @@
               <div class="exp-popup">
                 <div class="bg-[#141414] border border-orange-600/30 p-4 text-left shadow-lg shadow-black/60">
                   <p class="font-headline text-orange-600 tracking-[0.2em] uppercase mb-1.5" style="font-size:0.5625rem;">Details</p>
-                  <p class="text-zinc-300 leading-relaxed" style="font-size:0.7rem;">Focused on building scalable automation and API-driven systems across CRM, financial, marketing, and internal platforms. Heavy user of Zapier, creating and maintaining 1,000+ automation workflows. Hands-on development and maintenance of Intuit and Bill.com integrations. Proficient in Python, debugging, and CLI-based workflows, leveraging modern AI technologies to streamline operations.</p>
+                  <p class="text-zinc-300 leading-relaxed" style="font-size:0.7rem;">Sole technical lead automating 50% of operational workflows across 5 departments. Built and maintain 277 Zapier automations spanning lead intake, billing, and vendor payments. Developed AI progress billing (Claude vision), invoice sync backend (Python, Redis, AMQP), and contract management platform. Hands-on QuickBooks and Bill.com integrations in production.</p>
                 </div>
               </div>
             </div>
@@ -682,78 +689,76 @@
   </section><!-- /hero-section -->
 
   <!-- ==========================================
-       FEATURE BENTO GRID
+       FEATURE BENTO GRID — Sticky scroll-driven
+       Height provides scroll travel for card animations
   ========================================== -->
-  <section class="relative z-40 px-4 md:px-6 py-20 md:py-32">
-    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+  <section class="relative z-40" id="bento-wrapper" style="height: 300vh;">
+    <div class="sticky top-0 w-full overflow-hidden px-4 md:px-6 flex items-center justify-center" style="height: 100dvh; padding-top: max(3.5rem, env(safe-area-inset-top)); padding-bottom: max(2rem, env(safe-area-inset-bottom));" id="bento-sticky">
+    <div class="max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-12 gap-2.5 md:gap-6">
 
       <!-- Performance Card -->
-      <div class="md:col-span-8 group relative overflow-hidden bg-surface-container-lowest p-8 md:p-12 transition-all duration-500 hover:bg-surface-container-low border-t border-white/5">
+      <div class="bento-card md:col-span-8 group relative overflow-hidden bg-surface-container-lowest p-5 md:p-12 hover:bg-surface-container-low border-t border-white/5">
         <div class="relative z-10">
-          <p class="font-headline text-orange-600 tracking-widest uppercase mb-4" style="font-size:0.625rem;">01 // Optimization</p>
-          <h3 class="font-headline font-bold text-white uppercase tracking-tighter text-3xl md:text-5xl max-w-lg">
-            AI Systems at <span class="italic font-light">Full</span> Velocity.
+          <p class="font-headline text-orange-600 tracking-widest uppercase mb-2 md:mb-4" style="font-size:0.625rem;">01 // Production Impact</p>
+          <h3 class="font-headline font-bold text-white uppercase tracking-tighter text-2xl md:text-5xl max-w-lg">
+            277 Automations. <span class="italic font-light">Zero</span> Manual.
           </h3>
-          <p class="mt-5 text-zinc-400 max-w-md leading-relaxed" style="font-size: clamp(0.875rem, 3vw, 1rem);">
-            Every agent is production-hardened. Intelligent pipelines and edge deployment ensure your AI-powered systems operate at maximum throughput.
+          <p class="mt-3 md:mt-5 text-zinc-400 max-w-md leading-relaxed" style="font-size: clamp(0.8125rem, 3vw, 1rem);">
+            Sole technical lead for a luxury construction company. Built the entire automation layer — lead intake, billing pipelines, vendor payments, and AI-powered progress billing — across 5 departments.
           </p>
         </div>
         <div class="absolute -right-20 -bottom-20 w-72 h-72 md:w-80 md:h-80 opacity-5 group-hover:opacity-10 transition-opacity" aria-hidden="true">
-          <span class="material-symbols-outlined text-white" style="font-size:20rem;">psychology</span>
+          <span class="material-symbols-outlined text-white" style="font-size:20rem;">hub</span>
         </div>
       </div>
 
       <!-- Metric Card -->
-      <div class="md:col-span-4 bg-surface-container-low p-7 md:p-8 flex flex-col justify-between border-t border-white/5" style="min-height:9rem;">
-        <div class="flex justify-between items-start">
-          <span class="material-symbols-outlined text-orange-600 text-4xl" aria-hidden="true">bolt</span>
-          <span class="font-headline text-zinc-500 uppercase tracking-widest" style="font-size:0.625rem;">Live Output</span>
-        </div>
-        <div>
-          <div class="text-5xl md:text-6xl font-headline font-black text-white" aria-label="99 Lighthouse Score">99</div>
-          <div class="font-headline tracking-widest text-zinc-400 uppercase" style="font-size:0.75rem;">Lighthouse Score</div>
+      <div class="bento-card md:col-span-4 bg-surface-container-low p-4 md:p-8 flex items-center gap-4 md:flex-col md:items-stretch md:justify-between border-t border-white/5" style="min-height:auto;">
+        <span class="material-symbols-outlined text-orange-600 text-3xl md:text-4xl flex-shrink-0" aria-hidden="true">autorenew</span>
+        <div class="flex items-baseline gap-3 md:block">
+          <div class="text-4xl md:text-6xl font-headline font-black text-white" aria-label="50 percent workflows automated">50%</div>
+          <div class="font-headline tracking-widest text-zinc-400 uppercase" style="font-size:0.6875rem;">Ops Automated</div>
         </div>
       </div>
 
       <!-- Code Aesthetic Card -->
-      <div class="md:col-span-4 aspect-square bg-zinc-900 overflow-hidden group relative" aria-hidden="true">
-        <div class="absolute inset-0 p-5" style="font-family:'ui-monospace',monospace;font-size:0.5625rem;color:#52525b;line-height:1.7;">
-          <div class="text-orange-600 mb-2 tracking-widest" style="font-size:0.5rem;">// ai_agent.py</div>
-          <div>class <span class="text-zinc-300">AIAgent</span>:</div>
-          <div class="pl-4">def <span class="text-zinc-300">__init__</span>(self, llm):</div>
-          <div class="pl-8">self.llm = llm</div>
-          <div class="pl-8">self.tools = []</div>
-          <div class="mt-2 pl-4">def <span class="text-zinc-300">run</span>(self, ctx):</div>
-          <div class="pl-8">resp = self.llm</div>
-          <div class="pl-12">.chat(ctx)</div>
-          <div class="pl-8">return self</div>
-          <div class="pl-12">.execute(resp)</div>
-          <div class="mt-3 text-orange-600">&gt; DEPLOYED</div>
-          <div class="text-zinc-700">&gt; MONITORING...</div>
+      <div class="bento-card md:col-span-4 bg-zinc-900 overflow-hidden group relative md:aspect-square" aria-hidden="true">
+        <div class="p-4 md:absolute md:inset-0 md:p-5" style="font-family:'ui-monospace',monospace;font-size:0.5625rem;color:#52525b;line-height:1.6;">
+          <div class="text-orange-600 mb-1 tracking-widest" style="font-size:0.5rem;">// guardRails.ts</div>
+          <div><span class="text-zinc-500">export function</span> <span class="text-zinc-300">checkGuardRails</span>(input) {</div>
+          <div class="pl-4"><span class="text-zinc-500">const</span> norm = normalize(input)</div>
+          <div class="pl-4"><span class="text-zinc-500">for</span> (<span class="text-zinc-500">const</span> entry <span class="text-zinc-500">of</span> PATTERNS) {</div>
+          <div class="pl-8"><span class="text-zinc-500">if</span> (entry.pattern.test(norm))</div>
+          <div class="pl-12"><span class="text-zinc-500">return</span> { tier: entry.tier, category: entry.category }</div>
+          <div class="pl-4">}</div>
+          <div class="pl-4"><span class="text-zinc-500">return</span> { tier: <span class="text-orange-600">'PASS'</span> }</div>
+          <div>}</div>
+          <div class="mt-1 text-orange-600">&gt; 8 ATTACK CATEGORIES &middot; &lt; 5ms</div>
         </div>
-        <div class="absolute inset-0 bg-gradient-to-t from-[#050505]/70 to-transparent"></div>
-        <div class="absolute inset-0 bg-gradient-to-l from-[#050505]/40 to-transparent"></div>
+        <div class="hidden md:block absolute inset-0 bg-gradient-to-t from-[#050505]/70 to-transparent"></div>
+        <div class="hidden md:block absolute inset-0 bg-gradient-to-l from-[#050505]/40 to-transparent"></div>
       </div>
 
       <!-- CTA Logic Card -->
-      <div class="md:col-span-8 bg-primary-container p-8 md:p-12 flex flex-col justify-center relative overflow-hidden">
-        <h3 class="font-headline font-black text-on-primary-container uppercase tracking-tighter text-3xl md:text-5xl relative z-10">
+      <div class="bento-card md:col-span-8 bg-primary-container p-5 md:p-12 flex flex-col justify-center relative overflow-hidden">
+        <h3 class="font-headline font-black text-on-primary-container uppercase tracking-tighter text-2xl md:text-5xl relative z-10">
           Intelligent<br/>Architecture.
         </h3>
-        <div class="mt-7 flex gap-4 relative z-10 flex-wrap">
+        <div class="mt-4 md:mt-7 flex gap-4 relative z-10 flex-wrap">
           <a href="#projects"
-             class="inline-flex items-center gap-2 px-7 md:px-8 py-3 bg-black text-white font-headline tracking-widest uppercase hover:scale-105 transition-transform"
+             class="inline-flex items-center gap-2 px-6 md:px-8 py-2.5 md:py-3 bg-black text-white font-headline tracking-widest uppercase hover:scale-105 transition-transform"
              style="font-size:0.75rem;min-height:44px;">
             View Projects
           </a>
         </div>
-        <div class="absolute -bottom-8 -right-8 font-headline font-black text-black/5 leading-none select-none" style="font-size:12rem;" aria-hidden="true">
+        <div class="absolute -bottom-8 -right-8 font-headline font-black text-black/5 leading-none select-none" style="font-size:8rem;" aria-hidden="true">
           AI
         </div>
       </div>
 
     </div>
-  </section>
+    </div><!-- /bento-sticky -->
+  </section><!-- /bento-wrapper -->
 
   <!-- ==========================================
        PROJECTS -- Selected Work
@@ -764,60 +769,66 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
 
-        <a href="https://luis-chatbot.vercel.app/" target="_blank" rel="noopener noreferrer" class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
+        <div class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
           <div class="flex justify-between items-start mb-4">
             <span class="font-headline text-zinc-600 uppercase tracking-widest" style="font-size:0.5625rem;">01</span>
-            <span class="material-symbols-outlined text-zinc-700 group-hover:text-orange-600 transition-colors" style="font-size:1.1rem;" aria-hidden="true">arrow_outward</span>
+            <span class="material-symbols-outlined text-orange-600" style="font-size:1.1rem;" aria-hidden="true">lock</span>
           </div>
-          <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">Advanced Chatbot</h4>
-          <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">AI &middot; OpenAI &middot; FastAPI</p>
-        </a>
+          <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">Fiend Invoice Sync</h4>
+          <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">Python &middot; Redis &middot; AMQP &middot; QBO &middot; Bill.com</p>
+          <p class="text-zinc-700 mt-2" style="font-size:0.5625rem;">Production backend &mdash; distributed task processing, retry logic, duplicate prevention</p>
+        </div>
 
-        <a href="https://resume-ai-frontend-orpin.vercel.app" target="_blank" rel="noopener noreferrer" class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
+        <div class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
           <div class="flex justify-between items-start mb-4">
             <span class="font-headline text-zinc-600 uppercase tracking-widest" style="font-size:0.5625rem;">02</span>
-            <span class="material-symbols-outlined text-zinc-700 group-hover:text-orange-600 transition-colors" style="font-size:1.1rem;" aria-hidden="true">arrow_outward</span>
+            <span class="material-symbols-outlined text-orange-600" style="font-size:1.1rem;" aria-hidden="true">lock</span>
           </div>
-          <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">Resume Analyzer</h4>
-          <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">NLP &middot; Python &middot; React</p>
-        </a>
+          <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">PoolSightAI</h4>
+          <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">Claude Vision &middot; Next.js &middot; Trello API</p>
+          <p class="text-zinc-700 mt-2" style="font-size:0.5625rem;">AI progress billing &mdash; site photos to % completion per line item</p>
+        </div>
 
-        <a href="https://voice-ai-braincx.vercel.app/" target="_blank" rel="noopener noreferrer" class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
+        <div class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
           <div class="flex justify-between items-start mb-4">
             <span class="font-headline text-zinc-600 uppercase tracking-widest" style="font-size:0.5625rem;">03</span>
-            <span class="material-symbols-outlined text-zinc-700 group-hover:text-orange-600 transition-colors" style="font-size:1.1rem;" aria-hidden="true">arrow_outward</span>
+            <span class="material-symbols-outlined text-orange-600" style="font-size:1.1rem;" aria-hidden="true">lock</span>
           </div>
-          <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">Voice Assistant</h4>
-          <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">Speech &middot; AI &middot; Node.js</p>
-        </a>
+          <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">Contract Management</h4>
+          <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">Next.js &middot; PostgreSQL &middot; RBAC &middot; EML Parsing</p>
+          <p class="text-zinc-700 mt-2" style="font-size:0.5625rem;">150+ line-item contracts &mdash; webhook ingestion, Excel generation, approval workflows</p>
+        </div>
 
-        <a href="https://smartsync-integrator.vercel.app/" target="_blank" rel="noopener noreferrer" class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
+        <div class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
           <div class="flex justify-between items-start mb-4">
             <span class="font-headline text-zinc-600 uppercase tracking-widest" style="font-size:0.5625rem;">04</span>
-            <span class="material-symbols-outlined text-zinc-700 group-hover:text-orange-600 transition-colors" style="font-size:1.1rem;" aria-hidden="true">arrow_outward</span>
+            <span class="material-symbols-outlined text-orange-600" style="font-size:1.1rem;" aria-hidden="true">lock</span>
           </div>
-          <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">SmartSync Integrator</h4>
-          <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">QuickBooks &middot; Bill.com &middot; API</p>
-        </a>
+          <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">Zapier Automation Layer</h4>
+          <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">277 Zaps &middot; 9 Billing Sub-types &middot; 11 Affiliates</p>
+          <p class="text-zinc-700 mt-2" style="font-size:0.5625rem;">Full customer lifecycle &mdash; lead intake to vendor payment, auto-routing by document type</p>
+        </div>
 
         <!-- Hidden projects (5+) -->
         <div id="extra-projects" class="hidden contents">
-          <a href="https://va-portfolio-sample.vercel.app/" target="_blank" rel="noopener noreferrer" class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
+          <a href="https://codebyluis.dev" target="_blank" rel="noopener noreferrer" class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
             <div class="flex justify-between items-start mb-4">
               <span class="font-headline text-zinc-600 uppercase tracking-widest" style="font-size:0.5625rem;">05</span>
               <span class="material-symbols-outlined text-zinc-700 group-hover:text-orange-600 transition-colors" style="font-size:1.1rem;" aria-hidden="true">arrow_outward</span>
             </div>
-            <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">VA Portfolio</h4>
-            <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">Next.js &middot; Supabase &middot; AI</p>
+            <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">Portfolio Chatbot</h4>
+            <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">3-Tier AI &middot; Guard Rails &middot; OpenAI</p>
+            <p class="text-zinc-700 mt-2" style="font-size:0.5625rem;">Layered protection &mdash; client-side intent, FAQ fallback, 8 attack categories blocked</p>
           </a>
 
-          <a href="https://pilates-w-bee.vercel.app/" target="_blank" rel="noopener noreferrer" class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
+          <a href="https://smartsync-integrator.vercel.app/" target="_blank" rel="noopener noreferrer" class="group bg-surface-container-lowest border border-white/5 p-6 hover:border-primary-container/30 transition-all duration-300 block" style="min-height:44px;">
             <div class="flex justify-between items-start mb-4">
               <span class="font-headline text-zinc-600 uppercase tracking-widest" style="font-size:0.5625rem;">06</span>
               <span class="material-symbols-outlined text-zinc-700 group-hover:text-orange-600 transition-colors" style="font-size:1.1rem;" aria-hidden="true">arrow_outward</span>
             </div>
-            <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">Pilates With Bee</h4>
-            <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">Next.js &middot; Fitness &middot; Web</p>
+            <h4 class="font-headline text-sm font-bold text-white uppercase tracking-tight">SmartSync Demo</h4>
+            <p class="text-zinc-600 mt-1 font-headline" style="font-size:0.625rem;">QuickBooks &middot; Bill.com &middot; API</p>
+            <p class="text-zinc-700 mt-2" style="font-size:0.5625rem;">Public demo of the invoice sync architecture</p>
           </a>
         </div>
 
@@ -1112,6 +1123,12 @@
   // -- Build rows (frame 3) -- scroll-driven slide from right --
   var buildRows = document.querySelectorAll('.build-row');
 
+  // -- Bento grid elements --
+  var bentoWrapper = document.getElementById('bento-wrapper');
+  var bentoCards   = document.querySelectorAll('.bento-card');
+  var bentoCount   = bentoCards.length;
+  var bentoReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   // -- Starfield generation --
   var starfield = document.getElementById('starfield');
   var starData = [];
@@ -1386,6 +1403,30 @@
       ctaInitiate.style.pointerEvents = ctaT > 0.5 ? 'auto' : 'none';
     }
 
+    // -- Bento grid: sticky scroll-driven slide from off-screen right --
+    if (bentoWrapper && bentoCount > 0 && !bentoReducedMotion) {
+      var bentoTop   = bentoWrapper.offsetTop;
+      var bentoH     = bentoWrapper.offsetHeight;
+      var bentoTravel = bentoH - viewportH;
+      var bentoRaw   = (scrollY - bentoTop) / bentoTravel;
+      var bentoP     = Math.max(0, Math.min(1, bentoRaw));
+
+      for (var ci = 0; ci < bentoCount; ci++) {
+        // Staggered sub-windows: cards animate over 0%→70%, last 30% is dwell
+        var cardStart = (ci / bentoCount) * 0.5;
+        var cardEnd   = cardStart + 0.3;
+        var cardT     = Math.max(0, Math.min(1, (bentoP - cardStart) / (cardEnd - cardStart)));
+
+        // Ease-out cubic — smooth deceleration as card lands
+        var eased = 1 - Math.pow(1 - cardT, 3);
+
+        // Slide from 110vw (fully off-screen right) to 0
+        var xOff = (1 - eased) * 110;
+        bentoCards[ci].style.opacity   = eased;
+        bentoCards[ci].style.transform = 'translateX(' + xOff + 'vw)';
+      }
+    }
+
   }
 
   window.addEventListener('scroll', onScroll, { passive: true });
@@ -1529,6 +1570,43 @@
     if (el) el.remove();
   }
 
+  // -- FAQ keyword matching (mirrors ChatWindow.tsx TF+FAQ layer) --
+  var faqMatches = [
+    { keywords: ['who are you', 'what do you do', 'introduce yourself', 'your name', 'hi', 'hello', 'hey'],
+      response: "Hi there! I'm Luis, a Senior IBM ODM Specialist and QA Team Manager at Bell Digital Billboards. I'm also a Full-Stack Developer who leverages AI, machine learning, and generative technologies to elevate business processes and create intelligent solutions." },
+    { keywords: ['skills', 'programming', 'languages', 'typescript', 'javascript', 'react', 'java', 'c++'],
+      response: "I specialize in TypeScript and JavaScript for modern web development, plus React and Next.js. I also have experience with Java, C++, Python, and various databases like PostgreSQL and MySQL." },
+    { keywords: ['chatbot', 'ai', 'tensorflow', 'openai', 'machine learning'],
+      response: "Yes! I leverage AI and machine learning to create intelligent solutions that elevate business operations. I build AI-powered chatbots, develop generative AI applications, and implement machine learning models to automate processes and drive innovation." },
+    { keywords: ['hobbies', 'rc cars', 'cycling', 'coffee', 'sim racing', 'youtube', 'f1', 'formula'],
+      response: "I love Formula 1, cycling (both road and gravel), RC car builds with Tamiya kits, coffee brewing, and sim racing. I share these hobbies on my YouTube channel 'Sunraku-san TV'." },
+    { keywords: ['contact me', 'contact', 'email', 'linkedin', 'reach you', 'hire', 'freelance', 'get in touch', 'reach out', 'connect', 'work together', 'collaborate', 'hiring'],
+      response: "I'd be happy to discuss your project needs! You can reach me at contact@codebyluis.dev or connect with me on LinkedIn." },
+    { keywords: ['background', 'experience', 'career', 'work'],
+      response: "I'm currently a Senior IBM ODM Specialist (BRMS) & QA Team Manager at Bell Canada since October 2024. Previously, I was a Senior IBM ODM Developer and before that an ODM Developer / BRMS Engineer, all at Bell Canada. I also work as an IT & Web Dev Integrations Specialist at Bruntwork Co." },
+    { keywords: ['pricing', 'cost', 'price', 'rate', 'how much'],
+      response: "I offer three website packages: Starter at $599, Professional at $1,199, and Enterprise at $2,999. All include responsive design, SEO, hosting, and AI chatbot integration. Would you like to discuss your project needs?" },
+    { keywords: ['ecommerce', 'e-commerce', 'online store', 'shop', 'website'],
+      response: "Yes, I can build e-commerce sites and full-featured websites! I create online stores with payment integration, inventory management, and AI chatbot support using modern tech stacks like React, Node.js, and Stripe." },
+    { keywords: ['services', 'what services', 'what can you help', 'solutions'],
+      response: "I offer Website Development (Starter/Professional/Enterprise), AI Chatbot Integration, Full-stack Development with React/Next.js/TypeScript/Node.js, IBM ODM Business Rule Management Systems, and QA & Team Management services." },
+    { keywords: ['project', 'portfolio', 'built', 'projects'],
+      response: "Check out my projects: Advanced Chatbot (AI-powered), Resume Analyzer (NLP), Voice Assistant, SmartSync Integrator (QuickBooks/Bill.com APIs), and more. You can see them in the Projects section on this page!" },
+    { keywords: ['get quote', 'quote', 'estimate', 'proposal', 'budget'],
+      response: "I'd be happy to provide a detailed quote! Reach out at contact@codebyluis.dev with your project requirements and I'll get back to you with pricing." }
+  ];
+
+  function findFAQMatch(text) {
+    var msg = text.toLowerCase();
+    for (var i = 0; i < faqMatches.length; i++) {
+      var kws = faqMatches[i].keywords;
+      for (var k = 0; k < kws.length; k++) {
+        if (msg.indexOf(kws[k]) !== -1) return faqMatches[i].response;
+      }
+    }
+    return null;
+  }
+
   async function sendMessage() {
     var text = chatInput.value.trim();
     if (!text || chatBusy) return;
@@ -1538,8 +1616,19 @@
     chatInput.value = '';
     appendMsg(text, true);
     chatHistory.push({ role: 'user', content: text });
-    showTyping();
 
+    // Tier 1: FAQ keyword matching (instant, no API call)
+    var faqReply = findFAQMatch(text);
+    if (faqReply) {
+      appendMsg(faqReply, false);
+      chatHistory.push({ role: 'assistant', content: faqReply });
+      chatBusy = false;
+      chatSend.disabled = false;
+      return;
+    }
+
+    // Tier 2: API call (OpenAI via server, if configured)
+    showTyping();
     try {
       var res = await fetch('/api/chatbot/generate', {
         method: 'POST',
@@ -1549,12 +1638,19 @@
       var data = await res.json();
       removeTyping();
 
-      var reply = (data && data.response) || 'Sorry, I could not generate a response.';
-      appendMsg(reply, false);
-      chatHistory.push({ role: 'assistant', content: reply });
+      if (data && data.response) {
+        appendMsg(data.response, false);
+        chatHistory.push({ role: 'assistant', content: data.response });
+      } else {
+        var fallback = "I'm not sure about that specific question. Feel free to reach out to me directly at contact@codebyluis.dev for more detailed discussions!";
+        appendMsg(fallback, false);
+        chatHistory.push({ role: 'assistant', content: fallback });
+      }
     } catch (err) {
       removeTyping();
-      appendMsg('Connection error. Please try again.', false);
+      var fallback2 = "I'm not sure about that specific question. Feel free to reach out to me directly at contact@codebyluis.dev for more detailed discussions!";
+      appendMsg(fallback2, false);
+      chatHistory.push({ role: 'assistant', content: fallback2 });
     }
 
     chatBusy = false;
