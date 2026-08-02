@@ -1,5 +1,55 @@
-import * as tf from '@tensorflow/tfjs';
+// TYPE-ONLY import: erased at compile time, so referencing tf.LayersModel etc.
+// costs nothing at runtime. The actual library is fetched on demand by getTf().
+import type * as TF from '@tensorflow/tfjs';
 import { SecurityService } from './securityService';
+
+/**
+ * Lazily-loaded TensorFlow.js.
+ *
+ * @tensorflow/tfjs is ~1.1 MB of JavaScript. A static top-level import put it
+ * on the critical path of every page load — including for the large majority
+ * of visitors who never open the chat — and pulled model training onto the main
+ * thread during first paint.
+ *
+ * The import now happens on first use (first classify / train / load), which in
+ * practice means the first time someone actually opens the chatbot. The promise
+ * is memoised, so concurrent callers share a single fetch and repeated calls are
+ * free.
+ *
+ * Do NOT reintroduce a top-level `import * as tf` — it silently undoes this.
+ */
+let tfPromise: Promise<typeof TF> | null = null;
+let tfSync: typeof TF | null = null;
+
+function getTf(): Promise<typeof TF> {
+  if (!tfPromise) {
+    tfPromise = import('@tensorflow/tfjs').then(mod => {
+      tfSync = mod;
+      return mod;
+    });
+  }
+  return tfPromise;
+}
+
+/**
+ * Synchronous handle to TF, or null if it was never loaded.
+ * Only for teardown paths that must not themselves trigger a 1.1 MB download —
+ * if TF was never loaded there is, by definition, nothing to dispose.
+ */
+function peekTf(): typeof TF | null {
+  return tfSync;
+}
+
+/** Test seam: reset lazy-load state between cases. */
+export function __resetTfForTests(): void {
+  tfPromise = null;
+  tfSync = null;
+}
+
+/** Test seam: has TF been pulled in yet? */
+export function __tfLoaded(): boolean {
+  return tfSync !== null;
+}
 
 export interface IntentData {
   tag: string;
@@ -20,7 +70,7 @@ export interface ClassificationResult {
 }
 
 export class TensorFlowService {
-  private model: tf.LayersModel | null = null;
+  private model: TF.LayersModel | null = null;
   private vocabulary: string[] = [];
   private intents: IntentData[] = [];
   private confidenceThreshold = 0.75; // Increased for better accuracy
@@ -353,9 +403,9 @@ export class TensorFlowService {
   /**
    * Create and compile the model with enhanced architecture
    */
-  private createModel(vocabSize: number, numIntents: number): tf.LayersModel {
+  private createModel(tf: typeof TF, vocabSize: number, numIntents: number): TF.LayersModel {
     try {
-      
+
       // Clear any existing variables to prevent conflicts
       tf.disposeVariables();
       
@@ -428,8 +478,11 @@ export class TensorFlowService {
     }
     
     this.isInitializing = true;
-    
+
     try {
+      // Pulls in TensorFlow on first use — see getTf().
+      const tf = await getTf();
+
       // Clean up any existing model first
       if (this.model) {
         this.model.dispose();
@@ -450,7 +503,7 @@ export class TensorFlowService {
     const labelTensor = tf.tensor1d(labels, 'int32').toFloat();
     
     // Create and compile model
-    this.model = this.createModel(this.vocabulary.length, data.intents.length);
+    this.model = this.createModel(tf, this.vocabulary.length, data.intents.length);
     
     // Verify model was created successfully
     if (!this.model) {
@@ -469,7 +522,7 @@ export class TensorFlowService {
       validationSplit: 0.2,
       verbose: 0,
       callbacks: {
-        onEpochEnd: (epoch, logs) => {
+        onEpochEnd: (epoch: number, logs?: TF.Logs) => {
           this.trainingMetrics.epochs = epoch + 1;
           this.trainingMetrics.finalLoss = logs?.loss || 0;
           this.trainingMetrics.finalAccuracy = logs?.acc || 0;
@@ -552,11 +605,15 @@ export class TensorFlowService {
     }
 
 
+    // Already loaded by this point in practice (the model must exist to get
+    // here), but await keeps the contract explicit and is free once memoised.
+    const tf = await getTf();
+
     // Use tf.tidy for automatic memory management
     const result = tf.tidy(() => {
       const bag = this.createBagOfWords(text);
       const inputTensor = tf.tensor2d([bag]);
-      const prediction = this.model!.predict(inputTensor) as tf.Tensor;
+      const prediction = this.model!.predict(inputTensor) as TF.Tensor;
       return prediction;
     });
 
@@ -674,6 +731,8 @@ export class TensorFlowService {
    */
   async loadModel(): Promise<boolean> {
     try {
+      const tf = await getTf();
+
       // Load model
       this.model = await tf.loadLayersModel('indexeddb://chatbot-model');
       
@@ -947,8 +1006,10 @@ export class TensorFlowService {
       this.model = null;
     }
     
-    // Clear all TensorFlow variables
-    tf.disposeVariables();
+    // Clear all TensorFlow variables. peekTf() rather than getTf() on purpose:
+    // teardown must never be the thing that pulls in 1.1 MB of TensorFlow. If
+    // TF was never loaded there is nothing to dispose.
+    peekTf()?.disposeVariables();
     
     // Clear cache
     this.clearCache();

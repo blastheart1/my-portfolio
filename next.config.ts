@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // resend dynamically imports @react-email/render for React email templates.
+  // We only ever pass `html:` strings, so that code path never executes — but
+  // the bundler still has to resolve the import. Keeping resend external to
+  // the server bundle avoids pulling in a renderer we do not use.
+  //
+  // (Until 2026-08 this resolved by accident: the unused `portfolio-chatbot`
+  // GitHub dependency happened to declare @react-email/render, and npm hoisted
+  // it. Removing that package surfaced the real requirement.)
+  serverExternalPackages: ['resend'],
+
   images: {
     remotePatterns: [
       {

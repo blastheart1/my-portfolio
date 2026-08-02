@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import ChatLauncher from './ChatLauncher';
 import { ChatWindow } from './ChatWindow';
 import { PerformanceMonitor } from './PerformanceMonitor';
 import { PerformanceToggle } from './PerformanceToggle';
@@ -20,6 +20,12 @@ type PerformanceStats = {
 };
 
 interface ChatbotProps {
+  /**
+   * Open the window on mount. Set by PortfolioChatbotWrapper, which only
+   * mounts this component after the user clicks the launcher — so the click
+   * that caused the mount should also open the chat.
+   */
+  startOpen?: boolean;
   confidenceThreshold?: number;
   onStatusChange?: (status: {
     isModelReady: boolean;
@@ -31,11 +37,12 @@ interface ChatbotProps {
 }
 
 export const Chatbot: React.FC<ChatbotProps> = ({
+  startOpen = false,
   confidenceThreshold = 0.75,
   onStatusChange,
   onChatToggle
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(startOpen);
   const [isModelReady, setIsModelReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [learningCount, setLearningCount] = useState(0);
@@ -127,10 +134,11 @@ export const Chatbot: React.FC<ChatbotProps> = ({
     initializeModel();
   }, [tensorflowService, openaiService]);
 
-  // Update performance stats periodically
+  // Update performance stats periodically — only while the monitor is open.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!tensorflowService || !openaiService) return;
+    if (!showPerformanceMonitor) return;
 
     const updatePerformanceStats = () => {
       if (!tensorflowService || !openaiService) return;
@@ -148,9 +156,13 @@ export const Chatbot: React.FC<ChatbotProps> = ({
 
     // Update every 3 seconds
     const statsInterval = setInterval(updatePerformanceStats, 3000);
-    
+
     return () => clearInterval(statsInterval);
-  }, [tensorflowService, openaiService]);
+    // showPerformanceMonitor is in the guard above AND the deps: without it
+    // this polled every 3s for the lifetime of the page while the monitor was
+    // hidden (its default), doing work nobody could see and keeping the
+    // TensorFlow service graph reachable so it could never be collected.
+  }, [tensorflowService, openaiService, showPerformanceMonitor]);
 
   // Cleanup on unmount to prevent memory leaks
   useEffect(() => {
@@ -198,68 +210,9 @@ export const Chatbot: React.FC<ChatbotProps> = ({
 
   return (
     <>
-      {/* Floating Chat Button */}
-      <motion.img
-        src="/LuisBot.png"
-        alt="Luis AI Chatbot"
-        onClick={toggleChat}
-        className="fixed bottom-20 right-4 md:bottom-6 md:right-6 w-16 h-16 md:w-20 md:h-20 cursor-pointer z-40"
-        style={{ filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' }}
-        whileHover={{ 
-          scale: 1.1,
-          rotate: [0, -5, 5, -5, 0],
-          filter: 'drop-shadow(0 8px 12px rgba(0, 0, 0, 0.2))'
-        }}
-        whileTap={{ 
-          scale: 0.9,
-          rotate: 0
-        }}
-        initial={{ scale: 0, opacity: 0, y: 20 }}
-        animate={{ 
-          scale: 1, 
-          opacity: 1, 
-          y: 0,
-          rotate: [0, 0, 0, 0, 0],
-        }}
-        transition={{ 
-          type: "spring", 
-          stiffness: 260, 
-          damping: 20,
-          rotate: {
-            duration: 0.5,
-            ease: "easeInOut"
-          }
-        }}
-        role="button"
-        tabIndex={0}
-        aria-label="Open AI Chatbot"
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            toggleChat();
-          }
-        }}
-        onError={(e) => {
-          const target = e.currentTarget;
-          if (target.src.endsWith('/LuisBot.png')) {
-            console.warn('PNG failed, trying ICO');
-            target.src = '/LuisBot.ico';
-          } else if (target.src.endsWith('/LuisBot.ico')) {
-            console.warn('ICO failed, using default favicon');
-            target.src = '/favicon.ico';
-          } else {
-            console.warn('All images failed, using emoji fallback');
-            target.style.display = 'none';
-            target.parentElement!.innerHTML = '🤖';
-          }
-        }}
-        loading="eager"
-        width="80"
-        height="80"
-      />
-
-
-
+      {/* Floating Chat Button — same component the wrapper renders pre-mount,
+          with the entrance animation suppressed since it already played. */}
+      <ChatLauncher onClick={toggleChat} animateIn={false} />
 
       {/* Performance Monitor - Disabled in Production */}
       {process.env.NODE_ENV === 'development' && (
