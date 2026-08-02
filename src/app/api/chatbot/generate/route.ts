@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
   const apiKey =
     config.provider === 'claude'
       ? process.env.ANTHROPIC_API_KEY ?? ''
-      : process.env.OPENAI_API_KEY ?? process.env.NEXT_PUBLIC_OPENAI_API_KEY ?? '';
+      : process.env.OPENAI_API_KEY ?? '';
 
   if (!apiKey) {
     return NextResponse.json(

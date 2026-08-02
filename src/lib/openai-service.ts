@@ -5,7 +5,9 @@ let openai: OpenAI | null = null;
 
 function getOpenAI() {
   if (!openai) {
-    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+    // Server-only. Must NOT be a NEXT_PUBLIC_* var — those are inlined into
+    // the client bundle and would publish the key.
+    const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       console.warn('Missing OpenAI API key, using mock client');
       // Return a mock OpenAI instance for build time

@@ -21,11 +21,6 @@ export default function PortfolioChatbotWrapper() {
 
   if (!mounted) return null;
 
-  return (
-    <Chatbot
-      openaiApiKey={process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''}
-      confidenceThreshold={0.75}
-    />
-  );
+  return <Chatbot confidenceThreshold={0.75} />;
 }
 

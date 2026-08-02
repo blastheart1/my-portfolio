@@ -9,8 +9,14 @@ export interface LeadData {
   phone?: string;
 }
 
+/**
+ * Client-side wrapper around POST /api/send-lead.
+ *
+ * There is deliberately no apiKey here. The actual Resend call happens on the
+ * server with the server-only RESEND_API_KEY; a key in this config would have
+ * to be NEXT_PUBLIC_* and would therefore be published in the client bundle.
+ */
 export interface ResendConfig {
-  apiKey: string;
   fromEmail: string;
   toEmail: string;
 }
@@ -20,18 +26,9 @@ export class ResendService {
 
   constructor(config: ResendConfig) {
     this.config = config;
-    
-    if (!this.config.apiKey || this.config.apiKey.trim() === '') {
-      console.warn('⚠️ Resend API key not configured. Lead generation will not work until NEXT_PUBLIC_RESEND_API_KEY is set.');
-    }
   }
 
   async sendLeadNotification(leadData: LeadData): Promise<void> {
-    // Check if API key is configured
-    if (!this.config.apiKey || this.config.apiKey.trim() === '') {
-      throw new Error('Resend API key is not configured. Please add NEXT_PUBLIC_RESEND_API_KEY to your environment variables.');
-    }
-
     try {
       const response = await fetch('/api/send-lead', {
         method: 'POST',

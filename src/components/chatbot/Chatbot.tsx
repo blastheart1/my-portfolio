@@ -20,7 +20,6 @@ type PerformanceStats = {
 };
 
 interface ChatbotProps {
-  openaiApiKey?: string;
   confidenceThreshold?: number;
   onStatusChange?: (status: {
     isModelReady: boolean;
@@ -31,8 +30,7 @@ interface ChatbotProps {
   onChatToggle?: (isOpen: boolean) => void;
 }
 
-export const Chatbot: React.FC<ChatbotProps> = ({ 
-  openaiApiKey = '', 
+export const Chatbot: React.FC<ChatbotProps> = ({
   confidenceThreshold = 0.75,
   onStatusChange,
   onChatToggle
@@ -50,20 +48,12 @@ export const Chatbot: React.FC<ChatbotProps> = ({
     return new TensorFlowService(confidenceThreshold);
   }, [confidenceThreshold]);
   
-  const apiKey = openaiApiKey || (typeof window !== 'undefined' ? process.env.NEXT_PUBLIC_OPENAI_API_KEY : '') || '';
-  
+  // No API key on the client — completions go through /api/chatbot/generate,
+  // which resolves the provider key from server-only env vars.
   const openaiService = useMemo(() => {
     if (typeof window === 'undefined') return null;
-    return new OpenAIService({ apiKey: apiKey });
-  }, [apiKey]);
-
-  // Debug API key (remove in production)
-  useEffect(() => {
-    
-    if (apiKey && apiKey.length > 20) {
-    } else {
-    }
-  }, [apiKey, openaiApiKey]);
+    return new OpenAIService({});
+  }, []);
 
   // Notify parent component of status changes
   useEffect(() => {
