@@ -23,12 +23,6 @@ export async function POST(request: NextRequest) {
     };
 
     const generatedContent = await generateContent(contentRequest);
-    
-    // Debug logging
-    console.log('Generated content caseStudyLink:', generatedContent.caseStudyLink);
-    console.log('Content type:', contentRequest.type);
-    console.log('Full generated content:', JSON.stringify(generatedContent, null, 2));
-    
     // Save to database
     const newPost = await insertBlogPost({
       title: generatedContent.title,

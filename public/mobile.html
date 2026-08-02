@@ -1,4 +1,14 @@
 <!DOCTYPE html>
+<!--
+  INTENTIONALLY STANDALONE — do not delete as "dead code".
+
+  Nothing in src/ links here. That is by design: this page is shared directly
+  as https://codebyluis.dev/mobile.html. A dead-code sweep looking for inbound
+  references will find none and conclude it is unused; it is not.
+
+  It is also the only consumer of public/frames/ (180 WebP frames, ~8.2 MB).
+  Deleting this file would orphan that directory, and vice versa.
+-->
 <html class="dark" lang="en">
 <head>
 <meta charset="utf-8"/>

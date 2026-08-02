@@ -74,9 +74,19 @@ export class SecurityService {
       .trim();
   }
 
+  /**
+   * Client-side debounce ONLY — not a security control.
+   *
+   * Backed by localStorage, so it is trivially bypassed by calling the API
+   * directly, and it returns true (allow) on the server where there is no
+   * window. Its only job is to stop a user double-firing the send button.
+   *
+   * Real enforcement lives in src/lib/rate-limit.ts and runs inside the route
+   * handlers. Do not rely on this for anything that costs money.
+   */
   static checkRateLimit(userId: string = 'default'): boolean {
     if (typeof window === 'undefined') return true;
-    
+
     const key = `rate_limit_${userId}`;
     const now = Date.now();
     const lastRequest = localStorage.getItem(key);
