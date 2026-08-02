@@ -58,7 +58,7 @@ export default function Image() {
           }}
         >
           <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80" }} />
-          <span style={{ color: "#6b7280", fontSize: 20, letterSpacing: "0.05em" }}>luis.dev</span>
+          <span style={{ color: "#6b7280", fontSize: 20, letterSpacing: "0.05em" }}>codebyluis.dev</span>
         </div>
 
         {/* Tagline */}

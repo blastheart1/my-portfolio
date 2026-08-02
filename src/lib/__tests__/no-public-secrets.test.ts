@@ -117,7 +117,8 @@ describe('N3 — server-only key usage', () => {
 
   it('ResendService carries no apiKey in its config', () => {
     const src = readFileSync(path.join(SRC, 'lib/chatbot/resendService.ts'), 'utf8');
-    // The interface must not declare a key field.
-    expect(src).not.toMatch(/export interface ResendConfig \{[^}]*apiKey/s);
+    // The interface must not declare a key field. ([\s\S] rather than the /s
+    // flag — tsconfig targets ES2017.)
+    expect(src).not.toMatch(/export interface ResendConfig \{[\s\S]*?apiKey/);
   });
 });

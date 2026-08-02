@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: "/edit/",
     },
-    sitemap: "https://luis.dev/sitemap.xml",
+    sitemap: "https://codebyluis.dev/sitemap.xml",
   };
 }

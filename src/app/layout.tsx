@@ -5,6 +5,7 @@ import StructuredData from '@/components/StructuredData';
 import ServiceWorker from '@/components/ServiceWorker';
 import { ModalProvider } from '@/contexts/ModalContext';
 import ClientLayoutContent from '@/components/ClientLayoutContent';
+import { SITE_URL } from '@/lib/site';
 
 // Using Inter as a close alternative to SF Pro Display
 const inter = Inter({ 
@@ -15,7 +16,7 @@ const inter = Inter({
 });
 
 export const metadata = {
-  metadataBase: new URL('https://luis.dev'),
+  metadataBase: new URL(SITE_URL),
   title: 'Code by Luis',
   description: 'Senior IBM ODM Specialist and QA Team Manager specializing in full-stack development, AI integration, and scalable systems. Building future-ready applications with precision and innovation.',
   keywords: [
@@ -43,12 +44,12 @@ export const metadata = {
   publisher: 'Antonio Luis Santos',
   robots: 'index, follow',
   alternates: {
-    canonical: 'https://luis.dev',
+    canonical: SITE_URL,
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://luis.dev',
+    url: SITE_URL,
     siteName: 'CodeByLuis.Dev',
     title: 'Code by Luis',
     description: 'Senior IBM ODM Specialist and QA Team Manager specializing in full-stack development, AI integration, and scalable systems. Expert in React, Next.js, Python, and AI technologies.',
@@ -98,8 +99,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* No Google Fonts preconnect: next/font self-hosts Inter at build
+            time, so those origins are never contacted. */}
         <link rel="dns-prefetch" href="https://calendly.com" />
       </head>
       <body

@@ -18,8 +18,13 @@ import {
   getProjects,
 } from "@/lib/content-queries";
 
-// Force server-render on every request so DB edits show immediately
-export const dynamic = "force-dynamic";
+// This page is statically rendered and served from the edge cache. Admin edits
+// show up immediately because every mutating handler under /api/admin/* calls
+// revalidatePath('/') — see docs/plans/AUDIT-2026-08-02.md §2.1. Do NOT add
+// `force-dynamic` here: it disables the cache entry those calls invalidate,
+// which makes the site slower AND turns all 11 revalidatePath calls into
+// no-ops. `revalidate` is a staleness floor in case an invalidation is missed.
+export const revalidate = 3600;
 
 // Lazy load non-critical components
 const ProjectsSection = lazyLoad(() => import("@/components/ProjectsSection"), {
