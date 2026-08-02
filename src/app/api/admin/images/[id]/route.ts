@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { del } from '@vercel/blob';
 import { getSql } from '@/lib/neon';
+import { requireAdmin } from '@/lib/require-admin';
 
 export const runtime = 'nodejs';
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const { id } = await params;
   if (!id) return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
 

@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSql } from '@/lib/neon';
 import { revalidatePath } from 'next/cache';
+import { requireAdmin } from '@/lib/require-admin';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   try {
     const sql = getSql();
     type Row = { field_key: string; field_value: string | null };
@@ -27,6 +30,8 @@ const PatchSchema = z.object({
 });
 
 export async function PATCH(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   let body: unknown;
   try { body = await request.json(); } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });

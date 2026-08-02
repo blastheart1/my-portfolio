@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import { getSql } from '@/lib/neon';
+import { requireAdmin } from '@/lib/require-admin';
 
 export const runtime = 'nodejs';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   try {
     const sql = getSql();
     const rows = await sql`SELECT * FROM media_assets ORDER BY created_at DESC`;
@@ -19,6 +22,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const contentType = request.headers.get('content-type') ?? '';
   if (!contentType.includes('multipart/form-data')) {
     return NextResponse.json({ error: 'Expected multipart/form-data' }, { status: 400 });

@@ -2,15 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSql } from '@/lib/neon';
 import { revalidatePath } from 'next/cache';
+import { requireAdmin } from '@/lib/require-admin';
 
 export const runtime = 'nodejs';
 
 const VALID_SECTIONS = ['hero', 'about', 'experience', 'skills', 'projects', 'services', 'blog', 'contact'];
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ section: string }> }
 ) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const { section } = await params;
   if (!VALID_SECTIONS.includes(section)) {
     return NextResponse.json({ error: 'Unknown section' }, { status: 404 });
@@ -38,6 +41,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ section: string }> }
 ) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   const { section } = await params;
   if (!VALID_SECTIONS.includes(section)) {
     return NextResponse.json({ error: 'Unknown section' }, { status: 404 });

@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSql } from '@/lib/neon';
 import { revalidatePath } from 'next/cache';
+import { requireAdmin } from '@/lib/require-admin';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   try {
     const sql = getSql();
     const rows = await sql`SELECT * FROM service_tiers ORDER BY sort_order ASC`;
@@ -29,6 +32,8 @@ const TierSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   let body: unknown;
   try { body = await request.json(); } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
