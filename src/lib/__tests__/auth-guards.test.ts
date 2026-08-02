@@ -15,7 +15,7 @@
  * to enforce anyway.
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { NextRequest } from 'next/server';
 import { SignJWT } from 'jose';
 

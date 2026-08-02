@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateContent, getRandomTopic, shouldGenerateCaseStudy } from '@/lib/openai-service';
+import { timingSafeCompare } from '@/lib/admin-auth';
 import { insertBlogPost, getBlogPosts, getLatestBlogPost } from '@/lib/database';
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify this is a legitimate cron request (you can add authentication here)
+    // Verify this is a legitimate cron request. Constant-time compare so the
+    // secret cannot be recovered byte-by-byte from response timing.
+    // Fail closed when CRON_SECRET is unset — otherwise a literal "Bearer "
+    // header would authenticate against an empty secret.
+    const cronSecret = process.env.CRON_SECRET;
     const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (!cronSecret || !timingSafeCompare(authHeader ?? undefined, `Bearer ${cronSecret}`)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

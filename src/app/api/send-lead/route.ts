@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { getClientIp, isRateLimited, RATE_LIMITS } from '@/lib/rate-limit';
 
 interface LeadData {
   name: string;
@@ -13,7 +14,14 @@ interface LeadData {
 }
 
 export async function POST(request: NextRequest) {
-  console.log('📧 Lead submission API called');
+  const ip = getClientIp(request);
+  const { limit, windowMs } = RATE_LIMITS.sendLead;
+  if (isRateLimited(`send-lead:${ip}`, limit, windowMs)) {
+    return NextResponse.json(
+      { error: 'Too many submissions. Please try again later.' },
+      { status: 429 }
+    );
+  }
 
   try {
     // Check if Resend API key is configured

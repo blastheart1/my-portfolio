@@ -1,7 +1,29 @@
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
+import { timingSafeEqual } from 'node:crypto';
 
 const COOKIE_NAME = 'admin_session';
 const JWT_EXPIRY = '8h';
+
+/**
+ * Constant-time string comparison for shared secrets (CRON_SECRET, bearer
+ * tokens). A plain `!==` leaks how many leading characters matched via timing,
+ * which is enough to recover a secret byte-by-byte given enough requests.
+ *
+ * Returns false when either side is missing, so an unset env var can never
+ * authenticate a request.
+ */
+export function timingSafeCompare(a: string | undefined, b: string | undefined): boolean {
+  if (!a || !b) return false;
+
+  const bufA = Buffer.from(a, 'utf8');
+  const bufB = Buffer.from(b, 'utf8');
+
+  // timingSafeEqual throws on length mismatch, so compare lengths first. The
+  // length of a secret is not itself sensitive.
+  if (bufA.length !== bufB.length) return false;
+
+  return timingSafeEqual(bufA, bufB);
+}
 
 function getSecret(): Uint8Array {
   const secret = process.env.JWT_SECRET;
