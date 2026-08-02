@@ -8,7 +8,7 @@ export default function StructuredData() {
       "jobTitle": "Senior IBM ODM Specialist & QA Team Manager",
       "description": "Full-Stack Software Engineer specializing in generative AI, skilled in ReactJS, Next.js, TailwindCSS, Supabase, Python, FastAPI, and TensorFlow.",
       "url": "https://codebyluis.dev",
-      "image": "https://codebyluis.dev/profile-photo2.png",
+      "image": "https://codebyluis.dev/profile-photo2.webp",
       "sameAs": [
         "https://www.linkedin.com/in/alasantos01/",
         "https://www.instagram.com/0xlv1s_/",

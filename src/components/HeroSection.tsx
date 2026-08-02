@@ -21,9 +21,9 @@ export default function HeroSection({ content = {} }: { content?: HeroContent })
   const description  = content.description      ?? "Full-Stack, AI, and scalable systems – building future-ready applications that deliver results.";
   const ctaLabel     = content.cta_label        ?? "Schedule a Call";
   const ctaUrl       = content.cta_url          ?? "https://calendly.com/antonioluis-santos1/30min";
-  const photoDefault = content.photo_default_url ?? "/profile-photo2.png";
+  const photoDefault = content.photo_default_url ?? "/profile-photo2.webp";
   const photoHover   = content.photo_hover_url   ?? "/square-profile-photo.jpeg";
-  const photoDark    = content.photo_dark_url     ?? "/profile-photo2.png";
+  const photoDark    = content.photo_dark_url     ?? "/profile-photo2.webp";
 
   const handleCta = () => {
     if (window.Calendly?.showPopupWidget) {

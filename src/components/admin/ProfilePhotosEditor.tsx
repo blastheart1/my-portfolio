@@ -12,9 +12,9 @@ type SlotKey = typeof SLOTS[number]['key'];
 
 export default function ProfilePhotosEditor() {
   const [photos, setPhotos]   = useState<Record<SlotKey, string>>({
-    photo_default_url: '/profile-photo2.png',
+    photo_default_url: '/profile-photo2.webp',
     photo_hover_url:   '/square-profile-photo.jpeg',
-    photo_dark_url:    '/profile-photo2.png',
+    photo_dark_url:    '/profile-photo2.webp',
   });
   const [uploading, setUploading] = useState<SlotKey | null>(null);
   const [status, setStatus]       = useState<'idle' | 'saved' | 'error'>('idle');
