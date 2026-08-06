@@ -3,23 +3,17 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import LogoutButton from './LogoutButton';
-import { CONTENT_SECTIONS } from './layout';
-
-const TOP_LINKS = [
-  { href: '/edit',              label: 'Dashboard',  match: (p: string) => p === '/edit' },
-  { href: '/edit/sections',     label: 'Sections',   match: (p: string) => p === '/edit/sections' },
-  { href: '/edit/content/hero', label: 'Content',    match: (p: string) => p.startsWith('/edit/content') },
-  { href: '/edit/experience',   label: 'Experience', match: (p: string) => p === '/edit/experience' },
-  { href: '/edit/projects',     label: 'Projects',   match: (p: string) => p === '/edit/projects' },
-  { href: '/edit/services',     label: 'Services',   match: (p: string) => p === '/edit/services' },
-  { href: '/edit/images',       label: 'Images',     match: (p: string) => p === '/edit/images' },
-  { href: '/edit/chatbot',      label: 'Chatbot',    match: (p: string) => p.startsWith('/edit/chatbot') },
-];
+import {
+  NAV_ITEMS,
+  CONTENT_SECTIONS,
+  isNavItemActive,
+  activeContentSection,
+} from '@/lib/admin-nav';
 
 export default function AdminNav() {
   const pathname = usePathname();
   const isContent = pathname.startsWith('/edit/content');
-  const activeSection = isContent ? pathname.split('/')[3] : null;
+  const activeSection = activeContentSection(pathname);
 
   return (
     <header className="sticky top-0 z-40 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
@@ -30,12 +24,12 @@ export default function AdminNav() {
             ✦ Admin
           </Link>
           <nav className="hidden sm:flex items-center gap-1">
-            {TOP_LINKS.map(link => (
+            {NAV_ITEMS.map(link => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                  link.match(pathname)
+                  isNavItemActive(link, pathname)
                     ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}

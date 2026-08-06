@@ -1,13 +1,11 @@
 import { ReactNode } from 'react';
-import Link from 'next/link';
 import { AdminProvider } from '@/contexts/AdminContext';
-import LogoutButton from './LogoutButton';
 import AdminNav from './AdminNav';
 
-export const CONTENT_SECTIONS = [
-  'hero', 'about', 'experience', 'skills',
-  'projects', 'services', 'blog', 'contact',
-];
+// CONTENT_SECTIONS now lives in @/lib/admin-nav — importing a constant from a
+// route module coupled the nav to the layout. Re-exported for any consumer
+// that still points here.
+export { CONTENT_SECTIONS } from '@/lib/admin-nav';
 
 export default function EditLayout({ children }: { children: ReactNode }) {
   return (
