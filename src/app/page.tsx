@@ -70,6 +70,11 @@ export default async function Home() {
             <CosmicHero
               name={heroContent.name || undefined}
               tagline={heroContent.description || undefined}
+              ctaLabel={heroContent.cta_label || undefined}
+              ctaHref={
+                heroContent.cta_url ||
+                'https://calendly.com/antonioluis-santos1/30min'
+              }
             />
           </section>
 

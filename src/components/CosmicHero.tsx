@@ -70,9 +70,18 @@ interface CosmicHeroProps {
   name?: string;
   tagline?: string;
   ctaLabel?: string;
+  /** Renders the CTA as a link. Takes precedence over onCta. */
+  ctaHref?: string;
   onCta?: () => void;
   className?: string;
 }
+
+const CTA_CLASS =
+  'mt-[4.5vh] inline-flex items-center gap-2.5 rounded-full border border-white/55 ' +
+  'px-7 py-3 font-mono-ui text-[0.68rem] uppercase tracking-[0.18em] text-white ' +
+  'transition-colors duration-200 hover:border-white hover:bg-white/10 ' +
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ' +
+  'focus-visible:ring-offset-2 focus-visible:ring-offset-transparent';
 
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = React.useState(false);
@@ -112,7 +121,8 @@ const CLOUD_LAYERS = [
 export default function CosmicHero({
   name = 'Antonio Luis Santos',
   tagline = 'AI Full-Stack Software Engineer — building systems that automate, integrate, and scale.',
-  ctaLabel,
+  ctaLabel = 'Schedule a call',
+  ctaHref,
   onCta,
   className,
 }: CosmicHeroProps) {
@@ -204,19 +214,19 @@ export default function CosmicHero({
       }
 
       // ── Astronaut: sinks and is swallowed ───────────────────────────────
-      // It descends into the bank while receding slightly, so it reads as
-      // going under rather than either falling past the viewer or simply
-      // shrinking away. The fade is late and fast: the closing layers should
-      // be what hides it, with opacity only finishing the job.
+      // Keeps its size throughout. Scaling it down read as the figure
+      // retreating into the distance; in the reference it stays the same size
+      // and simply goes under, which is what makes it feel like drowning
+      // rather than flying away. The tilt comes from the idle bob on the inner
+      // element, so nothing here should touch scale.
       if (astronautRef.current) {
         const sink = range(p, 0.02, 0.72);
-        const drop = sink * 240;                     // into the bank
-        const scale = 1 - sink * 0.34;               // slight recession
-        const sway = Math.sin(p * Math.PI * 1.5) * 30;
+        const drop = sink * 324;                     // 240 * 1.35
+        const sway = Math.sin(p * Math.PI * 1.5) * 41;   // 30 * 1.35
         const fade = 1 - range(p, 0.52, 0.74);
 
         astronautRef.current.style.transform =
-          `translate3d(${sway}px, ${drop}px, 0) scale(${scale})`;
+          `translate3d(${sway}px, ${drop}px, 0)`;
         astronautRef.current.style.opacity = String(fade);
       }
 
@@ -268,7 +278,10 @@ export default function CosmicHero({
         {/* Title */}
         <div
           ref={titleRef}
-          className="absolute inset-x-0 top-[9vh] z-30 px-[5vw] will-change-transform"
+          // z-10: deliberately BELOW the astronaut (z-20). In the reference the
+          // helmet passes in front of the wordmark, which is what sells the
+          // figure as being in the scene rather than pasted over it.
+          className="absolute inset-x-0 top-[9vh] z-10 px-[5vw] will-change-transform"
         >
           <h1
             className="font-display font-light uppercase leading-[0.86] tracking-[-0.02em]
@@ -285,19 +298,26 @@ export default function CosmicHero({
             {tagline}
           </p>
 
-          {onCta && ctaLabel && (
-            <button
-              type="button"
-              onClick={onCta}
-              className="mt-[4vh] inline-flex items-center gap-2 rounded-full border border-white/50
-                         px-6 py-2.5 font-mono-ui text-[0.7rem] uppercase tracking-[0.14em]
-                         text-white transition-colors hover:bg-white/10
-                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          {/* Matches the reference's pill: hairline border, sparkle, wide
+              letterspaced mono caps. Rendered as a link when it points at a
+              URL so it stays keyboard- and middle-click friendly. */}
+          {ctaHref ? (
+            <a
+              href={ctaHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={CTA_CLASS}
             >
-              <span aria-hidden="true">✦</span>
+              <span aria-hidden="true" className="text-[0.9em]">✦</span>
+              {ctaLabel}
+            </a>
+          ) : onCta ? (
+            <button type="button" onClick={onCta} className={CTA_CLASS}>
+              <span aria-hidden="true" className="text-[0.9em]">✦</span>
               {ctaLabel}
             </button>
-          )}
+          ) : null}
+
         </div>
 
         {/* Far cloud layers — behind the astronaut. */}
@@ -307,7 +327,7 @@ export default function CosmicHero({
               key={i}
               ref={el => { cloudRefs.current[i] = el; }}
               image={layer.image}
-              className={cn(layer.className, 'z-10')}
+              className={cn(layer.className, 'z-[5]')}
             />
           )
         )}
