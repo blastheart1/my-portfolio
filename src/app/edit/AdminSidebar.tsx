@@ -68,6 +68,14 @@ export default function AdminSidebar() {
     setMobileOpen(false);
   }, [pathname]);
 
+  // Cmd/Ctrl-B is handled globally in AdminShortcuts, which cannot reach this
+  // component's state directly — it signals via a custom event instead.
+  React.useEffect(() => {
+    const onToggle = () => toggleCollapsed();
+    window.addEventListener('admin:toggle-sidebar', onToggle);
+    return () => window.removeEventListener('admin:toggle-sidebar', onToggle);
+  }, [toggleCollapsed]);
+
   return (
     <>
       {/* Mobile top bar — below md the sidebar is not rendered at all. */}

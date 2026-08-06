@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { AdminProvider } from '@/contexts/AdminContext';
 import { ToastProvider } from '@/components/ui/toast';
 import AdminSidebar from './AdminSidebar';
+import AdminShortcuts from '@/components/admin/AdminShortcuts';
 
 // CONTENT_SECTIONS now lives in @/lib/admin-nav — importing a constant from a
 // route module coupled the nav to the layout. Re-exported for any consumer
@@ -17,6 +18,7 @@ export default function EditLayout({ children }: { children: ReactNode }) {
             no per-element variant. */}
         <div className="flex min-h-screen bg-background">
           <AdminSidebar />
+          <AdminShortcuts />
 
           {/* min-w-0 so long content (tables, code) scrolls inside the column
               instead of stretching the flex row. */}
