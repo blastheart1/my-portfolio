@@ -10,31 +10,60 @@ import { cn } from '@/lib/utils';
 /**
  * Scroll-driven space hero.
  *
- * A tall scroll container with a sticky viewport inside. As you scroll: the
- * sky lifts from deep space toward daylight, the astronaut sinks and is
- * gradually swallowed by cloud layers rising at six different depths, and the
- * whole scene dissolves to white — handing off to the rest of the page.
+ * The sequence, matching the reference frames:
  *
- * Two things that took iterating on:
+ *   0.00  night sky, title, astronaut sharp and close
+ *   0.30  sky warms to teal, title lifts away, first clouds reach the astronaut
+ *   0.50  astronaut recedes and begins dissolving into the bank
+ *   0.70  sky is lavender, only the helmet still shows above the clouds
+ *   0.85  astronaut gone, clouds fill the frame
+ *   1.00  clouds thin out to a soft off-white and hand off to the page
  *
- * 1. The cloud PNGs are rectangles. Simply moving them up leaves a visible
- *    straight edge across the viewport. Each layer is therefore masked with a
- *    vertical gradient so its bottom fades out, and a white gradient sits
- *    beneath everything so the layers dissolve into the next section rather
- *    than stopping.
+ * Three things this gets right that a naive version does not:
  *
- * 2. The astronaut's idle bob and its scroll-driven descent both animate
- *    `transform`. They live on nested elements — outer for scroll, inner for
- *    the CSS keyframe — because on one element each would overwrite the other
- *    every frame.
+ * 1. The astronaut RECEDES rather than descending. It scales down and fades
+ *    while staying near the centre, so it reads as moving away into the cloud
+ *    rather than falling behind it.
+ * 2. The sky is a colour journey — three stacked gradients crossfading — not
+ *    one gradient fading to white. Fading to white desaturates through grey,
+ *    which is the muddy look the reference avoids.
+ * 3. The clouds scale up as they rise, so they genuinely engulf the viewport
+ *    instead of sliding across it as flat cards.
  *
- * Everything scroll-driven runs off a single ScrollContext subscription
- * writing to refs: no per-frame React renders, only compositable properties,
- * and geometry measured on resize rather than inside the scroll handler.
+ * All scroll work is one ScrollContext subscription writing to refs: no
+ * per-frame React renders, only compositable properties, geometry measured on
+ * resize rather than inside the handler.
  */
 
-/** Total scroll distance for the sequence, in vh. Longer = slower, calmer. */
+/**
+ * Total scroll distance for the sequence, in vh.
+ *
+ * 420vh minus the 100vh sticky viewport leaves ~320vh of travel — roughly
+ * three to four screen-heights of scrolling, which is what the reference takes
+ * to go from night sky to full white.
+ */
 const SCENE_VH = 420;
+
+/**
+ * Progress at which the scene is fully white.
+ *
+ * Deliberately short of 1.0. Finishing the fade exactly at the end means the
+ * next section arrives on the same frame the cover completes — there is no
+ * white to travel through, which is what makes the handoff read as a cut. The
+ * remaining scroll is held at full white so the release of the sticky element
+ * happens invisibly.
+ */
+const RESOLVE_COMPLETE = 0.86;
+
+/**
+ * End state.
+ *
+ * Must be the page's own background, not a hand-picked off-white: the section
+ * below the hero paints `bg-background`, so any other value leaves a visible
+ * seam at the handoff — and gets it badly wrong in dark mode, where the page
+ * is near-black while this scene is all daylight and cloud.
+ */
+const RESOLVE_COLOR = 'var(--background)';
 
 interface CosmicHeroProps {
   name?: string;
@@ -57,24 +86,22 @@ function usePrefersReducedMotion(): boolean {
 }
 
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
-
-/** Map v from [a,b] onto [0,1], clamped. */
 const range = (v: number, a: number, b: number) => clamp01((v - a) / (b - a));
 
 /**
  * Cloud layers, far to near.
  *
- * `start`/`end` are the scroll-progress window over which the layer travels;
- * staggering them is what makes the bank build up rather than arrive as one
- * slab. `rise` is how far it moves, in vh.
+ * `rise` is travel in vh; `scale` is how much the layer grows as it arrives,
+ * which is what makes the bank close over the viewport rather than slide past.
+ * Windows overlap heavily so the bank thickens continuously.
  */
 const CLOUD_LAYERS = [
-  { image: SPACE_IMAGES.cloudWhite,  start: 0.00, end: 0.70, rise: 50, className: 'bottom-[2%]   left-[-18%] w-[80%]  opacity-40 blur-[3px]' },
-  { image: SPACE_IMAGES.cloudTwo,    start: 0.04, end: 0.74, rise: 62, className: 'bottom-[-2%]  right-[-20%] w-[88%] opacity-55 blur-[2px]' },
-  { image: SPACE_IMAGES.cloudBanner, start: 0.10, end: 0.80, rise: 74, className: 'bottom-[-6%]  left-[-10%] w-[105%] opacity-70 blur-[1px]' },
-  { image: SPACE_IMAGES.cloudWhite,  start: 0.18, end: 0.86, rise: 86, className: 'bottom-[-10%] right-[-12%] w-[95%] opacity-85' },
-  { image: SPACE_IMAGES.cloudTwo,    start: 0.26, end: 0.92, rise: 98, className: 'bottom-[-16%] left-[-16%] w-[115%] opacity-95' },
-  { image: SPACE_IMAGES.cloudBanner, start: 0.34, end: 1.00, rise: 112, className: 'bottom-[-22%] right-[-8%] w-[130%]' },
+  { image: SPACE_IMAGES.cloudWhite,  start: 0.00, end: 0.50, rise: 46,  scale: 1.15, front: false, className: 'bottom-[6%]   left-[-22%]  w-[78%]  opacity-45 blur-[4px]' },
+  { image: SPACE_IMAGES.cloudTwo,    start: 0.03, end: 0.55, rise: 58,  scale: 1.2,  front: false, className: 'bottom-[0%]   right-[-24%] w-[86%]  opacity-60 blur-[3px]' },
+  { image: SPACE_IMAGES.cloudBanner, start: 0.08, end: 0.60, rise: 70,  scale: 1.25, front: false, className: 'bottom-[-6%]  left-[-14%]  w-[104%] opacity-75 blur-[2px]' },
+  { image: SPACE_IMAGES.cloudWhite,  start: 0.16, end: 0.66, rise: 84,  scale: 1.35, front: true,  className: 'bottom-[-12%] right-[-18%] w-[100%] opacity-90 blur-[1px]' },
+  { image: SPACE_IMAGES.cloudTwo,    start: 0.24, end: 0.72, rise: 100, scale: 1.5,  front: true,  className: 'bottom-[-20%] left-[-20%]  w-[126%] opacity-95' },
+  { image: SPACE_IMAGES.cloudBanner, start: 0.32, end: 0.80, rise: 118, scale: 1.7,  front: true,  className: 'bottom-[-28%] right-[-14%] w-[150%]' },
 ] as const;
 
 export default function CosmicHero({
@@ -88,8 +115,9 @@ export default function CosmicHero({
   const { subscribe } = useScrollY();
 
   const wrapperRef = React.useRef<HTMLDivElement>(null);
-  const skyRef = React.useRef<HTMLDivElement>(null);
-  const whiteRef = React.useRef<HTMLDivElement>(null);
+  const skyDuskRef = React.useRef<HTMLDivElement>(null);
+  const skyDayRef = React.useRef<HTMLDivElement>(null);
+  const resolveRef = React.useRef<HTMLDivElement>(null);
   const titleRef = React.useRef<HTMLDivElement>(null);
   const astronautRef = React.useRef<HTMLDivElement>(null);
   const cloudRefs = React.useRef<(HTMLDivElement | null)[]>([]);
@@ -106,7 +134,6 @@ export default function CosmicHero({
         travel: Math.max(1, el.offsetHeight - window.innerHeight),
       };
     };
-
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
@@ -119,41 +146,53 @@ export default function CosmicHero({
       const { top, travel } = geometry.current;
       const p = clamp01((scrollY - top) / travel);
 
-      // Sky: night fades out, revealing the daylight gradient beneath.
-      if (skyRef.current) {
-        skyRef.current.style.opacity = String(1 - range(p, 0.10, 0.72));
+      // ── Sky: night -> teal dusk -> lavender day ─────────────────────────
+      // Crossfading three gradients keeps the hue moving through colour
+      // instead of desaturating toward grey.
+      if (skyDuskRef.current) {
+        skyDuskRef.current.style.opacity = String(range(p, 0.06, 0.34));
+      }
+      if (skyDayRef.current) {
+        skyDayRef.current.style.opacity = String(range(p, 0.30, 0.64));
       }
 
-      // Title: lifts away and fades before the clouds reach it.
+      // ── Title ───────────────────────────────────────────────────────────
       if (titleRef.current) {
-        const out = range(p, 0.18, 0.48);
-        titleRef.current.style.transform = `translate3d(0, ${-out * 140}px, 0)`;
+        const out = range(p, 0.10, 0.32);
+        titleRef.current.style.transform = `translate3d(0, ${-out * 130}px, 0)`;
         titleRef.current.style.opacity = String(1 - out);
       }
 
-      // Astronaut: sinks into the cloud bank while swaying, then fades as the
-      // nearest layers pass in front of it.
+      // ── Astronaut: recedes into the cloud ───────────────────────────────
       if (astronautRef.current) {
-        const sink = range(p, 0, 0.9) * 300;
-        const sway = Math.sin(p * Math.PI * 1.4) * 46;
-        const spin = p * 18 - 6;
+        // Shrinks toward the horizon rather than dropping past the viewer.
+        const recede = range(p, 0.04, 0.66);
+        const scale = 1 - recede * 0.58;
+        const drift = recede * 90;              // gentle settle, not a fall
+        const sway = Math.sin(p * Math.PI * 1.3) * 34;
+        // Fades out across the same window the nearest layers arrive in, so
+        // it dissolves into cloud rather than vanishing in clear air.
+        const fade = 1 - range(p, 0.38, 0.66);
+
         astronautRef.current.style.transform =
-          `translate3d(${sway}px, ${sink}px, 0) rotate(${spin}deg)`;
-        astronautRef.current.style.opacity = String(1 - range(p, 0.52, 0.78));
+          `translate3d(${sway}px, ${drift}px, 0) scale(${scale})`;
+        astronautRef.current.style.opacity = String(fade);
       }
 
-      // Clouds: each rises across its own window, so the bank accumulates.
+      // ── Clouds: rise and swell until they fill the frame ────────────────
       CLOUD_LAYERS.forEach((layer, i) => {
         const el = cloudRefs.current[i];
         if (!el) return;
         const t = range(p, layer.start, layer.end);
-        el.style.transform = `translate3d(0, ${(1 - t) * layer.rise}vh, 0)`;
+        const scale = 1 + (layer.scale - 1) * t;
+        el.style.transform = `translate3d(0, ${(1 - t) * layer.rise}vh, 0) scale(${scale})`;
       });
 
-      // Final dissolve. Starts late and finishes just before the section ends,
-      // so the handoff to the page below is a fade rather than a cut.
-      if (whiteRef.current) {
-        whiteRef.current.style.opacity = String(range(p, 0.78, 0.99));
+      // ── Resolve: clouds thin out, then hold pure white ──────────────────
+      // Holding past RESOLVE_COMPLETE is what lets the sticky element release
+      // behind an already-opaque cover.
+      if (resolveRef.current) {
+        resolveRef.current.style.opacity = String(range(p, 0.62, RESOLVE_COMPLETE));
       }
     });
   }, [subscribe, reducedMotion]);
@@ -165,17 +204,24 @@ export default function CosmicHero({
       style={{ height: `${SCENE_VH}vh` }}
     >
       <div className="sticky top-0 h-screen overflow-hidden">
-        {/* Daylight base, revealed as the night sky fades above it. */}
+        {/* Night — the base everything else fades in over. */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[linear-gradient(180deg,#93b7cb_0%,#c9d9e5_40%,#eef3f7_72%,#ffffff_100%)]"
+          className="absolute inset-0 bg-[linear-gradient(180deg,#04100d_0%,#0a1f1e_38%,#2e5f59_72%,#4e837a_100%)]"
         />
 
-        {/* Night sky */}
+        {/* Teal dusk */}
         <div
-          ref={skyRef}
+          ref={skyDuskRef}
           aria-hidden="true"
-          className="absolute inset-0 bg-[linear-gradient(180deg,#04080d_0%,#0c2129_42%,#2a565a_78%,#4a7a76_100%)]"
+          className="absolute inset-0 opacity-0 bg-[linear-gradient(180deg,#123430_0%,#3d6f68_40%,#8fa8b8_78%,#c3c2dc_100%)]"
+        />
+
+        {/* Lavender day */}
+        <div
+          ref={skyDayRef}
+          aria-hidden="true"
+          className="absolute inset-0 opacity-0 bg-[linear-gradient(180deg,#9fb6c9_0%,#c4c3de_38%,#e4e2ee_70%,#f4f3f8_100%)]"
         />
 
         {/* Title */}
@@ -213,11 +259,24 @@ export default function CosmicHero({
           )}
         </div>
 
-        {/* Astronaut — outer element takes the scroll transform, inner one the
-            idle bob. See the docblock. */}
+        {/* Far cloud layers — behind the astronaut. */}
+        {CLOUD_LAYERS.map((layer, i) =>
+          layer.front ? null : (
+            <CloudLayer
+              key={i}
+              ref={el => { cloudRefs.current[i] = el; }}
+              image={layer.image}
+              className={cn(layer.className, 'z-10')}
+            />
+          )
+        )}
+
+        {/* Astronaut. Outer element carries the scroll transform; the inner one
+            carries the idle bob, because both animate `transform` and would
+            otherwise overwrite each other every frame. */}
         <div
           ref={astronautRef}
-          className="pointer-events-none absolute left-1/2 top-[34vh] z-20 w-[clamp(10rem,24vw,22rem)]
+          className="pointer-events-none absolute left-1/2 top-[30vh] z-20 w-[clamp(10rem,23vw,21rem)]
                      -translate-x-1/2 will-change-transform"
         >
           <div className={reducedMotion ? undefined : 'cosmic-float'}>
@@ -227,36 +286,45 @@ export default function CosmicHero({
               height={SPACE_IMAGES.astronaut.height}
               alt={SPACE_IMAGES.astronaut.alt}
               priority
-              sizes="(max-width: 768px) 50vw, 24vw"
-              className="h-auto w-full drop-shadow-[0_30px_70px_rgba(0,0,0,0.5)]"
+              sizes="(max-width: 768px) 50vw, 23vw"
+              className="h-auto w-full drop-shadow-[0_30px_70px_rgba(0,0,0,0.45)]"
             />
           </div>
         </div>
 
-        {/* Cloud bank. z-indices interleave around the astronaut (z-20) so the
-            later layers genuinely pass in front of it. */}
-        {CLOUD_LAYERS.map((layer, i) => (
-          <CloudLayer
-            key={i}
-            ref={el => { cloudRefs.current[i] = el; }}
-            image={layer.image}
-            className={cn(layer.className, i < 3 ? 'z-10' : 'z-[21]')}
-          />
-        ))}
+        {/* Near cloud layers — pass in front of the astronaut. */}
+        {CLOUD_LAYERS.map((layer, i) =>
+          layer.front ? (
+            <CloudLayer
+              key={i}
+              ref={el => { cloudRefs.current[i] = el; }}
+              image={layer.image}
+              className={cn(layer.className, 'z-[21]')}
+            />
+          ) : null
+        )}
 
-        {/* Dissolve into the next section. The cloud art is rectangular, so
-            without this its straight bottom edge is visible against the page. */}
+        {/* Softens the bottom so no cloud rectangle ever shows an edge. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[25] h-[38vh]
-                     bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.75)_55%,#ffffff_100%)]"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[24] h-[45vh]"
+          style={{
+            // color-mix keeps the fade in the page's own colour so the ramp
+            // and the final flood are the same hue.
+            background:
+              `linear-gradient(180deg,` +
+              ` color-mix(in srgb, ${RESOLVE_COLOR} 0%, transparent) 0%,` +
+              ` color-mix(in srgb, ${RESOLVE_COLOR} 70%, transparent) 55%,` +
+              ` ${RESOLVE_COLOR} 100%)`,
+          }}
         />
 
-        {/* Final white-out. */}
+        {/* Final resolve to the page background. */}
         <div
-          ref={whiteRef}
+          ref={resolveRef}
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-[26] bg-white opacity-0"
+          className="pointer-events-none absolute inset-0 z-[25] opacity-0"
+          style={{ backgroundColor: RESOLVE_COLOR }}
         />
       </div>
     </div>
@@ -271,14 +339,15 @@ const CloudLayer = React.forwardRef<
     <div
       ref={ref}
       aria-hidden="true"
-      className={cn('pointer-events-none absolute will-change-transform', className)}
+      className={cn('pointer-events-none absolute origin-bottom will-change-transform', className)}
       style={{
-        // Fade each layer's own bottom edge so the rectangle never reads as a
-        // straight line across the viewport.
+        // Feather every edge, not just the bottom: as layers scale up their
+        // left and right sides reach the viewport too, and a straight vertical
+        // edge is just as obvious as a horizontal one.
         maskImage:
-          'linear-gradient(180deg, rgba(0,0,0,1) 55%, rgba(0,0,0,0.55) 80%, rgba(0,0,0,0) 100%)',
+          'radial-gradient(120% 100% at 50% 100%, rgba(0,0,0,1) 45%, rgba(0,0,0,0.6) 72%, rgba(0,0,0,0) 100%)',
         WebkitMaskImage:
-          'linear-gradient(180deg, rgba(0,0,0,1) 55%, rgba(0,0,0,0.55) 80%, rgba(0,0,0,0) 100%)',
+          'radial-gradient(120% 100% at 50% 100%, rgba(0,0,0,1) 45%, rgba(0,0,0,0.6) 72%, rgba(0,0,0,0) 100%)',
       }}
     >
       <Image
