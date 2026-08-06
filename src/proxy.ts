@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminJWT, COOKIE_NAME } from '@/lib/admin-auth';
+import { verifyAdminJWT, COOKIE_NAME, isDevAuthBypassEnabled } from '@/lib/admin-auth';
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Local development only. Gated on NODE_ENV !== 'production' AND an explicit
+  // ADMIN_DEV_BYPASS=true, so no deployment can reach it. See
+  // isDevAuthBypassEnabled() for why both conditions exist.
+  if (isDevAuthBypassEnabled()) {
+    return NextResponse.next();
+  }
 
   // Whitelist: login page + all auth API routes pass through
   if (

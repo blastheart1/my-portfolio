@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { COOKIE_NAME, verifyAdminJWT } from './admin-auth';
+import { COOKIE_NAME, verifyAdminJWT, isDevAuthBypassEnabled } from './admin-auth';
 
 /**
  * Inline admin auth guard for API route handlers.
@@ -18,6 +18,11 @@ import { COOKIE_NAME, verifyAdminJWT } from './admin-auth';
  * Returns a NextResponse(401) if it is not.
  */
 export async function requireAdmin(request: NextRequest): Promise<NextResponse | null> {
+  // Local development only — see isDevAuthBypassEnabled(). Without this the
+  // /edit pages would load but every data fetch would 401, which is worse than
+  // no bypass at all.
+  if (isDevAuthBypassEnabled()) return null;
+
   const token = request.cookies.get(COOKIE_NAME)?.value;
   if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

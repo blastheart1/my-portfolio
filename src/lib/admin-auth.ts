@@ -5,6 +5,30 @@ const COOKIE_NAME = 'admin_session';
 const JWT_EXPIRY = '8h';
 
 /**
+ * Local-development auth bypass.
+ *
+ * Skips the /edit login so the admin UI can be worked on without a session.
+ * This is a genuine hole in the auth layer, so it is deliberately hard to
+ * turn on and impossible to turn on by accident:
+ *
+ *   1. NODE_ENV must not be 'production'. Vercel sets NODE_ENV=production for
+ *      every deployment — preview and production alike — so no deploy can
+ *      reach this branch regardless of the flag.
+ *   2. ADMIN_DEV_BYPASS must be exactly the string 'true'. Merely defining the
+ *      variable, or setting it to '1'/'yes', does nothing.
+ *
+ * Both conditions are re-read per call rather than cached at module load, so
+ * the value cannot be baked into a build artifact.
+ *
+ * ADMIN_DEV_BYPASS lives in .env.local, which is gitignored — do not add it to
+ * .env.example, and never set it in the Vercel dashboard.
+ */
+export function isDevAuthBypassEnabled(): boolean {
+  if (process.env.NODE_ENV === 'production') return false;
+  return process.env.ADMIN_DEV_BYPASS === 'true';
+}
+
+/**
  * Constant-time string comparison for shared secrets (CRON_SECRET, bearer
  * tokens). A plain `!==` leaks how many leading characters matched via timing,
  * which is enough to recover a secret byte-by-byte given enough requests.
