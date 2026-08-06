@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { AdminProvider } from '@/contexts/AdminContext';
 import { ToastProvider } from '@/components/ui/toast';
-import AdminNav from './AdminNav';
+import AdminSidebar from './AdminSidebar';
 
 // CONTENT_SECTIONS now lives in @/lib/admin-nav — importing a constant from a
 // route module coupled the nav to the layout. Re-exported for any consumer
@@ -13,13 +13,18 @@ export default function EditLayout({ children }: { children: ReactNode }) {
     <AdminProvider>
       <ToastProvider>
         {/* bg-background rather than bg-gray-50/dark:bg-gray-950 — the admin
-            now derives every colour from the semantic tokens, so light/dark
-            needs no per-element variant. */}
-        <div className="min-h-screen bg-background">
-          <AdminNav />
-          <main className="mx-auto max-w-7xl px-4 py-8">
-            {children}
-          </main>
+            derives every colour from the semantic tokens, so light/dark needs
+            no per-element variant. */}
+        <div className="flex min-h-screen bg-background">
+          <AdminSidebar />
+
+          {/* min-w-0 so long content (tables, code) scrolls inside the column
+              instead of stretching the flex row. */}
+          <div className="flex min-w-0 flex-1 flex-col">
+            <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">
+              {children}
+            </main>
+          </div>
         </div>
       </ToastProvider>
     </AdminProvider>
