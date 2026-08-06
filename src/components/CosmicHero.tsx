@@ -122,28 +122,63 @@ export default function CosmicHero({
   const astronautRef = React.useRef<HTMLDivElement>(null);
   const cloudRefs = React.useRef<(HTMLDivElement | null)[]>([]);
 
-  const geometry = React.useRef({ top: 0, travel: 1 });
+  /**
+   * Cached scene geometry.
+   *
+   * `ready` matters: the hero renders inside SplashWrapper, which can gate the
+   * content, so a measurement taken on mount may find a zero-height element.
+   * Combined with a divide-by-zero guard that clamps travel to 1px, that made
+   * the entire sequence complete within a single pixel of scrolling — the
+   * whole scene flashing past in one wheel notch. The scene now refuses to
+   * animate until it has measured a plausible height, and re-measures whenever
+   * layout actually changes.
+   */
+  const geometry = React.useRef({ top: 0, travel: 0, ready: false });
 
   React.useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+
     const measure = () => {
-      const el = wrapperRef.current;
-      if (!el) return;
       const rect = el.getBoundingClientRect();
+      const travel = el.offsetHeight - window.innerHeight;
+
       geometry.current = {
         top: rect.top + window.scrollY,
-        travel: Math.max(1, el.offsetHeight - window.innerHeight),
+        travel,
+        // A real scene is several viewports tall. Anything shorter than half a
+        // viewport means we measured before layout settled.
+        ready: travel > window.innerHeight * 0.5,
       };
     };
+
     measure();
+
+    // Re-measure on any layout change to this element — splash dismissal, font
+    // swap, cloud images arriving. A window resize listener alone misses all
+    // three, which is how the bad first measurement used to stick.
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+
     window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    window.addEventListener('load', measure);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', measure);
+      window.removeEventListener('load', measure);
+    };
   }, []);
 
   React.useEffect(() => {
     if (reducedMotion) return;
 
     return subscribe(scrollY => {
-      const { top, travel } = geometry.current;
+      const { top, travel, ready } = geometry.current;
+      // Not yet laid out — leave the scene in its initial state rather than
+      // snapping it to the end.
+      if (!ready) return;
+
       const p = clamp01((scrollY - top) / travel);
 
       // ── Sky: night -> teal dusk -> lavender day ─────────────────────────
