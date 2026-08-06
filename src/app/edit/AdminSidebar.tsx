@@ -32,14 +32,19 @@ import LogoutButton from './LogoutButton';
  *
  * Three layouts from one nav model (see @/lib/admin-nav):
  *   - < md   : hidden; a top bar exposes a hamburger that opens a slide-over
- *   - md–lg  : icon-only rail, labels on hover/focus via title
+ *   - md–lg  : icon-only rail (labels have nowhere to go at that width)
  *   - >= lg  : full sidebar, collapsible to the rail and remembered
  *
- * Replaces AdminNav.tsx, which was a horizontal bar with `hidden sm:flex` —
- * i.e. no navigation at all on a phone.
+ * `showLabels` is a single explicit prop rather than a pile of conditional
+ * `lg:` classes. The first version tried to express "rail below lg, and also
+ * rail at lg when collapsed" by combining `hidden lg:inline` with a
+ * conditional `lg:hidden` — twMerge sees those as the same variant+property
+ * and keeps only the last, so labels resolved the wrong way. Two callers with
+ * two explicit values is both correct and far easier to reason about.
  */
 
 const COLLAPSE_KEY = 'admin.sidebar';
+const RAIL_WIDTH = 'w-[4.25rem]';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -79,7 +84,7 @@ export default function AdminSidebar() {
   return (
     <>
       {/* Mobile top bar — below md the sidebar is not rendered at all. */}
-      <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-sidebar-border bg-sidebar px-3 md:hidden">
+      <div className="fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b border-sidebar-border bg-sidebar px-3 md:hidden">
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
@@ -93,58 +98,59 @@ export default function AdminSidebar() {
         </button>
 
         <span className="text-sm font-semibold text-sidebar-foreground">Admin</span>
-
-        <div className="flex items-center">
-          <ThemeToggleButton />
-        </div>
+        <ThemeToggleButton />
       </div>
 
-      <Sheet
-        open={mobileOpen}
-        onOpenChange={setMobileOpen}
-        side="left"
-        title="Navigation"
-      >
-        <NavTree pathname={pathname} collapsed={false} />
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen} side="left" title="Navigation">
+        {/* Always labelled: the sheet has room, and an icon-only slide-over
+            would be pointless. */}
+        <NavTree pathname={pathname} showLabels showSubTree />
         <div className="mt-6 space-y-1 border-t border-sidebar-border pt-4">
-          <ViewSiteLink collapsed={false} />
+          <ViewSiteLink showLabels />
           <LogoutButton />
         </div>
       </Sheet>
 
-      {/* md and up */}
       <aside
         aria-label="Admin navigation"
         className={cn(
-          'sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border',
-          'bg-sidebar md:flex',
-          // The rail is forced below lg; above lg the user's choice applies.
-          collapsed ? 'lg:w-[4.25rem]' : 'lg:w-60',
-          'w-[4.25rem]'
+          'sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar',
+          'md:flex',
+          // Rail by default; only widens at lg, and only when not collapsed.
+          RAIL_WIDTH,
+          !collapsed && 'lg:w-60'
         )}
       >
-        <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-3">
+        <div className="flex h-14 shrink-0 items-center gap-2 border-b border-sidebar-border px-3">
           <Link
             href="/edit"
             className="flex items-center gap-2 rounded-md text-sm font-semibold text-sidebar-foreground
                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
           >
             <span aria-hidden="true" className="text-[var(--color-brand)]">✦</span>
-            <span className={cn('hidden', !collapsed && 'lg:inline')}>Admin</span>
+            {!collapsed && <span className="hidden lg:inline">Admin</span>}
           </Link>
         </div>
 
         <nav className="flex-1 overflow-y-auto p-2">
-          <NavTree pathname={pathname} collapsed={collapsed} />
+          {/* One tree, not two. When collapsed the label is not rendered at
+              all; otherwise it is rendered and CSS hides it below lg, where
+              the rail has no room for it. Duplicating the tree per breakpoint
+              would put every link in the accessibility tree twice. */}
+          <NavTree
+            pathname={pathname}
+            showLabels={!collapsed}
+            responsiveLabels
+            showSubTree={!collapsed}
+          />
         </nav>
 
-        <div className="space-y-1 border-t border-sidebar-border p-2">
-          <ViewSiteLink collapsed={collapsed} />
+        <div className="shrink-0 space-y-1 border-t border-sidebar-border p-2">
+          <ViewSiteLink showLabels={!collapsed} responsiveLabels />
 
-          <div className={cn('flex items-center gap-1', collapsed ? 'flex-col' : 'lg:flex-row')}>
+          <div className={cn('flex items-center gap-1', collapsed && 'flex-col')}>
             <ThemeToggleButton />
-            {/* Collapse control only matters where the width can actually
-                change, i.e. lg and up. */}
+            {/* Collapse control only matters where the width can change. */}
             {mounted && (
               <button
                 type="button"
@@ -163,22 +169,37 @@ export default function AdminSidebar() {
             )}
           </div>
 
-          <div className={cn(collapsed && 'lg:hidden', 'hidden lg:block')}>
-            <LogoutButton />
-          </div>
+          {!collapsed && (
+            <div className="hidden lg:block">
+              <LogoutButton />
+            </div>
+          )}
         </div>
       </aside>
     </>
   );
 }
 
-function NavTree({ pathname, collapsed }: { pathname: string; collapsed: boolean }) {
+interface TreeProps {
+  pathname: string;
+  showLabels: boolean;
+  showSubTree: boolean;
+  /** Label is present in the DOM but hidden by CSS below lg (the rail). */
+  responsiveLabels?: boolean;
+}
+
+function NavTree({ pathname, showLabels, showSubTree, responsiveLabels }: TreeProps) {
   return (
     <div className="space-y-4">
       <ul className="space-y-0.5">
         {TOP_LEVEL_ITEMS.map(item => (
           <li key={item.href}>
-            <NavLink item={item} pathname={pathname} collapsed={collapsed} />
+            <NavLink
+              item={item}
+              pathname={pathname}
+              showLabel={showLabels}
+              responsiveLabel={responsiveLabels}
+            />
           </li>
         ))}
       </ul>
@@ -188,8 +209,9 @@ function NavTree({ pathname, collapsed }: { pathname: string; collapsed: boolean
           <p
             className={cn(
               'px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50',
-              collapsed ? 'lg:sr-only' : '',
-              'sr-only lg:not-sr-only'
+              // In the rail the heading has nowhere to render, but it still
+              // belongs in the accessibility tree.
+              !showLabels ? 'sr-only' : responsiveLabels && 'sr-only lg:not-sr-only'
             )}
           >
             {NAV_GROUP_LABELS[group]}
@@ -197,8 +219,15 @@ function NavTree({ pathname, collapsed }: { pathname: string; collapsed: boolean
           <ul className="space-y-0.5">
             {itemsInGroup(group).map(item => (
               <li key={item.href}>
-                <NavLink item={item} pathname={pathname} collapsed={collapsed} />
-                {item.hasSubTree && <ContentSubTree pathname={pathname} collapsed={collapsed} />}
+                <NavLink
+              item={item}
+              pathname={pathname}
+              showLabel={showLabels}
+              responsiveLabel={responsiveLabels}
+            />
+                {item.hasSubTree && showSubTree && (
+                  <ContentSubTree pathname={pathname} responsive={responsiveLabels} />
+                )}
               </li>
             ))}
           </ul>
@@ -211,11 +240,13 @@ function NavTree({ pathname, collapsed }: { pathname: string; collapsed: boolean
 function NavLink({
   item,
   pathname,
-  collapsed,
+  showLabel,
+  responsiveLabel,
 }: {
   item: NavItem;
   pathname: string;
-  collapsed: boolean;
+  showLabel: boolean;
+  responsiveLabel?: boolean;
 }) {
   const active = isNavItemActive(item, pathname);
   const Icon = item.icon;
@@ -224,10 +255,14 @@ function NavLink({
     <Link
       href={item.href}
       aria-current={active ? 'page' : undefined}
+      // In the rail the icon is the only visible content, so the link still
+      // needs a name.
+      aria-label={showLabel ? undefined : item.label}
       title={item.label}
       className={cn(
         'relative flex items-center gap-2.5 rounded-lg px-2 py-2 text-sm transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
+        !showLabel ? 'justify-center' : responsiveLabel && 'justify-center lg:justify-start',
         active
           ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground'
           : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
@@ -241,15 +276,17 @@ function NavLink({
         />
       )}
       <Icon className="size-4 shrink-0" aria-hidden="true" />
-      <span className={cn('truncate', collapsed ? 'lg:hidden' : '', 'hidden lg:inline')}>
-        {item.label}
-      </span>
+      {showLabel && (
+        <span className={cn('truncate', responsiveLabel && 'hidden lg:inline')}>
+          {item.label}
+        </span>
+      )}
     </Link>
   );
 }
 
 /** Expandable list of content sections beneath the Content item. */
-function ContentSubTree({ pathname, collapsed }: { pathname: string; collapsed: boolean }) {
+function ContentSubTree({ pathname, responsive }: { pathname: string; responsive?: boolean }) {
   const active = activeContentSection(pathname);
   const [open, setOpen] = React.useState(active !== null);
 
@@ -258,10 +295,8 @@ function ContentSubTree({ pathname, collapsed }: { pathname: string; collapsed: 
     if (active !== null) setOpen(true);
   }, [active]);
 
-  if (collapsed) return null;
-
   return (
-    <div className="hidden lg:block">
+    <div className={cn(responsive && 'hidden lg:block')}>
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
@@ -305,21 +340,33 @@ function ContentSubTree({ pathname, collapsed }: { pathname: string; collapsed: 
   );
 }
 
-function ViewSiteLink({ collapsed }: { collapsed: boolean }) {
+function ViewSiteLink({
+  showLabels,
+  responsiveLabels,
+}: {
+  showLabels: boolean;
+  responsiveLabels?: boolean;
+}) {
   return (
     <a
       href="/"
       target="_blank"
       rel="noopener noreferrer"
       title="View site"
-      className="flex items-center gap-2.5 rounded-lg px-2 py-2 text-sm text-sidebar-foreground/80
-                 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-foreground
-                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+      aria-label={showLabels ? undefined : 'View site'}
+      className={cn(
+        'flex items-center gap-2.5 rounded-lg px-2 py-2 text-sm text-sidebar-foreground/80',
+        'transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
+        !showLabels ? 'justify-center' : responsiveLabels && 'justify-center lg:justify-start'
+      )}
     >
       <ExternalLink className="size-4 shrink-0" aria-hidden="true" />
-      <span className={cn('truncate', collapsed ? 'lg:hidden' : '', 'hidden lg:inline')}>
-        View site
-      </span>
+      {showLabels && (
+        <span className={cn('truncate', responsiveLabels && 'hidden lg:inline')}>
+          View site
+        </span>
+      )}
     </a>
   );
 }
@@ -328,8 +375,7 @@ function ViewSiteLink({ collapsed }: { collapsed: boolean }) {
  * Theme toggle.
  *
  * Deliberately reuses the public site's mechanism — `localStorage.theme` plus
- * `.dark` on <html> — rather than introducing a second source of truth. The
- * brief is explicit that this must not change.
+ * `.dark` on <html> — rather than introducing a second source of truth.
  */
 function ThemeToggleButton() {
   const [isDark, setIsDark] = React.useState(false);

@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 import { PROVIDER_MODELS, type AIProviderName } from '@/lib/chatbot/aiProviders';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -52,13 +54,21 @@ function AIConfigTab() {
   const [editing, setEditing] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<AIConfig>>({});
   const [saveStatus, setSaveStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({});
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch('/api/admin/chatbot/config');
-      const data = await res.json() as AIConfig[];
-      setConfigs(data);
+      const data = await res.json().catch(() => null);
+      // A failed request returns { error }, not an array. Casting it and
+      // calling .map() crashed the whole page.
+      if (!res.ok) throw new Error(data?.error ?? `Request failed (${res.status})`);
+      setConfigs(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load config');
+      setConfigs([]);
     } finally {
       setLoading(false);
     }
@@ -119,6 +129,7 @@ function AIConfigTab() {
       : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
 
   if (loading) return <p className="text-sm text-gray-500">Loading configs…</p>;
+  if (error) return <TabError message={error} />;
 
   return (
     <div className="space-y-4">
@@ -267,12 +278,18 @@ function ExamplesTab() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<'all' | 'approved' | 'pending'>('all');
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/admin/chatbot/examples');
-      setExamples(await res.json() as ChatExample[]);
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? `Request failed (${res.status})`);
+      setExamples(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load examples');
+      setExamples([]);
     } finally {
       setLoading(false);
     }
@@ -314,6 +331,7 @@ function ExamplesTab() {
   const pendingCount = examples.filter(e => !e.approved).length;
 
   if (loading) return <p className="text-sm text-gray-500">Loading examples…</p>;
+  if (error) return <TabError message={error} />;
 
   return (
     <div className="space-y-4">
@@ -410,6 +428,7 @@ function ExamplesTab() {
 
 function ConversationsTab() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -418,7 +437,12 @@ function ConversationsTab() {
       setLoading(true);
       try {
         const res = await fetch('/api/admin/chatbot/conversations');
-        setConversations(await res.json() as Conversation[]);
+        const data = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(data?.error ?? `Request failed (${res.status})`);
+        setConversations(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load conversations');
+        setConversations([]);
       } finally {
         setLoading(false);
       }
@@ -426,6 +450,7 @@ function ConversationsTab() {
   }, []);
 
   if (loading) return <p className="text-sm text-gray-500">Loading conversations…</p>;
+  if (error) return <TabError message={error} />;
   if (conversations.length === 0) return <p className="text-sm text-gray-400 italic">No logged conversations yet.</p>;
 
   return (
@@ -504,5 +529,16 @@ export default function ChatbotAdminPage() {
         <TabsContent value="conversations"><ConversationsTab /></TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+/** Load failure inside a chatbot tab. */
+function TabError({ message }: { message: string }) {
+  return (
+    <Alert variant="destructive">
+      <AlertTriangle aria-hidden="true" />
+      <AlertTitle>Couldn’t load this tab</AlertTitle>
+      <AlertDescription>{message}</AlertDescription>
+    </Alert>
   );
 }

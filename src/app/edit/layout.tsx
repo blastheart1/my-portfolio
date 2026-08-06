@@ -23,7 +23,9 @@ export default function EditLayout({ children }: { children: ReactNode }) {
           {/* min-w-0 so long content (tables, code) scrolls inside the column
               instead of stretching the flex row. */}
           <div className="flex min-w-0 flex-1 flex-col">
-            <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">
+            {/* pt-14 clears the fixed mobile top bar; above md the sidebar
+                takes over and the bar is gone. */}
+            <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-8 pt-[4.5rem] sm:px-6 md:pt-8">
               {children}
             </main>
           </div>
