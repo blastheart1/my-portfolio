@@ -61,6 +61,18 @@ export interface TrainingData {
   intents: IntentData[];
 }
 
+/** Progress emitted once per training epoch, for driving a progress UI. */
+export interface TrainingProgress {
+  epoch: number;
+  totalEpochs: number;
+  /** 0..1 */
+  progress: number;
+  loss?: number;
+  accuracy?: number;
+}
+
+export type TrainingProgressCallback = (p: TrainingProgress) => void;
+
 export interface ClassificationResult {
   tag: string;
   confidence: number;
@@ -471,7 +483,16 @@ export class TensorFlowService {
   /**
    * Train the model with optimized parameters
    */
-  async trainModel(): Promise<void> {
+  /**
+   * Train the intent classifier.
+   *
+   * Only called after the visitor has explicitly opted in — see
+   * lib/chatbot/localModelConsent.ts. The result is persisted to IndexedDB, so
+   * this runs at most once per browser rather than once per session.
+   *
+   * @param onProgress invoked once per epoch so the caller can show progress.
+   */
+  async trainModel(onProgress?: TrainingProgressCallback): Promise<void> {
     // Prevent multiple simultaneous initializations
     if (this.isInitializing) {
       return;
@@ -516,17 +537,30 @@ export class TensorFlowService {
     let patience = 0;
     const maxPatience = 10; // Early stopping patience
     
+    const TOTAL_EPOCHS = 50;
+
     await this.model.fit(inputTensor, labelTensor, {
-      epochs: 50, // Reduced from 150 for faster training
+      epochs: TOTAL_EPOCHS,
       batchSize: 32, // Increased from 16 for better GPU utilization
       validationSplit: 0.2,
       verbose: 0,
       callbacks: {
-        onEpochEnd: (epoch: number, logs?: TF.Logs) => {
+        // Yield to the browser between batches.
+        //
+        // model.fit() otherwise occupies the main thread for the whole run,
+        // which freezes the page — no paint, no input, and crucially no
+        // progress UI, since a toast cannot render on a blocked thread.
+        // tf.nextFrame() hands control back each batch. Total wall-clock is
+        // slightly longer; the page stays interactive throughout.
+        onBatchEnd: async () => {
+          await tf.nextFrame();
+        },
+
+        onEpochEnd: async (epoch: number, logs?: TF.Logs) => {
           this.trainingMetrics.epochs = epoch + 1;
           this.trainingMetrics.finalLoss = logs?.loss || 0;
           this.trainingMetrics.finalAccuracy = logs?.acc || 0;
-          
+
           // Early stopping logic
           if (logs?.loss && logs.loss < bestLoss) {
             bestLoss = logs.loss;
@@ -534,15 +568,22 @@ export class TensorFlowService {
           } else {
             patience++;
           }
-          
-          // Log training progress (reduced frequency)
-          if (epoch % 10 === 0 || epoch === 0) {
+
+          // Report progress so the caller can drive a toast / progress bar.
+          onProgress?.({
+            epoch: epoch + 1,
+            totalEpochs: TOTAL_EPOCHS,
+            progress: (epoch + 1) / TOTAL_EPOCHS,
+            loss: logs?.loss,
+            accuracy: logs?.acc,
+          });
+
+          // Early stopping — halts fit() once loss has plateaued.
+          if (patience >= maxPatience && this.model) {
+            this.model.stopTraining = true;
           }
-          
-          // Early stopping
-          if (patience >= maxPatience) {
-            // Note: Early stopping is handled by the training loop, not by returning false
-          }
+
+          await tf.nextFrame();
         }
       }
     });

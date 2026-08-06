@@ -161,6 +161,68 @@ describe('N9 — nothing on the initial render path imports the model', () => {
   });
 });
 
+describe('consent gate — TF is never brought up unasked', () => {
+  const chatbotSrc = readFileSync(
+    path.join(SRC, 'components/chatbot/Chatbot.tsx'),
+    'utf8'
+  );
+
+  it('checks recorded consent before initialising', () => {
+    expect(chatbotSrc).toContain('getConsent()');
+  });
+
+  it('only auto-initialises when consent was already granted', () => {
+    // The mount effect must gate on 'granted' — never call initializeModel
+    // unconditionally.
+    expect(chatbotSrc).toMatch(/consent\s*===\s*['"]granted['"]/);
+  });
+
+  it('records the choice when the visitor accepts or declines', () => {
+    expect(chatbotSrc).toMatch(/setConsent\(\s*['"]granted['"]\s*\)/);
+    expect(chatbotSrc).toMatch(/setConsent\(\s*['"]declined['"]\s*\)/);
+  });
+
+  it('training is only reachable from the consent-gated initialiser', () => {
+    // trainModel must not be called from anywhere else in the component.
+    const calls = [...chatbotSrc.matchAll(/trainModel\(/g)];
+    expect(calls.length).toBe(1);
+  });
+
+  it('surfaces progress through the toast rather than blocking', () => {
+    expect(chatbotSrc).toContain('setToastPhase');
+    expect(chatbotSrc).toContain('setTrainingProgress');
+  });
+
+  it('keeps the chat usable when initialisation fails', () => {
+    // On error the model is marked not-ready so ChatWindow falls through to
+    // the server route, rather than being marked ready with no model.
+    expect(chatbotSrc).toMatch(/catch[\s\S]{0,200}setIsModelReady\(false\)/);
+  });
+});
+
+describe('training must yield so the progress toast can render', () => {
+  it('calls tf.nextFrame between batches', () => {
+    // Without this, model.fit() holds the main thread for the whole run and
+    // the toast cannot paint or animate — it would appear frozen.
+    expect(MODEL_SRC).toMatch(/onBatchEnd[\s\S]{0,120}tf\.nextFrame\(\)/);
+  });
+
+  it('reports per-epoch progress to the caller', () => {
+    expect(MODEL_SRC).toMatch(/onProgress\?\.\(/);
+    expect(MODEL_SRC).toContain('totalEpochs');
+  });
+
+  it('accepts an optional progress callback', () => {
+    expect(MODEL_SRC).toMatch(
+      /async trainModel\(onProgress\?: TrainingProgressCallback\)/
+    );
+  });
+
+  it('still early-stops on a loss plateau', () => {
+    expect(MODEL_SRC).toContain('stopTraining = true');
+  });
+});
+
 describe('N10 — no interval runs while the performance monitor is hidden', () => {
   const src = readFileSync(
     path.join(SRC, 'components/chatbot/Chatbot.tsx'),
