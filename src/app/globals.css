@@ -275,6 +275,47 @@ button:focus-visible, a:focus-visible {
    line up in columns. The body sets oldstyle-nums, which does not. */
 .tabular-nums { font-variant-numeric: tabular-nums; }
 
+/* ─── CosmicCounter ───────────────────────────────────────────────────────
+   Starfield-filled statistic with a sparkle and a drawn-in trail. The
+   starfield itself is generated in the component as radial-gradients, so
+   there is no image to load and nothing to go blurry when it scales.
+   ─────────────────────────────────────────────────────────────────────── */
+
+.cosmic-counter-number {
+  /* Lining figures: the body sets oldstyle-nums, which makes digits sit at
+     different heights — fine in prose, wrong for a display number. */
+  font-variant-numeric: lining-nums tabular-nums;
+  /* The starfield must not scroll with the page or the stars slide out of the
+     glyphs as the element moves. */
+  background-attachment: scroll;
+  background-repeat: no-repeat;
+}
+
+@keyframes cosmic-sparkle-pulse {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50%      { transform: scale(0.82) rotate(12deg); opacity: 0.75; }
+}
+
+@keyframes cosmic-trail-draw {
+  from { stroke-dashoffset: 240; }
+  to   { stroke-dashoffset: 0; }
+}
+
+.cosmic-sparkle {
+  animation: cosmic-sparkle-pulse 3.2s ease-in-out infinite;
+}
+
+.cosmic-trail {
+  animation: cosmic-trail-draw 2.4s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cosmic-sparkle,
+  .cosmic-trail {
+    animation: none;
+  }
+}
+
 /* Custom cursor — hides native cursor when class is present */
 html.custom-cursor,
 html.custom-cursor * {
