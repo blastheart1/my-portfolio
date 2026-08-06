@@ -14,6 +14,11 @@ export default function AboutSection({ initialContent }: { initialContent?: Reco
   const subheading = initialContent?.subheading ?? 'The person behind the code.';
   const body       = initialContent?.body       ?? FALLBACK_BODY;
 
+  // Managed from /edit/images so the resume can be replaced without a deploy.
+  // Falls back to the file committed in public/ for installs that predate the
+  // content field.
+  const resumeUrl  = initialContent?.resume_url || '/AntonioLuisSantos-Resume.pdf';
+
   return (
     <section id="about" className="py-0 max-w-4xl mx-auto px-6">
       <motion.div
@@ -45,7 +50,7 @@ export default function AboutSection({ initialContent }: { initialContent?: Reco
         transition={{ duration: 0.6, delay: 0.8 }}
       >
         <a
-          href="/AntonioLuisSantos-Resume.pdf"
+          href={resumeUrl}
           download
           target="_blank"
           rel="noopener noreferrer"
