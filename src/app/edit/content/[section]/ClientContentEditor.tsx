@@ -1,8 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { FileText } from 'lucide-react';
+
 import ContentEditor from '@/components/admin/ContentEditor';
+import AdminResource from '@/components/admin/AdminResource';
+import EmptyState from '@/components/admin/EmptyState';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { SkeletonForm } from '@/components/ui/skeleton';
+import { useAdminFetch } from '@/hooks/useAdminFetch';
 
 // Sections that have a dedicated full editor elsewhere
 const DEDICATED_EDITORS: Record<string, { href: string; label: string }> = {
@@ -14,53 +20,51 @@ interface Props {
   section: string;
 }
 
+/** The endpoint returns a key/value bag; anything else is a failed load. */
+function selectFields(raw: unknown): Record<string, string> {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return raw as Record<string, string>;
+  }
+  throw new Error('Unexpected response shape');
+}
+
 export default function ClientContentEditor({ section }: Props) {
-  const [fields, setFields] = useState<Record<string, string> | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setFields(null);
-    setError(null);
-    fetch(`/api/admin/content/${section}`)
-      .then(r => {
-        if (!r.ok) throw new Error('Failed to load');
-        return r.json();
-      })
-      .then(data => setFields(data && typeof data === 'object' && !Array.isArray(data) ? data : {}))
-      .catch(() => setFields({}));
-  }, [section]);
-
-  if (error) {
-    return <p className="text-sm text-red-500">{error}</p>;
-  }
-
-  if (fields === null) {
-    return <p className="text-sm text-gray-400 animate-pulse">Loading…</p>;
-  }
-
-  if (Object.keys(fields).length === 0) {
-    return (
-      <p className="text-sm text-gray-500">
-        No content fields found for <strong>{section}</strong>. Run the seed script to populate initial values.
-      </p>
-    );
-  }
+  const state = useAdminFetch<Record<string, string>>(
+    `/api/admin/content/${section}`,
+    { select: selectFields }
+  );
 
   const dedicated = DEDICATED_EDITORS[section];
 
   return (
-    <div className="space-y-4">
-      {dedicated && (
-        <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 px-4 py-3">
-          <p className="text-sm text-blue-700 dark:text-blue-300">
-            This page edits the section heading only.{' '}
-            <Link href={dedicated.href} className="font-medium underline hover:no-underline">
-              {dedicated.label}
-            </Link>
-          </p>
+    <AdminResource state={state} loadingFallback={<SkeletonForm fields={4} />}>
+      {fields => (
+        <div className="space-y-4">
+          {dedicated && (
+            <Alert>
+              <AlertDescription>
+                This page edits the section heading only.{' '}
+                <Link
+                  href={dedicated.href}
+                  className="font-medium underline underline-offset-2 hover:no-underline"
+                >
+                  {dedicated.label}
+                </Link>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {Object.keys(fields).length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title={`No content fields for “${section}” yet`}
+              description="Run the seed script to populate initial values for this section."
+            />
+          ) : (
+            <ContentEditor section={section} initialFields={fields} />
+          )}
         </div>
       )}
-      <ContentEditor section={section} initialFields={fields} />
-    </div>
+    </AdminResource>
   );
 }

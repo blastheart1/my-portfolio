@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { getClientIp, isRateLimited, RATE_LIMITS } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const { limit, windowMs } = RATE_LIMITS.contact;
+  if (isRateLimited(`contact:${ip}`, limit, windowMs)) {
+    return NextResponse.json(
+      { error: 'Too many messages. Please try again later.' },
+      { status: 429 }
+    );
+  }
+
   try {
     // Check if Resend API key is configured
     if (!process.env.RESEND_API_KEY) {
@@ -82,7 +92,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Email sent successfully:', data);
 
     return NextResponse.json({ 
       success: true, 

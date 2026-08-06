@@ -30,15 +30,17 @@ export default function BlogSection({ className = '', heading, subheading }: Blo
     try {
       setLoading(true);
       const response = await fetch('/api/blog');
-      const data = await response.json();
-      
-      if (data.posts) {
-        setPosts(data.posts);
-      } else {
-        setError('Failed to load posts');
+      const data = await response.json().catch(() => null);
+
+      // Check the status before trusting the body: a 500 returns { error },
+      // which has no `posts` and would otherwise read as "no posts yet".
+      if (!response.ok) {
+        throw new Error(data?.error ?? `Request failed (${response.status})`);
       }
+
+      setPosts(Array.isArray(data?.posts) ? data.posts : []);
     } catch (err) {
-      setError('Failed to load posts');
+      setError(err instanceof Error ? err.message : 'Failed to load posts');
       console.error('Error fetching posts:', err);
     } finally {
       setLoading(false);

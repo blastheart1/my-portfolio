@@ -5,19 +5,19 @@ let openai: OpenAI | null = null;
 
 function getOpenAI() {
   if (!openai) {
-    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+    // Server-only. Must NOT be a NEXT_PUBLIC_* var — those are inlined into
+    // the client bundle and would publish the key.
+    const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      console.warn('Missing OpenAI API key, using mock client');
-      // Return a mock OpenAI instance for build time
-      return {
-        chat: {
-          completions: {
-            create: async () => ({
-              choices: [{ message: { content: '{"title": "Mock Title", "content": "Mock content", "excerpt": "Mock excerpt"}' } }]
-            })
-          }
-        }
-      } as unknown as OpenAI;
+      // This used to return a mock client emitting {"title": "Mock Title"}.
+      // Both callers (POST /api/blog/generate and the every-2-days cron) write
+      // straight to the blog table, so an unset key silently published
+      // placeholder posts to the live site. Fail loudly instead.
+      throw new Error(
+        'OPENAI_API_KEY is not set — refusing to generate blog content. ' +
+          'Set it in the environment before calling /api/blog/generate or the ' +
+          'content cron.'
+      );
     }
     openai = new OpenAI({
       apiKey: apiKey,
@@ -167,26 +167,13 @@ Format the response as JSON with: title, content (as plain text, not JSON), exce
 
     // Parse JSON response
     const parsedResponse = JSON.parse(response);
-    
-    // Debug logging
-    console.log('Generated response keys:', Object.keys(parsedResponse));
-    console.log('caseStudyLink value:', parsedResponse.caseStudyLink);
-    console.log('Full response:', JSON.stringify(parsedResponse, null, 2));
-    
-    // Handle caseStudyLink for case studies
-    let caseStudyLink = parsedResponse.caseStudyLink;
-    if (type === 'case-study') {
-      if (!caseStudyLink || caseStudyLink === null || caseStudyLink === undefined || caseStudyLink === 'null') {
-        // No real case study found, use null (will show disclaimer in UI)
-        caseStudyLink = null;
-        console.log('No real case study found, using null');
-      } else {
-        console.log('AI generated caseStudyLink:', caseStudyLink);
-      }
-    } else {
-      // For blog posts, no case study link needed
-      caseStudyLink = null;
-    }
+
+    // Handle caseStudyLink. The model may report "no credible source" as a
+    // missing value or the literal string "null"; both mean the UI should show
+    // the disclaimer instead of a link. Blog posts never carry one.
+    const rawLink = parsedResponse.caseStudyLink;
+    const caseStudyLink =
+      type === 'case-study' && rawLink && rawLink !== 'null' ? rawLink : null;
     
     return {
       title: parsedResponse.title,

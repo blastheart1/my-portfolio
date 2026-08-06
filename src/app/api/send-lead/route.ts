@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { getClientIp, isRateLimited, RATE_LIMITS } from '@/lib/rate-limit';
 
 interface LeadData {
   name: string;
@@ -13,7 +14,14 @@ interface LeadData {
 }
 
 export async function POST(request: NextRequest) {
-  console.log('📧 Lead submission API called');
+  const ip = getClientIp(request);
+  const { limit, windowMs } = RATE_LIMITS.sendLead;
+  if (isRateLimited(`send-lead:${ip}`, limit, windowMs)) {
+    return NextResponse.json(
+      { error: 'Too many submissions. Please try again later.' },
+      { status: 429 }
+    );
+  }
 
   try {
     // Check if Resend API key is configured
@@ -141,7 +149,6 @@ export async function POST(request: NextRequest) {
     const toEmail = process.env.TO_EMAIL || 'antonioluis.santos1@gmail.com';
 
     // Send lead notification email to Luis
-    console.log('📤 Sending lead notification email...');
     const leadNotificationResult = await resend.emails.send({
       from: `Luis.dev <${fromEmail}>`,
       to: [toEmail],
@@ -149,10 +156,8 @@ export async function POST(request: NextRequest) {
       html: generateLeadNotificationHtml(leadData, priority),
     });
 
-    console.log('📤 Lead notification result:', leadNotificationResult);
 
     // Send welcome email to the lead
-    console.log('📤 Sending welcome email...');
     const welcomeEmailResult = await resend.emails.send({
       from: `Luis.dev <${fromEmail}>`,
       to: [leadData.email],
@@ -160,7 +165,6 @@ export async function POST(request: NextRequest) {
       html: generateWelcomeEmailHtml(leadData),
     });
 
-    console.log('📤 Welcome email result:', welcomeEmailResult);
 
     // Check for errors AFTER both emails are sent
     if (leadNotificationResult.error) {
@@ -168,7 +172,6 @@ export async function POST(request: NextRequest) {
       throw new Error(`Lead notification failed: ${leadNotificationResult.error.message}`);
     }
 
-    console.log('✅ Lead notification email sent:', leadNotificationResult.data?.id);
 
     // Check welcome email but DON'T fail if it errors (temporary fix for unverified domain)
     if (welcomeEmailResult.error) {
@@ -176,7 +179,6 @@ export async function POST(request: NextRequest) {
       console.warn('⚠️ Welcome email failed - likely due to unverified recipient. Lead notification was successful.');
       // Don't throw - you already received the lead notification
     } else {
-      console.log('✅ Welcome email sent:', welcomeEmailResult.data?.id);
     }
 
     return NextResponse.json({

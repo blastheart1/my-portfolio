@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import ChatLauncher from './ChatLauncher';
+import TrainingToast, { type TrainingPhase } from './TrainingToast';
 import { ChatWindow } from './ChatWindow';
+import { getConsent, setConsent } from '@/lib/chatbot/localModelConsent';
 import { PerformanceMonitor } from './PerformanceMonitor';
 import { PerformanceToggle } from './PerformanceToggle';
 import { TensorFlowService } from '@/lib/chatbot/tensorflowModel';
@@ -20,7 +22,12 @@ type PerformanceStats = {
 };
 
 interface ChatbotProps {
-  openaiApiKey?: string;
+  /**
+   * Open the window on mount. Set by PortfolioChatbotWrapper, which only
+   * mounts this component after the user clicks the launcher — so the click
+   * that caused the mount should also open the chat.
+   */
+  startOpen?: boolean;
   confidenceThreshold?: number;
   onStatusChange?: (status: {
     isModelReady: boolean;
@@ -31,18 +38,23 @@ interface ChatbotProps {
   onChatToggle?: (isOpen: boolean) => void;
 }
 
-export const Chatbot: React.FC<ChatbotProps> = ({ 
-  openaiApiKey = '', 
+export const Chatbot: React.FC<ChatbotProps> = ({
+  startOpen = false,
   confidenceThreshold = 0.75,
   onStatusChange,
   onChatToggle
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(startOpen);
   const [isModelReady, setIsModelReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [learningCount, setLearningCount] = useState(0);
   const [performanceStats, setPerformanceStats] = useState<PerformanceStats | null>(null);
   const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(false);
+
+  // On-device model opt-in state.
+  const [showConsent, setShowConsent] = useState(false);
+  const [toastPhase, setToastPhase] = useState<TrainingPhase | null>(null);
+  const [trainingProgress, setTrainingProgress] = useState(0);
 
   // Initialize services (only on client-side)
   const tensorflowService = useMemo(() => {
@@ -50,20 +62,12 @@ export const Chatbot: React.FC<ChatbotProps> = ({
     return new TensorFlowService(confidenceThreshold);
   }, [confidenceThreshold]);
   
-  const apiKey = openaiApiKey || (typeof window !== 'undefined' ? process.env.NEXT_PUBLIC_OPENAI_API_KEY : '') || '';
-  
+  // No API key on the client — completions go through /api/chatbot/generate,
+  // which resolves the provider key from server-only env vars.
   const openaiService = useMemo(() => {
     if (typeof window === 'undefined') return null;
-    return new OpenAIService({ apiKey: apiKey });
-  }, [apiKey]);
-
-  // Debug API key (remove in production)
-  useEffect(() => {
-    
-    if (apiKey && apiKey.length > 20) {
-    } else {
-    }
-  }, [apiKey, openaiApiKey]);
+    return new OpenAIService({});
+  }, []);
 
   // Notify parent component of status changes
   useEffect(() => {
@@ -77,70 +81,84 @@ export const Chatbot: React.FC<ChatbotProps> = ({
     }
   }, [isModelReady, isLoading, learningCount, openaiService, onStatusChange]);
 
-  // Initialize TensorFlow.js model
-  useEffect(() => {
-    // Don't initialize during SSR or build time
-    if (typeof window === 'undefined') return;
-    if (!tensorflowService) return;
-    
-    const initializeModel = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Prevent multiple initializations in development
-        if (process.env.NODE_ENV === 'development' && tensorflowService.isModelReady()) {
-          setIsModelReady(true);
-          setIsLoading(false);
-          return;
-        }
+  /**
+   * Bring up the on-device model.
+   *
+   * Never called without consent. A cached model loads straight from
+   * IndexedDB (fast, no toast beyond a brief "ready"); only a first-ever grant
+   * pays for training, which reports progress so the toast can show it.
+   */
+  const initializeModel = useCallback(async () => {
+    if (typeof window === 'undefined' || !tensorflowService) return;
 
-        // Try to load existing model
-        const modelLoaded = await tensorflowService.loadModel();
-        
-        if (modelLoaded) {
-          setIsModelReady(true);
-        } else {
-          await tensorflowService.trainModel();
-          setIsModelReady(true);
-        }
+    try {
+      setIsLoading(true);
+      setToastPhase('downloading');
 
-        // Load learning count
-        const storedCount = localStorage.getItem('learning-count');
-        if (storedCount) {
-          setLearningCount(parseInt(storedCount));
-        }
+      // Loading the module and any cached weights. This is where the ~1.1 MB
+      // download happens, so the toast is already up.
+      const modelLoaded = await tensorflowService.loadModel();
 
-        // Get performance stats
-        if (tensorflowService && openaiService) {
-          const tensorflowStats = tensorflowService.getPerformanceStats();
-          const openaiStats = openaiService.getPerformanceStats();
-          const combinedStats = {
-            tensorflow: tensorflowStats,
-            openai: openaiStats
-          };
-          setPerformanceStats(combinedStats);
-        }
-        
-        // Performance monitor is hidden by default, can be toggled
-        setShowPerformanceMonitor(false);
-
-
-      } catch (err) {
-        console.error('❌ Error initializing model:', err);
-        // Set model as ready even if training failed, so we can use simple matching
-        setIsModelReady(true);
-      } finally {
-        setIsLoading(false);
+      if (!modelLoaded) {
+        setToastPhase('training');
+        setTrainingProgress(0);
+        await tensorflowService.trainModel(p => setTrainingProgress(p.progress));
       }
-    };
 
-    initializeModel();
-  }, [tensorflowService, openaiService]);
+      setIsModelReady(true);
+      setToastPhase('ready');
 
-  // Update performance stats periodically
+      const storedCount = localStorage.getItem('learning-count');
+      if (storedCount) setLearningCount(parseInt(storedCount));
+    } catch (err) {
+      console.error('Error initializing on-device model:', err);
+      // Non-fatal: the chat continues to work through /api/chatbot/generate.
+      setIsModelReady(false);
+      setToastPhase('error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [tensorflowService]);
+
+  // Decide, on mount, whether to prompt / auto-load / do nothing.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !tensorflowService) return;
+
+    const consent = getConsent();
+
+    if (consent === 'granted') {
+      // Already opted in — bring the model up without asking again.
+      void initializeModel();
+    } else {
+      // No model, no download. The chat works via the server route.
+      setIsLoading(false);
+      setShowConsent(consent === 'unset');
+    }
+  }, [tensorflowService, initializeModel]);
+
+  const handleAcceptLocalModel = useCallback(() => {
+    setConsent('granted');
+    setShowConsent(false);
+    void initializeModel();
+  }, [initializeModel]);
+
+  const handleDeclineLocalModel = useCallback(() => {
+    setConsent('declined');
+    setShowConsent(false);
+  }, []);
+
+  // Auto-dismiss the terminal toast states; keep progress states pinned.
+  useEffect(() => {
+    if (toastPhase !== 'ready' && toastPhase !== 'error') return;
+    const t = setTimeout(() => setToastPhase(null), 4000);
+    return () => clearTimeout(t);
+  }, [toastPhase]);
+
+  // Update performance stats periodically — only while the monitor is open.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!tensorflowService || !openaiService) return;
+    if (!showPerformanceMonitor) return;
 
     const updatePerformanceStats = () => {
       if (!tensorflowService || !openaiService) return;
@@ -158,9 +176,13 @@ export const Chatbot: React.FC<ChatbotProps> = ({
 
     // Update every 3 seconds
     const statsInterval = setInterval(updatePerformanceStats, 3000);
-    
+
     return () => clearInterval(statsInterval);
-  }, [tensorflowService, openaiService]);
+    // showPerformanceMonitor is in the guard above AND the deps: without it
+    // this polled every 3s for the lifetime of the page while the monitor was
+    // hidden (its default), doing work nobody could see and keeping the
+    // TensorFlow service graph reachable so it could never be collected.
+  }, [tensorflowService, openaiService, showPerformanceMonitor]);
 
   // Cleanup on unmount to prevent memory leaks
   useEffect(() => {
@@ -208,68 +230,17 @@ export const Chatbot: React.FC<ChatbotProps> = ({
 
   return (
     <>
-      {/* Floating Chat Button */}
-      <motion.img
-        src="/LuisBot.png"
-        alt="Luis AI Chatbot"
-        onClick={toggleChat}
-        className="fixed bottom-20 right-4 md:bottom-6 md:right-6 w-16 h-16 md:w-20 md:h-20 cursor-pointer z-40"
-        style={{ filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' }}
-        whileHover={{ 
-          scale: 1.1,
-          rotate: [0, -5, 5, -5, 0],
-          filter: 'drop-shadow(0 8px 12px rgba(0, 0, 0, 0.2))'
-        }}
-        whileTap={{ 
-          scale: 0.9,
-          rotate: 0
-        }}
-        initial={{ scale: 0, opacity: 0, y: 20 }}
-        animate={{ 
-          scale: 1, 
-          opacity: 1, 
-          y: 0,
-          rotate: [0, 0, 0, 0, 0],
-        }}
-        transition={{ 
-          type: "spring", 
-          stiffness: 260, 
-          damping: 20,
-          rotate: {
-            duration: 0.5,
-            ease: "easeInOut"
-          }
-        }}
-        role="button"
-        tabIndex={0}
-        aria-label="Open AI Chatbot"
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            toggleChat();
-          }
-        }}
-        onError={(e) => {
-          const target = e.currentTarget;
-          if (target.src.endsWith('/LuisBot.png')) {
-            console.warn('PNG failed, trying ICO');
-            target.src = '/LuisBot.ico';
-          } else if (target.src.endsWith('/LuisBot.ico')) {
-            console.warn('ICO failed, using default favicon');
-            target.src = '/favicon.ico';
-          } else {
-            console.warn('All images failed, using emoji fallback');
-            target.style.display = 'none';
-            target.parentElement!.innerHTML = '🤖';
-          }
-        }}
-        loading="eager"
-        width="80"
-        height="80"
+      {/* Floating Chat Button — same component the wrapper renders pre-mount,
+          with the entrance animation suppressed since it already played. */}
+      <ChatLauncher onClick={toggleChat} animateIn={false} />
+
+      {/* On-device model progress. Only animates because training yields
+          between batches — see tensorflowModel.trainModel. */}
+      <TrainingToast
+        phase={toastPhase}
+        progress={trainingProgress}
+        onDismiss={() => setToastPhase(null)}
       />
-
-
-
 
       {/* Performance Monitor - Disabled in Production */}
       {process.env.NODE_ENV === 'development' && (
@@ -300,6 +271,9 @@ export const Chatbot: React.FC<ChatbotProps> = ({
         tensorflowService={tensorflowService}
         openaiService={openaiService}
         onLearningExample={handleLearningExample}
+        showLocalModelConsent={showConsent}
+        onAcceptLocalModel={handleAcceptLocalModel}
+        onDeclineLocalModel={handleDeclineLocalModel}
       />
     </>
   );

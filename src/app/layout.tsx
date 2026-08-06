@@ -5,17 +5,18 @@ import StructuredData from '@/components/StructuredData';
 import ServiceWorker from '@/components/ServiceWorker';
 import { ModalProvider } from '@/contexts/ModalContext';
 import ClientLayoutContent from '@/components/ClientLayoutContent';
+import { SITE_URL } from '@/lib/site';
 
 // Using Inter as a close alternative to SF Pro Display
-const inter = Inter({ 
-  variable: "--font-sf-pro", 
+const inter = Inter({
+  variable: "--font-sf-pro",
   subsets: ["latin"],
   display: 'swap',
   preload: true
 });
 
 export const metadata = {
-  metadataBase: new URL('https://luis.dev'),
+  metadataBase: new URL(SITE_URL),
   title: 'Code by Luis',
   description: 'Senior IBM ODM Specialist and QA Team Manager specializing in full-stack development, AI integration, and scalable systems. Building future-ready applications with precision and innovation.',
   keywords: [
@@ -43,12 +44,12 @@ export const metadata = {
   publisher: 'Antonio Luis Santos',
   robots: 'index, follow',
   alternates: {
-    canonical: 'https://luis.dev',
+    canonical: SITE_URL,
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://luis.dev',
+    url: SITE_URL,
     siteName: 'CodeByLuis.Dev',
     title: 'Code by Luis',
     description: 'Senior IBM ODM Specialist and QA Team Manager specializing in full-stack development, AI integration, and scalable systems. Expert in React, Next.js, Python, and AI technologies.',
@@ -98,8 +99,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Inter is self-hosted by next/font, so no preconnect is needed for
+            it. Jost and Space Mono load as a plain stylesheet instead: they are
+            decorative display faces, and next/font fetches font binaries at
+            build time from fonts.gstatic.com — a hard build/render failure
+            whenever that host is unreachable. A stylesheet link degrades to the
+            fallback stack in globals.css instead of taking the page down. */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&family=Space+Mono:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
         <link rel="dns-prefetch" href="https://calendly.com" />
       </head>
       <body

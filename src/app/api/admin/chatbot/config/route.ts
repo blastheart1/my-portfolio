@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSql } from '@/lib/neon';
+import { requireAdmin } from '@/lib/require-admin';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   try {
     const sql = getSql();
     const rows = await sql`SELECT * FROM ai_config ORDER BY provider, model`;
@@ -21,6 +24,8 @@ const ActivateSchema = z.object({
 
 // PATCH: set a config as the active one (deactivates all others)
 export async function PATCH(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   let body: unknown;
   try {
     body = await request.json();
@@ -67,6 +72,8 @@ const UpdateSchema = z.object({
 
 // PUT: update editable fields on a config row
 export async function PUT(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   let body: unknown;
   try {
     body = await request.json();

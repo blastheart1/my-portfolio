@@ -1,19 +1,14 @@
-import { CONTENT_SECTIONS } from '@/app/edit/layout';
+import { isContentSection } from '@/lib/admin-nav';
+import ClientContentEditor from './ClientContentEditor';
 
 interface Props {
   params: Promise<{ section: string }>;
 }
 
-async function fetchContent(section: string): Promise<Record<string, string>> {
-  // Server-side fetch using internal API (absolute URL not available in RSC without headers)
-  // We'll pass empty defaults and let the client editor hydrate from the API.
-  return {};
-}
-
 export default async function ContentPage({ params }: Props) {
   const { section } = await params;
 
-  if (!CONTENT_SECTIONS.includes(section)) {
+  if (!isContentSection(section)) {
     return (
       <div className="max-w-2xl">
         <p className="text-sm text-red-500">Unknown section: {section}</p>
@@ -21,7 +16,6 @@ export default async function ContentPage({ params }: Props) {
     );
   }
 
-  const initialFields = await fetchContent(section);
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -40,4 +34,3 @@ export default async function ContentPage({ params }: Props) {
 }
 
 // Client wrapper that fetches via API on mount
-import ClientContentEditor from './ClientContentEditor';

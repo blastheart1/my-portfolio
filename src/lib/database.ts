@@ -4,17 +4,30 @@ import { BlogPost } from '@/types/blog';
 // Lazy initialization of Supabase client
 let supabase: SupabaseClient | null = null;
 
+/**
+ * NOTE: the blog is the last thing still on Supabase — everything else in this
+ * app uses Neon (src/lib/neon.ts). Consolidating onto Neon is worth doing; it
+ * needs a schema + data migration, so it is deliberately not bundled here.
+ *
+ * This previously returned a client pointed at https://mock.supabase.co when
+ * the env vars were missing, which meant every blog read and write failed
+ * silently and looked like "no posts yet". Misconfiguration now throws, and
+ * callers (which all wrap this in try/catch) surface it in logs instead of
+ * pretending the database is simply empty.
+ */
 function getSupabaseClient(): SupabaseClient {
   if (!supabase) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    
+
     if (!supabaseUrl || !supabaseKey) {
-      // During build time or when env vars are missing, return a mock client
-      console.warn('Missing Supabase environment variables, using mock client');
-      return createClient('https://mock.supabase.co', 'mock-key');
+      throw new Error(
+        'Supabase is not configured: NEXT_PUBLIC_SUPABASE_URL and ' +
+          'NEXT_PUBLIC_SUPABASE_ANON_KEY must both be set for blog features. ' +
+          '(These two are publishable by design — the anon key is protected by RLS.)'
+      );
     }
-    
+
     supabase = createClient(supabaseUrl, supabaseKey);
   }
   return supabase;
@@ -33,7 +46,6 @@ export async function createBlogPostTable() {
       throw error;
     }
     
-    console.log('Blog posts table verified successfully');
     return { success: true };
   } catch (error) {
     console.error('Error verifying blog posts table:', error);

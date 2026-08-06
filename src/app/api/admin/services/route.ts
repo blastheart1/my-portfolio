@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getSql } from '@/lib/neon';
 import { revalidatePath } from 'next/cache';
+import { requireAdmin } from '@/lib/require-admin';
+import { ServiceTierSchema as TierSchema } from '@/lib/schemas/services';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   try {
     const sql = getSql();
     const rows = await sql`SELECT * FROM service_tiers ORDER BY sort_order ASC`;
@@ -16,19 +19,10 @@ export async function GET() {
   }
 }
 
-const TierSchema = z.object({
-  name:       z.string().min(1).max(50),
-  tagline:    z.string().max(80).optional().default(''),
-  outcome:    z.string().max(300).optional().default(''),
-  price_php:  z.number().int().min(0),
-  price_usd:  z.number().int().min(0),
-  features:   z.array(z.string().max(100)).max(8).default([]),
-  is_popular: z.boolean().default(false),
-  visible:    z.boolean().default(true),
-  sort_order: z.number().int().min(0).default(0),
-});
 
 export async function POST(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   let body: unknown;
   try { body = await request.json(); } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });

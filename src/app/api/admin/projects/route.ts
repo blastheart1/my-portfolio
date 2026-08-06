@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getSql } from '@/lib/neon';
 import { revalidatePath } from 'next/cache';
+import { requireAdmin } from '@/lib/require-admin';
+import { ProjectSchema } from '@/lib/schemas/projects';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   try {
     const sql = getSql();
     const rows = await sql`SELECT * FROM projects ORDER BY sort_order ASC`;
@@ -16,17 +19,10 @@ export async function GET() {
   }
 }
 
-const ProjectSchema = z.object({
-  title: z.string().min(1).max(200),
-  description: z.string().max(2000).optional(),
-  tech: z.array(z.string().max(100)).optional(),
-  link: z.string().max(500).nullable().optional(),
-  image_url: z.string().max(500).nullable().optional(),
-  sort_order: z.number().int().min(0).optional(),
-  visible: z.boolean().optional(),
-});
 
 export async function POST(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   let body: unknown;
   try { body = await request.json(); } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });

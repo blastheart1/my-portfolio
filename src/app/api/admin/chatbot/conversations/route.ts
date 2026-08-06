@@ -1,11 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/neon';
+import { requireAdmin } from '@/lib/require-admin';
 
 export const runtime = 'nodejs';
 
-// Admin-only: returns all conversation logs
-// Protected by proxy middleware (route is under /api/admin/)
-export async function GET() {
+// Admin-only: returns all visitor conversation logs.
+// Guarded by both the proxy matcher and requireAdmin() below.
+export async function GET(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   try {
     const sql = getSql();
     const rows = await sql`

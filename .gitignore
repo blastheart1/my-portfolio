@@ -47,6 +47,14 @@ next-env.d.ts
 # sql scripts
 *.sql
 
+# Frame sequence source PNGs. The committed sequence is WebP (~8 MB vs 107 MB
+# for the same frames as PNG). If you regenerate frames, convert before
+# committing:  cwebp -q 80 in.png -o out.webp
+public/frames/*.png
+
 # ide / editor workspace files
 .cursor/
 *.code-workspace
+
+# Local Claude Code settings and scratch plans — machine-specific
+.claude/

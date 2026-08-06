@@ -1,11 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/neon';
+import { requireAdmin } from '@/lib/require-admin';
 
 export const runtime = 'nodejs';
 
 // Admin-only: returns ALL examples including unapproved
 // Protected by proxy middleware (route is under /api/admin/)
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   try {
     const sql = getSql();
     const rows = await sql`

@@ -8,6 +8,7 @@ import { LeadForm, LeadData } from './LeadForm';
 import { ResendService } from '@/lib/chatbot/resendService';
 import { LeadDetectionService } from '@/lib/chatbot/leadDetectionService';
 import { QuickSuggestions } from './QuickSuggestions';
+import LocalModelConsent from './LocalModelConsent';
 import { checkGuardRails, logGuardRailEvent, getBlockResponse } from '@/lib/chatbot/guardRails';
 
 interface ChatWindowProps {
@@ -16,6 +17,10 @@ interface ChatWindowProps {
   tensorflowService: TensorFlowService;
   openaiService: OpenAIService;
   onLearningExample: (userInput: string, openAiResponse: string) => Promise<{success: boolean, reason?: string}>;
+  /** Show the opt-in prompt for the on-device model (no choice recorded yet). */
+  showLocalModelConsent?: boolean;
+  onAcceptLocalModel?: () => void;
+  onDeclineLocalModel?: () => void;
 }
 
 // Configuration for AI response customization
@@ -38,6 +43,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   tensorflowService,
   openaiService,
   onLearningExample,
+  showLocalModelConsent = false,
+  onAcceptLocalModel,
+  onDeclineLocalModel,
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -84,7 +92,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   }, []);
   
   const resendService = useRef(new ResendService({
-    apiKey: process.env.NEXT_PUBLIC_RESEND_API_KEY || '',
     fromEmail: 'onboarding@resend.dev', // Always use verified Resend domain
     toEmail: process.env.NEXT_PUBLIC_TO_EMAIL || 'antonioluis.santos1@gmail.com'
   }));
@@ -925,6 +932,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               overscrollBehavior: isMobile ? 'contain' : 'auto'
             }}
           >
+            {/* Optional on-device model opt-in. Sits above the transcript so
+                it is visible without gating the conversation — the chat is
+                fully functional whether or not it is accepted. */}
+            {showLocalModelConsent && onAcceptLocalModel && onDeclineLocalModel && (
+              <LocalModelConsent
+                onAccept={onAcceptLocalModel}
+                onDecline={onDeclineLocalModel}
+              />
+            )}
+
             {messages.map((message) => (
               <MessageBubble key={message.id} message={message} />
             ))}

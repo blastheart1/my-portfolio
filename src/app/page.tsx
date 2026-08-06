@@ -1,6 +1,6 @@
 import lazyLoad from "next/dynamic";
 import ParallaxBackground from "@/components/ParallaxBackground";
-import HeroSection from "@/components/HeroSection";
+import CosmicHero from "@/components/CosmicHero";
 import AboutSection from "@/components/AboutSection";
 import ExperienceSection from "@/components/ExperienceSection";
 import TechStacks from "@/components/TechStacks";
@@ -18,8 +18,13 @@ import {
   getProjects,
 } from "@/lib/content-queries";
 
-// Force server-render on every request so DB edits show immediately
-export const dynamic = "force-dynamic";
+// This page is statically rendered and served from the edge cache. Admin edits
+// show up immediately because every mutating handler under /api/admin/* calls
+// revalidatePath('/') — see docs/plans/AUDIT-2026-08-02.md §2.1. Do NOT add
+// `force-dynamic` here: it disables the cache entry those calls invalidate,
+// which makes the site slower AND turns all 11 revalidatePath calls into
+// no-ops. `revalidate` is a staleness floor in case an invalidation is missed.
+export const revalidate = 3600;
 
 // Lazy load non-critical components
 const ProjectsSection = lazyLoad(() => import("@/components/ProjectsSection"), {
@@ -59,9 +64,30 @@ export default async function Home() {
         <ParallaxBackground />
 
         <div className="relative z-10 flex-1">
+          {/* Scroll-driven space hero. It resolves to white, so the sections
+              below it read as the sky clearing rather than a hard cut. */}
           <section id="home">
-            <HeroSection content={heroContent} />
+            <CosmicHero
+              name={heroContent.name || undefined}
+              tagline={heroContent.description || undefined}
+              ctaLabel={heroContent.cta_label || undefined}
+              ctaHref={
+                heroContent.cta_url ||
+                'https://calendly.com/antonioluis-santos1/30min'
+              }
+            />
           </section>
+
+          {/* Ramp out of the hero.
+              CosmicHero resolves to a flat --background, but the page behind
+              it is ParallaxBackground's fixed white -> gray-200 gradient. Where
+              the hero ended, flat white met mid-grey as a hard horizontal line.
+              This fades the hero's colour out so the page gradient arrives
+              gradually, and doubles as breathing room before About. */}
+          <div
+            aria-hidden="true"
+            className="h-[35vh] bg-gradient-to-b from-[var(--background)] to-transparent"
+          />
 
           {show('about') && (
             <ScrollFadeEffect fadeStartPoint={0.7} fadeIntensity={1.2}>

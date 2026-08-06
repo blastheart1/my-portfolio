@@ -2,38 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { signAdminJWT, buildSessionCookie } from '@/lib/admin-auth';
+import { getClientIp, isRateLimited, RATE_LIMITS } from '@/lib/rate-limit';
 
 // Must use Node.js runtime — bcryptjs does not run on Edge
 export const runtime = 'nodejs';
-
-// In-memory rate limiter (5 attempts per 15 min per IP)
-const attempts = new Map<string, { count: number; resetAt: number }>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = attempts.get(ip);
-
-  if (!entry || entry.resetAt < now) {
-    attempts.set(ip, { count: 1, resetAt: now + 15 * 60 * 1000 });
-    return false;
-  }
-  if (entry.count >= 5) return true;
-  entry.count++;
-  return false;
-}
 
 const LoginSchema = z.object({
   password: z.string().min(1).max(256),
 });
 
 export async function POST(request: NextRequest) {
-  // Get client IP for rate limiting
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    request.headers.get('x-real-ip') ??
-    'unknown';
+  const ip = getClientIp(request);
 
-  if (isRateLimited(ip)) {
+  const { limit, windowMs } = RATE_LIMITS.login;
+  if (isRateLimited(`login:${ip}`, limit, windowMs)) {
     return NextResponse.json(
       { error: 'Too many attempts. Try again in 15 minutes.' },
       { status: 429 }

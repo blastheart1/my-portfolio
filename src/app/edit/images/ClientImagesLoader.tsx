@@ -1,24 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import ImageUploader from '@/components/admin/ImageUploader';
+import AdminResource from '@/components/admin/AdminResource';
+import { useAdminFetch, selectArray } from '@/hooks/useAdminFetch';
+
+type Assets = Parameters<typeof ImageUploader>[0]['initialAssets'];
 
 export default function ClientImagesLoader() {
-  const [assets, setAssets] = useState<Parameters<typeof ImageUploader>[0]['initialAssets'] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const state = useAdminFetch<Assets>('/api/admin/images', { select: selectArray });
 
-  useEffect(() => {
-    fetch('/api/admin/images')
-      .then(r => {
-        if (!r.ok) throw new Error('Failed to load');
-        return r.json();
-      })
-      .then(data => setAssets(Array.isArray(data) ? data : []))
-      .catch(() => setAssets([]));
-  }, []);
-
-  if (error) return <p className="text-sm text-red-500">{error}</p>;
-  if (assets === null) return <p className="text-sm text-gray-400 animate-pulse">Loading…</p>;
-
-  return <ImageUploader initialAssets={assets} />;
+  return (
+    <AdminResource state={state} skeletonRows={3}>
+      {assets => <ImageUploader initialAssets={assets} />}
+    </AdminResource>
+  );
 }

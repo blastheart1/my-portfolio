@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createBlogPostTable } from '@/lib/database';
+import { timingSafeCompare } from '@/lib/admin-auth';
 
+// Bootstrap endpoint. Kept (rather than deleted) because scripts/setup-blog.js,
+// scripts/setup-database.js and scripts/setup-supabase.js drive schema creation
+// through it. It is idempotent DDL, but it stays CRON_SECRET-gated and fails
+// closed when that secret is unset.
 export async function GET(request: NextRequest) {
   try {
-    // Verify this is a legitimate request (you can add authentication here)
+    const cronSecret = process.env.CRON_SECRET;
     const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (!cronSecret || !timingSafeCompare(authHeader ?? undefined, `Bearer ${cronSecret}`)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

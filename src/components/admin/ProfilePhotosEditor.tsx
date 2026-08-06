@@ -12,9 +12,9 @@ type SlotKey = typeof SLOTS[number]['key'];
 
 export default function ProfilePhotosEditor() {
   const [photos, setPhotos]   = useState<Record<SlotKey, string>>({
-    photo_default_url: '/profile-photo2.png',
+    photo_default_url: '/profile-photo2.webp',
     photo_hover_url:   '/square-profile-photo.jpeg',
-    photo_dark_url:    '/profile-photo2.png',
+    photo_dark_url:    '/profile-photo2.webp',
   });
   const [uploading, setUploading] = useState<SlotKey | null>(null);
   const [status, setStatus]       = useState<'idle' | 'saved' | 'error'>('idle');
@@ -22,15 +22,21 @@ export default function ProfilePhotosEditor() {
 
   useEffect(() => {
     fetch('/api/admin/content/hero')
-      .then(r => r.json())
-      .then((data: Record<string, string>) => {
+      .then(async r => {
+        // Without the status check a 500 body ({ error }) was treated as a
+        // content record: every field read as undefined, the defaults were
+        // silently kept, and the editor looked like it had loaded fine.
+        if (!r.ok) throw new Error(`Request failed (${r.status})`);
+        return (await r.json()) as Record<string, string>;
+      })
+      .then(data => {
         setPhotos(prev => ({
           photo_default_url: data.photo_default_url || prev.photo_default_url,
           photo_hover_url:   data.photo_hover_url   || prev.photo_hover_url,
           photo_dark_url:    data.photo_dark_url     || prev.photo_dark_url,
         }));
       })
-      .catch(() => {});
+      .catch(() => setStatus('error'));
   }, []);
 
   const handleFileChange = async (key: SlotKey, file: File) => {

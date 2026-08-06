@@ -15,8 +15,13 @@
  */
 import { checkGuardRails, logGuardRailEvent, getBlockResponse } from './guardRails';
 
+/**
+ * No apiKey here by design. All completions go through POST
+ * /api/chatbot/generate, which resolves the provider key from server-only env
+ * vars. A key on the client would have to be NEXT_PUBLIC_* and would ship in
+ * the browser bundle.
+ */
 export interface OpenAIConfig {
-  apiKey: string; // kept for backward compat; no longer used for direct calls
   model?: string;
   maxTokens?: number;
   temperature?: number;
@@ -255,7 +260,8 @@ export class OpenAIService {
   }
 
   clearConversationContext(): void { /* no-op */ }
-  updateApiKey(apiKey: string): void { this.config.apiKey = apiKey; }
+  /** No-op: key resolution moved server-side to /api/chatbot/generate. */
+  updateApiKey(): void { /* no-op */ }
   clearCache(): void { this.responseCache.clear(); }
   updateRateLimit(delay: number): void { this.rateLimitDelay = Math.max(100, delay); }
 

@@ -1,4 +1,4 @@
-import ExperienceEditor from '@/components/admin/ExperienceEditor';
+import ClientExperienceLoader from './ClientExperienceLoader';
 
 export default function ExperiencePage() {
 
@@ -16,4 +16,3 @@ export default function ExperiencePage() {
   );
 }
 
-import ClientExperienceLoader from './ClientExperienceLoader';

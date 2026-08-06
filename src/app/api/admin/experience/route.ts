@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getSql } from '@/lib/neon';
 import { revalidatePath } from 'next/cache';
+import { requireAdmin } from '@/lib/require-admin';
+import { ExperienceSchema as EntrySchema } from '@/lib/schemas/experience';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   try {
     const sql = getSql();
     const rows = await sql`SELECT * FROM experience_entries ORDER BY start_date DESC, sort_order ASC`;
@@ -16,19 +19,10 @@ export async function GET() {
   }
 }
 
-const EntrySchema = z.object({
-  track: z.string().min(1).max(50),
-  role: z.string().min(1).max(200),
-  company: z.string().min(1).max(200),
-  description: z.string().max(2000).optional(),
-  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
-  sort_order: z.number().int().min(0).optional(),
-  visible: z.boolean().optional(),
-  detail_body: z.string().max(5000).optional(),
-});
 
 export async function POST(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
   let body: unknown;
   try { body = await request.json(); } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });

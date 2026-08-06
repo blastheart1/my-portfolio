@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateContent, getRandomTopic, shouldGenerateCaseStudy } from '@/lib/openai-service';
 import { insertBlogPost, getBlogPosts } from '@/lib/database';
+import { requireAdmin } from '@/lib/require-admin';
 
+// Admin-only: this endpoint spends AI provider budget AND publishes to the
+// live blog. The scheduled path is /api/cron/generate-content, which is
+// separately guarded by CRON_SECRET and does not go through here.
 export async function POST(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   try {
     const { topic, type } = await request.json();
     
@@ -16,12 +23,6 @@ export async function POST(request: NextRequest) {
     };
 
     const generatedContent = await generateContent(contentRequest);
-    
-    // Debug logging
-    console.log('Generated content caseStudyLink:', generatedContent.caseStudyLink);
-    console.log('Content type:', contentRequest.type);
-    console.log('Full generated content:', JSON.stringify(generatedContent, null, 2));
-    
     // Save to database
     const newPost = await insertBlogPost({
       title: generatedContent.title,

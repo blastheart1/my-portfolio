@@ -12,6 +12,16 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sf-pro);
+  /* Display face for the hero — geometric, used at light weights only.
+     Jost arrives via the stylesheet link in layout.tsx; the fallbacks are all
+     geometric sans in the same Futura lineage, so the hero still reads
+     correctly if that request never lands. */
+  --font-display: 'Jost', 'Futura', 'Avenir Next', 'Century Gothic',
+                  ui-sans-serif, system-ui, sans-serif;
+  /* Letterspaced uppercase captions. Distinct from --font-mono, which is the
+     code face used in markdown and the admin. */
+  --font-mono-ui: 'Space Mono', ui-monospace, SFMono-Regular, 'SF Mono',
+                  Menlo, Consolas, monospace;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -46,6 +56,15 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Admin status colours. The base palette is fully neutral, so there was no
+     token for "needs attention" (dirty dots, hidden badges, char counters near
+     a limit) or "healthy" (active provider dot) — only --destructive, which
+     overstates both. */
+  --color-warn: var(--warn);
+  --color-warn-foreground: var(--warn-foreground);
+  --color-ok: var(--ok);
+  --color-ok-foreground: var(--ok-foreground);
 }
 
 html {
@@ -85,6 +104,10 @@ html {
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --warn: oklch(0.62 0.15 65);
+  --warn-foreground: oklch(0.985 0 0);
+  --ok: oklch(0.55 0.15 150);
+  --ok-foreground: oklch(0.985 0 0);
   --hero-name: #1a1a1a;
   --color-brand: #0033A0;
 }
@@ -121,6 +144,10 @@ html {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --warn: oklch(0.78 0.13 70);
+  --warn-foreground: oklch(0.205 0 0);
+  --ok: oklch(0.75 0.15 150);
+  --ok-foreground: oklch(0.205 0 0);
   --hero-name: #ffffff;
   --color-brand: #4ade80;
 }
@@ -210,6 +237,131 @@ button, a, [role="button"] {
 button:focus-visible, a:focus-visible {
   outline: 2px solid var(--color-brand);
   outline-offset: 2px;
+}
+
+/* ─── Admin motion ────────────────────────────────────────────────────────
+   CSS only, ≤150ms, ease-out, opacity/transform only. The public site uses
+   framer-motion heavily; /edit deliberately does not — an editing tool should
+   feel immediate, not animated. These four cover every moving surface in the
+   admin: menus/dialogs, the experience drawer, the mobile nav sheet, and
+   loading skeletons.
+   ─────────────────────────────────────────────────────────────────────── */
+
+@keyframes admin-fade-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes admin-drawer-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes admin-sheet-in {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes admin-skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+.animate-admin-fade-up { animation: admin-fade-up 150ms ease-out; }
+.animate-admin-drawer  { animation: admin-drawer-in 150ms ease-out; }
+.animate-admin-sheet   { animation: admin-sheet-in 150ms ease-out; }
+.animate-admin-skeleton { animation: admin-skeleton-pulse 1.6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-admin-fade-up,
+  .animate-admin-drawer,
+  .animate-admin-sheet,
+  .animate-admin-skeleton {
+    animation: none;
+  }
+}
+
+/* Numeric data — prices, counts, dates, file sizes, position numbers — must
+   line up in columns. The body sets oldstyle-nums, which does not. */
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* ─── CosmicCounter ───────────────────────────────────────────────────────
+   Starfield-filled statistic with a sparkle and a drawn-in trail. The
+   starfield itself is generated in the component as radial-gradients, so
+   there is no image to load and nothing to go blurry when it scales.
+   ─────────────────────────────────────────────────────────────────────── */
+
+.cosmic-counter-number {
+  /* Lining figures: the body sets oldstyle-nums, which makes digits sit at
+     different heights — fine in prose, wrong for a display number. */
+  font-variant-numeric: lining-nums tabular-nums;
+  /* The starfield must not scroll with the page or the stars slide out of the
+     glyphs as the element moves. */
+  background-attachment: scroll;
+  background-repeat: no-repeat;
+}
+
+/* Cloud layer feathering.
+   A class rather than an inline style so the fade can differ by breakpoint:
+   phone layers are far wider relative to the viewport, so the same radial
+   percentages would eat most of the visible area. */
+.cosmic-cloud-mask {
+  -webkit-mask-image: radial-gradient(150% 110% at 50% 100%,
+    rgba(0,0,0,1) 55%, rgba(0,0,0,0.65) 80%, rgba(0,0,0,0) 100%);
+  mask-image: radial-gradient(150% 110% at 50% 100%,
+    rgba(0,0,0,1) 55%, rgba(0,0,0,0.65) 80%, rgba(0,0,0,0) 100%);
+}
+
+@media (min-width: 768px) {
+  .cosmic-cloud-mask {
+    -webkit-mask-image: radial-gradient(120% 100% at 50% 100%,
+      rgba(0,0,0,1) 45%, rgba(0,0,0,0.6) 72%, rgba(0,0,0,0) 100%);
+    mask-image: radial-gradient(120% 100% at 50% 100%,
+      rgba(0,0,0,1) 45%, rgba(0,0,0,0.6) 72%, rgba(0,0,0,0) 100%);
+  }
+}
+
+/* Astronaut idle drift.
+   Deliberately on its own element, nested inside the one the scroll handler
+   writes to: both animate `transform`, so sharing an element would mean each
+   one clobbering the other every frame. */
+@keyframes cosmic-float {
+  0%, 100% { transform: translateY(-14px) rotate(-1.8deg); }
+  50%      { transform: translateY(14px) rotate(1.8deg); }
+}
+
+.cosmic-float {
+  animation: cosmic-float 7s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cosmic-float { animation: none; }
+}
+
+@keyframes cosmic-sparkle-pulse {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50%      { transform: scale(0.82) rotate(12deg); opacity: 0.75; }
+}
+
+@keyframes cosmic-trail-draw {
+  from { stroke-dashoffset: 240; }
+  to   { stroke-dashoffset: 0; }
+}
+
+.cosmic-sparkle {
+  animation: cosmic-sparkle-pulse 3.2s ease-in-out infinite;
+}
+
+.cosmic-trail {
+  animation: cosmic-trail-draw 2.4s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cosmic-sparkle,
+  .cosmic-trail {
+    animation: none;
+  }
 }
 
 /* Custom cursor — hides native cursor when class is present */

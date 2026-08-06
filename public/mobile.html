@@ -1,4 +1,14 @@
 <!DOCTYPE html>
+<!--
+  INTENTIONALLY STANDALONE — do not delete as "dead code".
+
+  Nothing in src/ links here. That is by design: this page is shared directly
+  as https://codebyluis.dev/mobile.html. A dead-code sweep looking for inbound
+  references will find none and conclude it is unused; it is not.
+
+  It is also the only consumer of public/frames/ (180 WebP frames, ~8.2 MB).
+  Deleting this file would orphan that directory, and vice versa.
+-->
 <html class="dark" lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -1205,16 +1215,19 @@
     var ch = f1Canvas.height;
     f1Ctx.clearRect(0, 0, cw, ch);
 
-    // Draw base frame
-    if (f1Images[baseIdx]) {
+    // Draw base frame — nearest resident frame, so a not-yet-arrived frame
+    // holds the previous image instead of flashing an empty canvas.
+    var baseImg = getFrame(baseIdx);
+    if (baseImg) {
       f1Ctx.globalAlpha = 1;
-      drawF1ImageCover(f1Images[baseIdx]);
+      drawF1ImageCover(baseImg);
     }
 
     // Blend next frame on top if available and blend > 0
-    if (blend > 0.01 && nextIdx !== baseIdx && f1Images[nextIdx]) {
+    var nextImg = f1Images[nextIdx];
+    if (blend > 0.01 && nextIdx !== baseIdx && nextImg && nextImg !== baseImg) {
       f1Ctx.globalAlpha = blend;
-      drawF1ImageCover(f1Images[nextIdx]);
+      drawF1ImageCover(nextImg);
       f1Ctx.globalAlpha = 1;
     }
   }
@@ -1251,6 +1264,9 @@
     var f1Progress = Math.min(1, heroProgress / F1_SCROLL_END);
     f1TargetIdx = Math.min(F1_TOTAL - 1, Math.floor(f1Progress * F1_TOTAL));
 
+    // Stream in frames ahead of where the playhead is heading.
+    ensureF1Window(f1TargetIdx);
+
     if (!f1RafId) {
       f1RafId = requestAnimationFrame(f1AnimLoop);
     }
@@ -1272,22 +1288,100 @@
     }
   }
 
-  // Preload frames
+  // ======================================
+  // FRAME LOADER
+  //
+  // Frames are WebP (~60 KB each, down from ~766 KB as PNG — 107 MB to 8.2 MB
+  // across the sequence).
+  //
+  // Loading is a bounded sliding window, not a single up-front loop. The old
+  // version fired 180 concurrent `new Image()` requests on page load, which on
+  // a phone meant downloading the entire sequence before the user had scrolled
+  // anywhere. Now a short eager head renders something immediately, and the
+  // rest streams in ahead of the playhead.
+  //
+  // On narrow viewports only every other frame is fetched (F1_STEP = 2),
+  // halving the payload again. The scroll math is untouched: the logical index
+  // space stays 0..179 and draws snap to the nearest loaded frame.
+  // ======================================
+  var F1_STEP = (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) ? 2 : 1;
+  var F1_EAGER = 10;           // frames fetched immediately so the canvas paints fast
+  var F1_AHEAD = 24;           // how far ahead of the playhead to keep resident
+  var F1_MAX_CONCURRENT = 6;   // cap parallel requests so they don't starve each other
+
+  var f1Requested = new Array(F1_TOTAL);
+  var f1Queue     = [];
+  var f1Active    = 0;
+
   function padNum(n) {
     return n < 10 ? '00' + n : n < 100 ? '0' + n : '' + n;
   }
-  function preloadF1Frames() {
-    for (var i = 0; i < F1_TOTAL; i++) {
+
+  function frameSrc(idx) {
+    return '/frames/ezgif-frame-' + padNum(idx + 1) + '.webp';
+  }
+
+  // Snap a logical index onto the loaded lattice (identity when F1_STEP is 1).
+  function snapIdx(idx) {
+    if (F1_STEP === 1) return idx;
+    var s = Math.round(idx / F1_STEP) * F1_STEP;
+    return Math.max(0, Math.min(F1_TOTAL - 1, s));
+  }
+
+  // Nearest already-decoded frame, searching outward. Prevents a blank canvas
+  // when the playhead lands on a frame that has not arrived yet.
+  function getFrame(idx) {
+    idx = Math.max(0, Math.min(F1_TOTAL - 1, idx));
+    if (f1Images[idx]) return f1Images[idx];
+    for (var d = 1; d <= 8; d++) {
+      if (f1Images[idx - d]) return f1Images[idx - d];
+      if (f1Images[idx + d]) return f1Images[idx + d];
+    }
+    return null;
+  }
+
+  function pumpF1Queue() {
+    while (f1Active < F1_MAX_CONCURRENT && f1Queue.length) {
       (function (idx) {
+        f1Active++;
         var img = new Image();
+        img.decoding = 'async';
         img.onload = function () {
           f1Images[idx] = img;
           f1Loaded++;
-          if (idx === 0 && f1DrawnIdx < 0) drawF1Blended(0);
+          f1Active--;
+          if (f1DrawnIdx < 0) drawF1Blended(0);
+          pumpF1Queue();
         };
-        img.src = '/frames/ezgif-frame-' + padNum(idx + 1) + '.png';
-      })(i);
+        img.onerror = function () {
+          f1Active--;
+          pumpF1Queue();
+        };
+        img.src = frameSrc(idx);
+      })(f1Queue.shift());
     }
+  }
+
+  function requestF1Frame(idx) {
+    idx = snapIdx(idx);
+    if (idx < 0 || idx >= F1_TOTAL || f1Requested[idx]) return;
+    f1Requested[idx] = true;
+    f1Queue.push(idx);
+  }
+
+  // Keep a window of frames resident ahead of the current playhead.
+  function ensureF1Window(centerIdx) {
+    for (var i = centerIdx; i <= centerIdx + F1_AHEAD; i += F1_STEP) {
+      requestF1Frame(i);
+    }
+    pumpF1Queue();
+  }
+
+  function preloadF1Frames() {
+    for (var i = 0; i < F1_EAGER * F1_STEP; i += F1_STEP) {
+      requestF1Frame(i);
+    }
+    pumpF1Queue();
   }
   preloadF1Frames();
 

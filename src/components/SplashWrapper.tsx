@@ -38,18 +38,26 @@ export default function SplashWrapper({ children, splashEnabled = true, splashVe
     };
   }, [splashEnabled]);
 
-  // Restore scroll once splash is done
+  /**
+   * Restore scrolling once the splash is done.
+   *
+   * These MUST clear the inline styles rather than set `overflow: auto`.
+   * `overflow: auto` on <html> or <body> makes that element the scroll
+   * container instead of the viewport, which silently breaks
+   * `position: sticky` for every descendant — the sticky hero simply scrolled
+   * away with the page instead of pinning.
+   */
   useEffect(() => {
     if (splashComplete && !showSplash) {
       document.body.classList.remove('splash-active');
       document.documentElement.classList.remove('splash-active');
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.height = '';
       document.body.style.width = '';
       document.body.style.top = '';
       document.body.style.left = '';
-      document.documentElement.style.overflow = 'auto';
+      document.documentElement.style.overflow = '';
       window.dispatchEvent(new Event('scroll'));
     }
   }, [splashComplete, showSplash]);
@@ -61,13 +69,13 @@ export default function SplashWrapper({ children, splashEnabled = true, splashVe
 
     document.body.classList.remove('splash-active');
     document.documentElement.classList.remove('splash-active');
-    document.body.style.overflow = 'auto';
+    document.body.style.overflow = '';
     document.body.style.position = '';
     document.body.style.height = '';
     document.body.style.width = '';
     document.body.style.top = '';
     document.body.style.left = '';
-    document.documentElement.style.overflow = 'auto';
+    document.documentElement.style.overflow = '';
     window.dispatchEvent(new Event('scroll'));
 
     setTimeout(() => setShowSplash(false), 100);
