@@ -107,15 +107,34 @@ const range = (v: number, a: number, b: number) => clamp01((v - a) / (b - a));
  */
 const CLOUD_LAYERS = [
   // Far bank — the horizon the astronaut floats above.
-  { image: SPACE_IMAGES.cloudWhite,  start: 0.00, end: 0.42, rise: 44, scale: 1.15, front: false, className: 'bottom-[4%]   left-[-20%]  w-[86%]  opacity-50' },
-  { image: SPACE_IMAGES.cloudTwo,    start: 0.06, end: 0.50, rise: 58, scale: 1.2,  front: false, className: 'bottom-[-2%]  right-[-22%] w-[94%]  opacity-70' },
+  {
+    image: SPACE_IMAGES.cloudWhite, start: 0.00, end: 0.42, rise: 44, scale: 1.15, front: false,
+    // The art is roughly 2:1 landscape. At 86% width on a phone that is a
+    // ~180px-tall strip that the mask all but erases, which is why mobile
+    // showed a bare gradient. Mobile gets a much wider layer — width drives
+    // height here — sitting higher up the viewport.
+    className: 'bottom-[18%] left-[-55%] w-[210%] opacity-50 md:bottom-[4%] md:left-[-20%] md:w-[86%]',
+  },
+  {
+    image: SPACE_IMAGES.cloudTwo, start: 0.06, end: 0.50, rise: 58, scale: 1.2, front: false,
+    className: 'bottom-[10%] right-[-50%] w-[200%] opacity-70 md:bottom-[-2%] md:right-[-22%] md:w-[94%]',
+  },
 
   // Waterline — reaches the feet and takes it under.
-  { image: SPACE_IMAGES.cloudBanner, start: 0.18, end: 0.62, rise: 74, scale: 1.3,  front: true,  className: 'bottom-[-10%] left-[-16%]  w-[112%] opacity-90' },
+  {
+    image: SPACE_IMAGES.cloudBanner, start: 0.18, end: 0.62, rise: 74, scale: 1.3, front: true,
+    className: 'bottom-[2%] left-[-45%] w-[230%] opacity-90 md:bottom-[-10%] md:left-[-16%] md:w-[112%]',
+  },
 
   // Closing over — across the body, then the helmet.
-  { image: SPACE_IMAGES.cloudTwo,    start: 0.32, end: 0.76, rise: 92, scale: 1.4,  front: true,  className: 'bottom-[-20%] right-[-18%] w-[130%]' },
-  { image: SPACE_IMAGES.cloudBanner, start: 0.44, end: 0.88, rise: 108, scale: 1.5, front: true,  className: 'bottom-[-28%] left-[-14%]  w-[145%]' },
+  {
+    image: SPACE_IMAGES.cloudTwo, start: 0.32, end: 0.76, rise: 92, scale: 1.4, front: true,
+    className: 'bottom-[-8%] right-[-55%] w-[250%] md:bottom-[-20%] md:right-[-18%] md:w-[130%]',
+  },
+  {
+    image: SPACE_IMAGES.cloudBanner, start: 0.44, end: 0.88, rise: 108, scale: 1.5, front: true,
+    className: 'bottom-[-18%] left-[-50%] w-[270%] md:bottom-[-28%] md:left-[-14%] md:w-[145%]',
+  },
 ] as const;
 
 export default function CosmicHero({
@@ -400,16 +419,10 @@ const CloudLayer = React.forwardRef<
     <div
       ref={ref}
       aria-hidden="true"
-      className={cn('pointer-events-none absolute origin-bottom will-change-transform', className)}
-      style={{
-        // Feather every edge, not just the bottom: as layers scale up their
-        // left and right sides reach the viewport too, and a straight vertical
-        // edge is just as obvious as a horizontal one.
-        maskImage:
-          'radial-gradient(120% 100% at 50% 100%, rgba(0,0,0,1) 45%, rgba(0,0,0,0.6) 72%, rgba(0,0,0,0) 100%)',
-        WebkitMaskImage:
-          'radial-gradient(120% 100% at 50% 100%, rgba(0,0,0,1) 45%, rgba(0,0,0,0.6) 72%, rgba(0,0,0,0) 100%)',
-      }}
+      className={cn(
+        'cosmic-cloud-mask pointer-events-none absolute origin-bottom will-change-transform',
+        className
+      )}
     >
       <Image
         src={image.src}

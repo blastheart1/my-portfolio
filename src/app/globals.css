@@ -301,6 +301,26 @@ button:focus-visible, a:focus-visible {
   background-repeat: no-repeat;
 }
 
+/* Cloud layer feathering.
+   A class rather than an inline style so the fade can differ by breakpoint:
+   phone layers are far wider relative to the viewport, so the same radial
+   percentages would eat most of the visible area. */
+.cosmic-cloud-mask {
+  -webkit-mask-image: radial-gradient(150% 110% at 50% 100%,
+    rgba(0,0,0,1) 55%, rgba(0,0,0,0.65) 80%, rgba(0,0,0,0) 100%);
+  mask-image: radial-gradient(150% 110% at 50% 100%,
+    rgba(0,0,0,1) 55%, rgba(0,0,0,0.65) 80%, rgba(0,0,0,0) 100%);
+}
+
+@media (min-width: 768px) {
+  .cosmic-cloud-mask {
+    -webkit-mask-image: radial-gradient(120% 100% at 50% 100%,
+      rgba(0,0,0,1) 45%, rgba(0,0,0,0.6) 72%, rgba(0,0,0,0) 100%);
+    mask-image: radial-gradient(120% 100% at 50% 100%,
+      rgba(0,0,0,1) 45%, rgba(0,0,0,0.6) 72%, rgba(0,0,0,0) 100%);
+  }
+}
+
 /* Astronaut idle drift.
    Deliberately on its own element, nested inside the one the scroll handler
    writes to: both animate `transform`, so sharing an element would mean each
