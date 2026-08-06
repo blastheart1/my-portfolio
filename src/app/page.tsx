@@ -73,6 +73,17 @@ export default async function Home() {
             />
           </section>
 
+          {/* Ramp out of the hero.
+              CosmicHero resolves to a flat --background, but the page behind
+              it is ParallaxBackground's fixed white -> gray-200 gradient. Where
+              the hero ended, flat white met mid-grey as a hard horizontal line.
+              This fades the hero's colour out so the page gradient arrives
+              gradually, and doubles as breathing room before About. */}
+          <div
+            aria-hidden="true"
+            className="h-[35vh] bg-gradient-to-b from-[var(--background)] to-transparent"
+          />
+
           {show('about') && (
             <ScrollFadeEffect fadeStartPoint={0.7} fadeIntensity={1.2}>
               <AboutSection initialContent={aboutContent} />

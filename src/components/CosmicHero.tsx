@@ -38,11 +38,12 @@ import { cn } from '@/lib/utils';
 /**
  * Total scroll distance for the sequence, in vh.
  *
- * 420vh minus the 100vh sticky viewport leaves ~320vh of travel — roughly
- * three to four screen-heights of scrolling, which is what the reference takes
- * to go from night sky to full white.
+ * 260vh minus the 100vh sticky viewport leaves ~160vh of travel — one to two
+ * screen-heights. Longer than this and the cloud bank has to keep growing to
+ * fill the extra distance, which is what made it feel heavy and over-clouded
+ * near the end.
  */
-const SCENE_VH = 420;
+const SCENE_VH = 260;
 
 /**
  * Progress at which the scene is fully white.
@@ -53,7 +54,7 @@ const SCENE_VH = 420;
  * remaining scroll is held at full white so the release of the sticky element
  * happens invisibly.
  */
-const RESOLVE_COMPLETE = 0.86;
+const RESOLVE_COMPLETE = 0.90;
 
 /**
  * End state.
@@ -96,19 +97,16 @@ const range = (v: number, a: number, b: number) => clamp01((v - a) / (b - a));
  * Windows overlap heavily so the bank thickens continuously.
  */
 const CLOUD_LAYERS = [
-  // Far bank — the horizon the astronaut is still well above.
-  { image: SPACE_IMAGES.cloudWhite,  start: 0.00, end: 0.34, rise: 40,  scale: 1.2,  front: false, className: 'bottom-[8%]   left-[-24%]  w-[80%]  opacity-40 blur-[5px]' },
-  { image: SPACE_IMAGES.cloudTwo,    start: 0.04, end: 0.40, rise: 52,  scale: 1.25, front: false, className: 'bottom-[2%]   right-[-26%] w-[88%]  opacity-55 blur-[4px]' },
-  { image: SPACE_IMAGES.cloudBanner, start: 0.10, end: 0.48, rise: 64,  scale: 1.3,  front: false, className: 'bottom-[-4%]  left-[-16%]  w-[106%] opacity-70 blur-[3px]' },
+  // Far bank — the horizon the astronaut floats above.
+  { image: SPACE_IMAGES.cloudWhite,  start: 0.00, end: 0.42, rise: 44, scale: 1.15, front: false, className: 'bottom-[4%]   left-[-20%]  w-[86%]  opacity-50' },
+  { image: SPACE_IMAGES.cloudTwo,    start: 0.06, end: 0.50, rise: 58, scale: 1.2,  front: false, className: 'bottom-[-2%]  right-[-22%] w-[94%]  opacity-70' },
 
-  // Waterline — reaches the astronaut's feet and starts taking it under.
-  { image: SPACE_IMAGES.cloudWhite,  start: 0.22, end: 0.56, rise: 78,  scale: 1.4,  front: true,  className: 'bottom-[-10%] right-[-20%] w-[104%] opacity-85 blur-[2px]' },
-  { image: SPACE_IMAGES.cloudTwo,    start: 0.30, end: 0.64, rise: 92,  scale: 1.5,  front: true,  className: 'bottom-[-16%] left-[-22%]  w-[122%] opacity-90 blur-[1px]' },
+  // Waterline — reaches the feet and takes it under.
+  { image: SPACE_IMAGES.cloudBanner, start: 0.18, end: 0.62, rise: 74, scale: 1.3,  front: true,  className: 'bottom-[-10%] left-[-16%]  w-[112%] opacity-90' },
 
-  // Closing over — these pass across the body and then the helmet.
-  { image: SPACE_IMAGES.cloudBanner, start: 0.40, end: 0.72, rise: 106, scale: 1.6,  front: true,  className: 'bottom-[-22%] right-[-16%] w-[140%] opacity-95' },
-  { image: SPACE_IMAGES.cloudWhite,  start: 0.50, end: 0.80, rise: 122, scale: 1.75, front: true,  className: 'bottom-[-28%] left-[-18%]  w-[150%]' },
-  { image: SPACE_IMAGES.cloudTwo,    start: 0.58, end: 0.86, rise: 138, scale: 1.9,  front: true,  className: 'bottom-[-34%] right-[-20%] w-[165%]' },
+  // Closing over — across the body, then the helmet.
+  { image: SPACE_IMAGES.cloudTwo,    start: 0.32, end: 0.76, rise: 92, scale: 1.4,  front: true,  className: 'bottom-[-20%] right-[-18%] w-[130%]' },
+  { image: SPACE_IMAGES.cloudBanner, start: 0.44, end: 0.88, rise: 108, scale: 1.5, front: true,  className: 'bottom-[-28%] left-[-14%]  w-[145%]' },
 ] as const;
 
 export default function CosmicHero({
@@ -211,11 +209,11 @@ export default function CosmicHero({
       // shrinking away. The fade is late and fast: the closing layers should
       // be what hides it, with opacity only finishing the job.
       if (astronautRef.current) {
-        const sink = range(p, 0.02, 0.80);
+        const sink = range(p, 0.02, 0.72);
         const drop = sink * 240;                     // into the bank
         const scale = 1 - sink * 0.34;               // slight recession
         const sway = Math.sin(p * Math.PI * 1.5) * 30;
-        const fade = 1 - range(p, 0.58, 0.80);
+        const fade = 1 - range(p, 0.52, 0.74);
 
         astronautRef.current.style.transform =
           `translate3d(${sway}px, ${drop}px, 0) scale(${scale})`;
@@ -235,7 +233,7 @@ export default function CosmicHero({
       // Holding past RESOLVE_COMPLETE is what lets the sticky element release
       // behind an already-opaque cover.
       if (resolveRef.current) {
-        resolveRef.current.style.opacity = String(range(p, 0.62, RESOLVE_COMPLETE));
+        resolveRef.current.style.opacity = String(range(p, 0.66, RESOLVE_COMPLETE));
       }
     });
   }, [subscribe, reducedMotion]);
