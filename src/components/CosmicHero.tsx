@@ -305,7 +305,8 @@ export default function CosmicHero({
           <h1
             className="font-display font-light uppercase leading-[0.86] tracking-[-0.02em]
                        text-[clamp(2.5rem,10.5vw,9.5rem)] text-white
-                       [text-wrap:balance] drop-shadow-[0_2px_40px_rgba(0,0,0,0.4)]"
+                       [text-wrap:balance]
+                       [text-shadow:0_2px_40px_rgba(0,0,0,0.45)]"
           >
             {name}
           </h1>
@@ -351,15 +352,30 @@ export default function CosmicHero({
           )
         )}
 
-        {/* Astronaut. Outer element carries the scroll transform; the inner one
-            carries the idle bob, because both animate `transform` and would
-            otherwise overwrite each other every frame. */}
+        {/* Astronaut.
+            Outer element carries the scroll transform; the inner one carries
+            the idle bob, because both animate `transform` and would otherwise
+            overwrite each other every frame.
+
+            NO drop-shadow on the image. A filter with a 70px blur radius
+            creates a filter region far larger than the image box, and inside
+            nested promoted layers iOS Safari rasterises that region with the
+            wrong bounds — it painted as a translucent rectangle around the
+            figure that only corrected itself once a scroll invalidated the
+            layer. The glow below is a plain gradient: same look, no filter,
+            nothing for the compositor to get wrong. */}
         <div
           ref={astronautRef}
           className="pointer-events-none absolute left-1/2 top-[30vh] z-20 w-[clamp(10rem,23vw,21rem)]
                      -translate-x-1/2 will-change-transform"
         >
-          <div className={reducedMotion ? undefined : 'cosmic-float'}>
+          <div className={cn('relative', reducedMotion ? undefined : 'cosmic-float')}>
+            {/* Soft shadow, painted rather than filtered. */}
+            <div
+              aria-hidden="true"
+              className="absolute inset-x-[8%] bottom-[2%] -z-10 h-[38%] rounded-[50%]
+                         bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.42)_0%,rgba(0,0,0,0.18)_45%,rgba(0,0,0,0)_72%)]"
+            />
             <Image
               src={SPACE_IMAGES.astronaut.src}
               width={SPACE_IMAGES.astronaut.width}
@@ -367,7 +383,7 @@ export default function CosmicHero({
               alt={SPACE_IMAGES.astronaut.alt}
               priority
               sizes="(max-width: 768px) 50vw, 23vw"
-              className="h-auto w-full drop-shadow-[0_30px_70px_rgba(0,0,0,0.45)]"
+              className="relative h-auto w-full"
             />
           </div>
         </div>

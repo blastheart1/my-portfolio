@@ -332,7 +332,10 @@ button:focus-visible, a:focus-visible {
 
 .cosmic-float {
   animation: cosmic-float 7s ease-in-out infinite;
-  will-change: transform;
+  /* Deliberately no will-change. The parent is already promoted for the
+     scroll transform; promoting this one too gave iOS Safari nested
+     compositing layers, which is where the astronaut's rectangular
+     rasterisation artifact came from. One promoted layer is enough. */
 }
 
 @media (prefers-reduced-motion: reduce) {
