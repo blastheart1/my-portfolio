@@ -8,8 +8,8 @@ import ClientLayoutContent from '@/components/ClientLayoutContent';
 import { SITE_URL } from '@/lib/site';
 
 // Using Inter as a close alternative to SF Pro Display
-const inter = Inter({ 
-  variable: "--font-sf-pro", 
+const inter = Inter({
+  variable: "--font-sf-pro",
   subsets: ["latin"],
   display: 'swap',
   preload: true
@@ -99,8 +99,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* No Google Fonts preconnect: next/font self-hosts Inter at build
-            time, so those origins are never contacted. */}
+        {/* Inter is self-hosted by next/font, so no preconnect is needed for
+            it. Jost and Space Mono load as a plain stylesheet instead: they are
+            decorative display faces, and next/font fetches font binaries at
+            build time from fonts.gstatic.com — a hard build/render failure
+            whenever that host is unreachable. A stylesheet link degrades to the
+            fallback stack in globals.css instead of taking the page down. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&family=Space+Mono:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
         <link rel="dns-prefetch" href="https://calendly.com" />
       </head>
       <body

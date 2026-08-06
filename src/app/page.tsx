@@ -1,6 +1,6 @@
 import lazyLoad from "next/dynamic";
 import ParallaxBackground from "@/components/ParallaxBackground";
-import HeroSection from "@/components/HeroSection";
+import CosmicHero from "@/components/CosmicHero";
 import AboutSection from "@/components/AboutSection";
 import ExperienceSection from "@/components/ExperienceSection";
 import TechStacks from "@/components/TechStacks";
@@ -64,8 +64,13 @@ export default async function Home() {
         <ParallaxBackground />
 
         <div className="relative z-10 flex-1">
+          {/* Scroll-driven space hero. It resolves to white, so the sections
+              below it read as the sky clearing rather than a hard cut. */}
           <section id="home">
-            <HeroSection content={heroContent} />
+            <CosmicHero
+              name={heroContent.name || undefined}
+              tagline={heroContent.description || undefined}
+            />
           </section>
 
           {show('about') && (

@@ -20,6 +20,13 @@ const nextConfig: NextConfig = {
         hostname: '*.public.blob.vercel-storage.com',
         pathname: '/**',
       },
+      {
+        // Space scene artwork (astronaut, clouds). Scoped to this account's
+        // delivery path rather than all of Cloudinary.
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/doatpmjdp/**',
+      },
     ],
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
