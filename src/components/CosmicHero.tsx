@@ -96,12 +96,19 @@ const range = (v: number, a: number, b: number) => clamp01((v - a) / (b - a));
  * Windows overlap heavily so the bank thickens continuously.
  */
 const CLOUD_LAYERS = [
-  { image: SPACE_IMAGES.cloudWhite,  start: 0.00, end: 0.50, rise: 46,  scale: 1.15, front: false, className: 'bottom-[6%]   left-[-22%]  w-[78%]  opacity-45 blur-[4px]' },
-  { image: SPACE_IMAGES.cloudTwo,    start: 0.03, end: 0.55, rise: 58,  scale: 1.2,  front: false, className: 'bottom-[0%]   right-[-24%] w-[86%]  opacity-60 blur-[3px]' },
-  { image: SPACE_IMAGES.cloudBanner, start: 0.08, end: 0.60, rise: 70,  scale: 1.25, front: false, className: 'bottom-[-6%]  left-[-14%]  w-[104%] opacity-75 blur-[2px]' },
-  { image: SPACE_IMAGES.cloudWhite,  start: 0.16, end: 0.66, rise: 84,  scale: 1.35, front: true,  className: 'bottom-[-12%] right-[-18%] w-[100%] opacity-90 blur-[1px]' },
-  { image: SPACE_IMAGES.cloudTwo,    start: 0.24, end: 0.72, rise: 100, scale: 1.5,  front: true,  className: 'bottom-[-20%] left-[-20%]  w-[126%] opacity-95' },
-  { image: SPACE_IMAGES.cloudBanner, start: 0.32, end: 0.80, rise: 118, scale: 1.7,  front: true,  className: 'bottom-[-28%] right-[-14%] w-[150%]' },
+  // Far bank — the horizon the astronaut is still well above.
+  { image: SPACE_IMAGES.cloudWhite,  start: 0.00, end: 0.34, rise: 40,  scale: 1.2,  front: false, className: 'bottom-[8%]   left-[-24%]  w-[80%]  opacity-40 blur-[5px]' },
+  { image: SPACE_IMAGES.cloudTwo,    start: 0.04, end: 0.40, rise: 52,  scale: 1.25, front: false, className: 'bottom-[2%]   right-[-26%] w-[88%]  opacity-55 blur-[4px]' },
+  { image: SPACE_IMAGES.cloudBanner, start: 0.10, end: 0.48, rise: 64,  scale: 1.3,  front: false, className: 'bottom-[-4%]  left-[-16%]  w-[106%] opacity-70 blur-[3px]' },
+
+  // Waterline — reaches the astronaut's feet and starts taking it under.
+  { image: SPACE_IMAGES.cloudWhite,  start: 0.22, end: 0.56, rise: 78,  scale: 1.4,  front: true,  className: 'bottom-[-10%] right-[-20%] w-[104%] opacity-85 blur-[2px]' },
+  { image: SPACE_IMAGES.cloudTwo,    start: 0.30, end: 0.64, rise: 92,  scale: 1.5,  front: true,  className: 'bottom-[-16%] left-[-22%]  w-[122%] opacity-90 blur-[1px]' },
+
+  // Closing over — these pass across the body and then the helmet.
+  { image: SPACE_IMAGES.cloudBanner, start: 0.40, end: 0.72, rise: 106, scale: 1.6,  front: true,  className: 'bottom-[-22%] right-[-16%] w-[140%] opacity-95' },
+  { image: SPACE_IMAGES.cloudWhite,  start: 0.50, end: 0.80, rise: 122, scale: 1.75, front: true,  className: 'bottom-[-28%] left-[-18%]  w-[150%]' },
+  { image: SPACE_IMAGES.cloudTwo,    start: 0.58, end: 0.86, rise: 138, scale: 1.9,  front: true,  className: 'bottom-[-34%] right-[-20%] w-[165%]' },
 ] as const;
 
 export default function CosmicHero({
@@ -198,19 +205,20 @@ export default function CosmicHero({
         titleRef.current.style.opacity = String(1 - out);
       }
 
-      // ── Astronaut: recedes into the cloud ───────────────────────────────
+      // ── Astronaut: sinks and is swallowed ───────────────────────────────
+      // It descends into the bank while receding slightly, so it reads as
+      // going under rather than either falling past the viewer or simply
+      // shrinking away. The fade is late and fast: the closing layers should
+      // be what hides it, with opacity only finishing the job.
       if (astronautRef.current) {
-        // Shrinks toward the horizon rather than dropping past the viewer.
-        const recede = range(p, 0.04, 0.66);
-        const scale = 1 - recede * 0.58;
-        const drift = recede * 90;              // gentle settle, not a fall
-        const sway = Math.sin(p * Math.PI * 1.3) * 34;
-        // Fades out across the same window the nearest layers arrive in, so
-        // it dissolves into cloud rather than vanishing in clear air.
-        const fade = 1 - range(p, 0.38, 0.66);
+        const sink = range(p, 0.02, 0.80);
+        const drop = sink * 240;                     // into the bank
+        const scale = 1 - sink * 0.34;               // slight recession
+        const sway = Math.sin(p * Math.PI * 1.5) * 30;
+        const fade = 1 - range(p, 0.58, 0.80);
 
         astronautRef.current.style.transform =
-          `translate3d(${sway}px, ${drift}px, 0) scale(${scale})`;
+          `translate3d(${sway}px, ${drop}px, 0) scale(${scale})`;
         astronautRef.current.style.opacity = String(fade);
       }
 
