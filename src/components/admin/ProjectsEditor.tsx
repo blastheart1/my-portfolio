@@ -1,6 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import * as React from 'react';
+import { FolderKanban, Pencil, Plus, Trash2, X } from 'lucide-react';
+
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { AlertDialog } from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/toast';
+import { FIELD_LIMITS } from '@/lib/schemas';
+import { useReorder } from '@/hooks/useReorder';
+import { useDirtyGuard } from '@/hooks/useDirtyGuard';
+import { cn } from '@/lib/utils';
+
+import EmptyState from './EmptyState';
+import FieldMeta from './FieldMeta';
+import { RecordList, RecordRow } from './RecordList';
 
 interface Project {
   id: string;
@@ -17,7 +31,9 @@ interface Props {
   initialProjects: Project[];
 }
 
-const EMPTY: Omit<Project, 'id' | 'sort_order'> = {
+type Draft = Omit<Project, 'id' | 'sort_order'>;
+
+const EMPTY: Draft = {
   title: '',
   description: '',
   tech: [],
@@ -26,287 +42,563 @@ const EMPTY: Omit<Project, 'id' | 'sort_order'> = {
   visible: true,
 };
 
-export default function ProjectsEditor({ initialProjects }: Props) {
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
-  const [editing, setEditing] = useState<string | 'new' | null>(null);
-  const [form, setForm] = useState<Omit<Project, 'id' | 'sort_order'>>(EMPTY);
-  const [techInput, setTechInput] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const LIMITS = FIELD_LIMITS.project;
 
+/** Server field errors keyed by field name, from zod's flatten(). */
+type FieldErrors = Partial<Record<keyof Draft, string>>;
+
+export default function ProjectsEditor({ initialProjects }: Props) {
+  const toast = useToast();
+  const [projects, setProjects] = React.useState<Project[]>(initialProjects);
+  const [editing, setEditing] = React.useState<string | 'new' | null>(null);
+  const [draft, setDraft] = React.useState<Draft>(EMPTY);
+  const [baseline, setBaseline] = React.useState<Draft>(EMPTY);
+  const [techInput, setTechInput] = React.useState('');
+  const [saving, setSaving] = React.useState(false);
+  const [fieldErrors, setFieldErrors] = React.useState<FieldErrors>({});
+  const [pendingDelete, setPendingDelete] = React.useState<Project | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
+
+  const isDirty =
+    editing !== null && JSON.stringify(draft) !== JSON.stringify(baseline);
+  const dirtyGuard = useDirtyGuard(isDirty);
+
+  // ── Reordering ────────────────────────────────────────────────────────────
+  const persistOrder = React.useCallback(
+    async (changes: { id: string; sort_order: number }[], next: Project[]) => {
+      const previous = projects;
+      setProjects(next); // optimistic
+
+      try {
+        // Only the rows whose position actually changed.
+        await Promise.all(
+          changes.map(c =>
+            fetch(`/api/admin/projects/${c.id}`, {
+              method: 'PATCH',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ sort_order: c.sort_order }),
+            }).then(r => {
+              if (!r.ok) throw new Error(`Failed to save order (${r.status})`);
+            })
+          )
+        );
+      } catch (err) {
+        setProjects(previous); // rollback
+        toast.error('Could not save the new order', {
+          description: err instanceof Error ? err.message : undefined,
+          retry: () => void persistOrder(changes, next),
+        });
+      }
+    },
+    [projects, toast]
+  );
+
+  const reorder = useReorder<Project>({
+    items: projects,
+    onPersist: persistOrder,
+    describe: p => `“${p.title}”`,
+  });
+
+  // ── Form ──────────────────────────────────────────────────────────────────
   const openEdit = (p: Project) => {
-    setForm({
+    const next: Draft = {
       title: p.title,
       description: p.description ?? '',
       tech: p.tech ?? [],
       link: p.link ?? '',
       image_url: p.image_url ?? '',
       visible: p.visible,
+    };
+    dirtyGuard.guard(() => {
+      setDraft(next);
+      setBaseline(next);
+      setTechInput('');
+      setEditing(p.id);
+      setFieldErrors({});
     });
-    setTechInput((p.tech ?? []).join(', '));
-    setEditing(p.id);
-    setError(null);
   };
 
   const openNew = () => {
-    setForm(EMPTY);
-    setTechInput('');
-    setEditing('new');
-    setError(null);
+    dirtyGuard.guard(() => {
+      setDraft(EMPTY);
+      setBaseline(EMPTY);
+      setTechInput('');
+      setEditing('new');
+      setFieldErrors({});
+    });
+  };
+
+  const closeForm = () => {
+    dirtyGuard.guard(() => {
+      setEditing(null);
+      setFieldErrors({});
+    });
+  };
+
+  const update = <K extends keyof Draft>(key: K, value: Draft[K]) => {
+    setDraft(d => ({ ...d, [key]: value }));
+    setFieldErrors(e => ({ ...e, [key]: undefined }));
+  };
+
+  /** Chip input: Enter or comma commits, Backspace on empty removes the last. */
+  const onTechKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const value = techInput.trim().replace(/,$/, '');
+      if (value && !draft.tech.includes(value)) {
+        update('tech', [...draft.tech, value]);
+      }
+      setTechInput('');
+    } else if (e.key === 'Backspace' && techInput === '' && draft.tech.length > 0) {
+      update('tech', draft.tech.slice(0, -1));
+    }
   };
 
   const handleSave = async () => {
     setSaving(true);
-    setError(null);
+    setFieldErrors({});
 
-    const techArray = techInput
-      .split(',')
-      .map(t => t.trim())
-      .filter(Boolean);
+    const isNew = editing === 'new';
+    const url = isNew ? '/api/admin/projects' : `/api/admin/projects/${editing}`;
+    const body: Record<string, unknown> = { ...draft };
 
-    const payload = {
-      ...form,
-      tech: techArray,
-      description: form.description || undefined,
-      link: form.link || null,
-      image_url: form.image_url || null,
-    };
+    // New records land at the end, matching the sort the list is displayed in.
+    if (isNew) body.sort_order = projects.length;
 
     try {
-      if (editing === 'new') {
-        const res = await fetch('/api/admin/projects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error('Failed to create project');
-        const created: Project = await res.json();
-        setProjects(prev => [...prev, created]);
-      } else {
-        const res = await fetch(`/api/admin/projects/${editing}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error('Failed to update project');
-        const updated: Project = await res.json();
-        setProjects(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+      const res = await fetch(url, {
+        method: isNew ? 'POST' : 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (res.status === 401) {
+        window.location.href = '/edit/login?expired=1';
+        return;
       }
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        // Map zod's flattened field errors back onto the form rather than
+        // discarding them for a generic "Save failed".
+        const flattened = data?.details?.fieldErrors as
+          | Record<string, string[]>
+          | undefined;
+
+        if (flattened) {
+          const mapped: FieldErrors = {};
+          for (const [key, messages] of Object.entries(flattened)) {
+            if (messages?.length) mapped[key as keyof Draft] = messages[0];
+          }
+          setFieldErrors(mapped);
+        }
+
+        toast.error('Could not save', {
+          description: data?.error ?? `Request failed (${res.status})`,
+        });
+        return;
+      }
+
+      setProjects(prev =>
+        isNew ? [...prev, data] : prev.map(p => (p.id === editing ? { ...p, ...data } : p))
+      );
       setEditing(null);
+      setBaseline(draft);
+
+      // Naming the record and confirming revalidation is the reassurance the
+      // owner actually wants — the public site is already updated.
+      toast.success(`“${draft.title}” saved — public site revalidated.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed');
+      toast.error('Could not save', {
+        description: err instanceof Error ? err.message : undefined,
+        retry: handleSave,
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this project?')) return;
+  const handleDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    const target = pendingDelete;
+
     try {
-      const res = await fetch(`/api/admin/projects/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Delete failed');
-      setProjects(prev => prev.filter(p => p.id !== id));
-      if (editing === id) setEditing(null);
-    } catch {
-      setError('Delete failed');
+      const res = await fetch(`/api/admin/projects/${target.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+
+      setProjects(prev => prev.filter(p => p.id !== target.id));
+      setPendingDelete(null);
+      toast.success(`“${target.title}” deleted — public site revalidated.`);
+    } catch (err) {
+      toast.error('Could not delete', {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
-  const handleToggleVisible = async (p: Project) => {
+  const toggleVisible = async (project: Project) => {
+    const next = !project.visible;
+    const previous = projects;
+
+    // Optimistic: a toggle should feel instant and needs no toast on success.
+    setProjects(prev => prev.map(p => (p.id === project.id ? { ...p, visible: next } : p)));
+
     try {
-      const res = await fetch(`/api/admin/projects/${p.id}`, {
+      const res = await fetch(`/api/admin/projects/${project.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visible: !p.visible }),
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ visible: next }),
       });
-      if (!res.ok) throw new Error('Failed to update');
-      const updated: Project = await res.json();
-      setProjects(prev => prev.map(x => (x.id === updated.id ? updated : x)));
-    } catch {
-      setError('Toggle failed');
+      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+    } catch (err) {
+      setProjects(previous);
+      toast.error(`Could not ${next ? 'show' : 'hide'} “${project.title}”`, {
+        description: err instanceof Error ? err.message : undefined,
+        retry: () => void toggleVisible(project),
+      });
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Projects</h2>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          {projects.length} {projects.length === 1 ? 'project' : 'projects'}
+        </p>
         <button
+          type="button"
           onClick={openNew}
-          className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5
+                     text-sm font-medium text-primary-foreground transition-opacity
+                     hover:opacity-90 focus-visible:outline-none focus-visible:ring-2
+                     focus-visible:ring-ring"
         >
-          + Add project
+          <Plus className="size-4" aria-hidden="true" />
+          New project
         </button>
       </div>
 
-      {/* Form panel */}
-      {editing !== null && (
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 space-y-4">
-          <h3 className="font-medium text-gray-900 dark:text-gray-100">
-            {editing === 'new' ? 'New project' : 'Edit project'}
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Title">
-              <input
-                type="text"
-                value={form.title}
-                onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
-                className="input-field"
-              />
-            </Field>
-            <Field label="Link (URL)">
-              <input
-                type="text"
-                value={form.link ?? ''}
-                onChange={e => setForm(p => ({ ...p, link: e.target.value }))}
-                placeholder="https://..."
-                className="input-field"
-              />
-            </Field>
-            <Field label="Image URL (optional)">
-              <input
-                type="text"
-                value={form.image_url ?? ''}
-                onChange={e => setForm(p => ({ ...p, image_url: e.target.value }))}
-                placeholder="https://..."
-                className="input-field"
-              />
-            </Field>
-            <Field label="Visible">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.visible}
-                  onChange={e => setForm(p => ({ ...p, visible: e.target.checked }))}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Show on site</span>
-              </label>
-            </Field>
-          </div>
-
-          <Field label="Tech stack (comma-separated)">
-            <input
-              type="text"
-              value={techInput}
-              onChange={e => setTechInput(e.target.value)}
-              placeholder="React, TypeScript, Next.js"
-              className="input-field"
-            />
-          </Field>
-
-          <Field label="Description">
-            <textarea
-              rows={3}
-              value={form.description ?? ''}
-              onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y"
-            />
-          </Field>
-
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-
-          <div className="flex gap-3">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            >
-              {saving ? 'Saving…' : 'Save'}
-            </button>
-            <button
-              onClick={() => setEditing(null)}
-              className="rounded-md border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
+      {editing === 'new' && (
+        <ProjectForm
+          draft={draft}
+          errors={fieldErrors}
+          techInput={techInput}
+          saving={saving}
+          isDirty={isDirty}
+          onTechInput={setTechInput}
+          onTechKeyDown={onTechKeyDown}
+          onChange={update}
+          onSave={handleSave}
+          onCancel={closeForm}
+        />
       )}
 
-      {/* Projects list */}
-      <div className="space-y-2">
-        {projects.map(p => (
-          <div
-            key={p.id}
-            className="flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3"
-          >
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{p.title}</p>
-              {p.link && (
-                <a
-                  href={p.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-500 hover:underline truncate block"
-                >
-                  {p.link}
-                </a>
-              )}
-              {p.tech && p.tech.length > 0 && (
-                <p className="text-xs text-gray-400 mt-0.5 truncate">{p.tech.join(', ')}</p>
-              )}
-            </div>
+      {projects.length === 0 && editing !== 'new' ? (
+        <EmptyState
+          icon={FolderKanban}
+          title="No projects yet"
+          description="Projects appear in the Projects section of your public site."
+          action={
             <button
-              onClick={() => handleToggleVisible(p)}
-              className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                p.visible
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                  : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
-              }`}
+              type="button"
+              onClick={openNew}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5
+                         text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
             >
-              {p.visible ? 'visible' : 'hidden'}
+              <Plus className="size-4" aria-hidden="true" />
+              Add your first project
             </button>
-            <button
-              onClick={() => openEdit(p)}
-              className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+          }
+        />
+      ) : (
+        <RecordList announcement={reorder.announcement}>
+          {projects.map((project, index) => (
+            <RecordRow
+              key={project.id}
+              position={index + 1}
+              total={projects.length}
+              label={project.title}
+              dimmed={!project.visible}
+              reorder={{
+                index,
+                onKeyDown: reorder.handleKeyDown,
+                dragHandlers: reorder.dragHandlers,
+                isDragging: reorder.dragIndex === index,
+              }}
             >
-              Edit
-            </button>
-            <button
-              onClick={() => handleDelete(p.id)}
-              className="text-xs text-red-500 hover:text-red-700 font-medium"
-            >
-              Delete
-            </button>
-          </div>
-        ))}
-        {projects.length === 0 && (
-          <p className="text-sm text-gray-500 text-center py-8">No projects yet.</p>
-        )}
-      </div>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-card-foreground">
+                    {project.title}
+                    {!project.visible && (
+                      <span className="ml-2 rounded bg-warn/15 px-1.5 py-0.5 text-[10px] font-medium text-warn">
+                        Hidden
+                      </span>
+                    )}
+                  </p>
+                  {project.description && (
+                    <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                      {project.description}
+                    </p>
+                  )}
+                </div>
 
-      <style>{`
-        .input-field {
-          width: 100%;
-          border-radius: 0.375rem;
-          border: 1px solid rgb(209 213 219);
-          background: white;
-          padding: 0.5rem 0.75rem;
-          font-size: 0.875rem;
-          outline: none;
+                <div className="flex shrink-0 items-center gap-1">
+                  <Switch
+                    checked={project.visible}
+                    onCheckedChange={() => void toggleVisible(project)}
+                    label={`${project.visible ? 'Hide' : 'Show'} ${project.title}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => openEdit(project)}
+                    aria-label={`Edit ${project.title}`}
+                    className="rounded-md p-1.5 text-muted-foreground transition-colors
+                               hover:bg-secondary hover:text-foreground focus-visible:outline-none
+                               focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <Pencil className="size-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingDelete(project)}
+                    aria-label={`Delete ${project.title}`}
+                    className="rounded-md p-1.5 text-muted-foreground transition-colors
+                               hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none
+                               focus-visible:ring-2 focus-visible:ring-destructive"
+                  >
+                    <Trash2 className="size-4" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Inline expansion — the form opens in place rather than in a
+                  panel mounted at the top of the page, so the row being edited
+                  stays where the eye already is. */}
+              {editing === project.id && (
+                <div className="animate-admin-fade-up mt-3 border-t border-border pt-3">
+                  <ProjectForm
+                    draft={draft}
+                    errors={fieldErrors}
+                    techInput={techInput}
+                    saving={saving}
+                    isDirty={isDirty}
+                    onTechInput={setTechInput}
+                    onTechKeyDown={onTechKeyDown}
+                    onChange={update}
+                    onSave={handleSave}
+                    onCancel={closeForm}
+                  />
+                </div>
+              )}
+            </RecordRow>
+          ))}
+        </RecordList>
+      )}
+
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={open => !open && setPendingDelete(null)}
+        title={`Delete “${pendingDelete?.title ?? ''}”?`}
+        description="This removes it from your public site immediately. This cannot be undone."
+        onConfirm={handleDelete}
+        pending={deleting}
+        preview={
+          pendingDelete?.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={pendingDelete.image_url}
+              alt=""
+              className="h-24 w-full rounded-md object-cover"
+            />
+          ) : undefined
         }
-        .dark .input-field {
-          border-color: rgb(75 85 99);
-          background: rgb(31 41 55);
-          color: rgb(243 244 246);
-        }
-        .input-field:focus {
-          box-shadow: 0 0 0 2px rgb(59 130 246);
-        }
-      `}</style>
+      />
+
+      <AlertDialog
+        open={dirtyGuard.isConfirming}
+        onOpenChange={open => !open && dirtyGuard.cancelDiscard()}
+        title="Discard unsaved changes?"
+        description="Your edits to this project have not been saved."
+        confirmLabel="Discard"
+        onConfirm={dirtyGuard.confirmDiscard}
+      />
     </div>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+// ─── Form ────────────────────────────────────────────────────────────────────
+
+interface FormProps {
+  draft: Draft;
+  errors: FieldErrors;
+  techInput: string;
+  saving: boolean;
+  isDirty: boolean;
+  onTechInput: (v: string) => void;
+  onTechKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onChange: <K extends keyof Draft>(key: K, value: Draft[K]) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}
+
+function ProjectForm({
+  draft,
+  errors,
+  techInput,
+  saving,
+  isDirty,
+  onTechInput,
+  onTechKeyDown,
+  onChange,
+  onSave,
+  onCancel,
+}: FormProps) {
+  const titleId = React.useId();
+  const descId = React.useId();
+  const linkId = React.useId();
+  const techId = React.useId();
+
+  const inputClass =
+    'w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ' +
+    'placeholder:text-muted-foreground focus-visible:outline-none ' +
+    'focus-visible:ring-2 focus-visible:ring-ring';
+
   return (
-    <div className="space-y-1">
-      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-        {label}
-      </label>
-      {children}
-    </div>
+    <form
+      onSubmit={e => {
+        e.preventDefault();
+        onSave();
+      }}
+      className="space-y-4"
+    >
+      <div className="space-y-1.5">
+        <Label htmlFor={titleId} required>
+          Title
+        </Label>
+        <input
+          id={titleId}
+          value={draft.title}
+          onChange={e => onChange('title', e.target.value)}
+          aria-invalid={Boolean(errors.title)}
+          className={inputClass}
+        />
+        <FieldMeta value={draft.title} limit={LIMITS.title} error={errors.title} />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor={descId}>Description</Label>
+        <textarea
+          id={descId}
+          rows={3}
+          value={draft.description ?? ''}
+          onChange={e => onChange('description', e.target.value)}
+          aria-invalid={Boolean(errors.description)}
+          className={cn(inputClass, 'resize-y')}
+        />
+        <FieldMeta
+          value={draft.description ?? ''}
+          limit={LIMITS.description}
+          error={errors.description}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor={techId}>Tech stack</Label>
+        <div className="flex flex-wrap gap-1.5 rounded-lg border border-input bg-background p-2">
+          {draft.tech.map(t => (
+            <span
+              key={t}
+              className="inline-flex items-center gap-1 rounded bg-secondary px-2 py-0.5 text-xs"
+            >
+              {t}
+              <button
+                type="button"
+                onClick={() => onChange('tech', draft.tech.filter(x => x !== t))}
+                aria-label={`Remove ${t}`}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-3" aria-hidden="true" />
+              </button>
+            </span>
+          ))}
+          <input
+            id={techId}
+            value={techInput}
+            onChange={e => onTechInput(e.target.value)}
+            onKeyDown={onTechKeyDown}
+            placeholder={draft.tech.length === 0 ? 'React, TypeScript…' : ''}
+            className="min-w-[8rem] flex-1 bg-transparent text-sm outline-none
+                       placeholder:text-muted-foreground"
+          />
+        </div>
+        <FieldMeta value="" hint="Press Enter or comma to add. Backspace removes the last." />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor={linkId}>Link</Label>
+        <input
+          id={linkId}
+          value={draft.link ?? ''}
+          onChange={e => onChange('link', e.target.value)}
+          placeholder="https://…"
+          aria-invalid={Boolean(errors.link)}
+          className={inputClass}
+        />
+        <FieldMeta value={draft.link ?? ''} error={errors.link} />
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Switch
+          checked={draft.visible}
+          onCheckedChange={v => onChange('visible', v)}
+          label="Visible on the public site"
+        />
+        <span className="text-sm text-muted-foreground">Visible on the public site</span>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
+        {isDirty ? (
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span aria-hidden="true" className="size-1.5 rounded-full bg-warn" />
+            Unsaved changes
+          </span>
+        ) : (
+          <span />
+        )}
+
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium
+                       transition-colors hover:bg-secondary focus-visible:outline-none
+                       focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={saving || !isDirty}
+            className={cn(
+              'rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground',
+              'transition-opacity hover:opacity-90 focus-visible:outline-none',
+              'focus-visible:ring-2 focus-visible:ring-ring',
+              // 45% when clean, per the brief — visibly inert but still legible.
+              (saving || !isDirty) && 'opacity-45'
+            )}
+          >
+            {/* Fixed width so the button does not resize mid-save. */}
+            <span className="inline-block min-w-[3.5rem]">
+              {saving ? 'Saving…' : 'Save'}
+            </span>
+          </button>
+        </div>
+      </div>
+    </form>
   );
 }
