@@ -55,3 +55,6 @@ public/frames/*.png
 # ide / editor workspace files
 .cursor/
 *.code-workspace
+
+# Local Claude Code settings and scratch plans — machine-specific
+.claude/
