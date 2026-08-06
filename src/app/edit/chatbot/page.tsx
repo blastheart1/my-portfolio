@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { PROVIDER_MODELS, type AIProviderName } from '@/lib/chatbot/aiProviders';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -479,44 +480,29 @@ type Tab = 'config' | 'examples' | 'conversations';
 export default function ChatbotAdminPage() {
   const [tab, setTab] = useState<Tab>('config');
 
-  const tabs: { id: Tab; label: string }[] = [
-    { id: 'config',        label: 'AI Config' },
-    { id: 'examples',      label: 'Learned Examples' },
-    { id: 'conversations', label: 'Conversations' },
-  ];
-
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Chatbot</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Chatbot</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Configure AI providers, review learned examples, and browse conversation logs.
         </p>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex gap-0 border-b border-gray-200 dark:border-gray-700">
-        {tabs.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              tab === t.id
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {/* A real tablist: the previous version rendered three unrelated buttons,
+          so a screen reader gave no indication they were a set and arrow keys
+          did nothing. */}
+      <Tabs value={tab} onValueChange={v => setTab(v as Tab)}>
+        <TabsList label="Chatbot settings">
+          <TabsTrigger value="config">AI Config</TabsTrigger>
+          <TabsTrigger value="examples">Learned Examples</TabsTrigger>
+          <TabsTrigger value="conversations">Conversations</TabsTrigger>
+        </TabsList>
 
-      {/* Tab panels */}
-      <div>
-        {tab === 'config'        && <AIConfigTab />}
-        {tab === 'examples'      && <ExamplesTab />}
-        {tab === 'conversations' && <ConversationsTab />}
-      </div>
+        <TabsContent value="config"><AIConfigTab /></TabsContent>
+        <TabsContent value="examples"><ExamplesTab /></TabsContent>
+        <TabsContent value="conversations"><ConversationsTab /></TabsContent>
+      </Tabs>
     </div>
   );
 }
