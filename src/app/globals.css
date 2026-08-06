@@ -301,6 +301,24 @@ button:focus-visible, a:focus-visible {
   background-repeat: no-repeat;
 }
 
+/* Astronaut idle drift.
+   Deliberately on its own element, nested inside the one the scroll handler
+   writes to: both animate `transform`, so sharing an element would mean each
+   one clobbering the other every frame. */
+@keyframes cosmic-float {
+  0%, 100% { transform: translateY(-14px) rotate(-1.8deg); }
+  50%      { transform: translateY(14px) rotate(1.8deg); }
+}
+
+.cosmic-float {
+  animation: cosmic-float 7s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cosmic-float { animation: none; }
+}
+
 @keyframes cosmic-sparkle-pulse {
   0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
   50%      { transform: scale(0.82) rotate(12deg); opacity: 0.75; }
