@@ -3,6 +3,7 @@
 import * as React from 'react';
 
 import { useScrollY } from '@/contexts/ScrollContext';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 /**
  * A large statistic whose glyphs are filled with a starfield, with a sparkle
@@ -73,20 +74,6 @@ function starfieldCss(stars: Star[]): string {
     .join(', ');
 }
 
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = React.useState(false);
-
-  React.useEffect(() => {
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduced(query.matches);
-
-    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
-    query.addEventListener('change', onChange);
-    return () => query.removeEventListener('change', onChange);
-  }, []);
-
-  return reduced;
-}
 
 export default function CosmicCounter({
   value,

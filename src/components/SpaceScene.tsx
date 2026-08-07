@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useScrollY } from '@/contexts/ScrollContext';
 import { SPACE_IMAGES, SPACE_VIDEOS, type SpaceVideoKey } from '@/lib/space-assets';
 import { cn } from '@/lib/utils';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 /**
  * Scroll-driven space scene: a lightspeed backdrop, parallax cloud layers, and
@@ -32,19 +33,6 @@ interface SpaceSceneProps {
   className?: string;
 }
 
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = React.useState(false);
-
-  React.useEffect(() => {
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduced(query.matches);
-    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
-    query.addEventListener('change', onChange);
-    return () => query.removeEventListener('change', onChange);
-  }, []);
-
-  return reduced;
-}
 
 export default function SpaceScene({ children, video, className }: SpaceSceneProps) {
   const reducedMotion = usePrefersReducedMotion();
