@@ -2,25 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, Home, User, Briefcase, Code, FolderOpen, FlaskConical, DollarSign, BookOpen, Mail } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useScrollY } from "@/contexts/ScrollContext";
+import { useVisibleNavItems } from "@/hooks/useVisibleNavItems";
 
-const navItems = [
-  { id: "home",       label: "Home",       icon: Home },
-  { id: "about",      label: "About",      icon: User },
-  { id: "experience", label: "Experience", icon: Briefcase },
-  { id: "skills",     label: "Skills",     icon: Code },
-  { id: "projects",   label: "Projects",   icon: FolderOpen },
-  { id: "lab",        label: "Lab",        icon: FlaskConical },
-  { id: "services",   label: "Services",   icon: DollarSign },
-  { id: "blog",       label: "Blog",       icon: BookOpen },
-  { id: "contact",    label: "Contact",    icon: Mail },
-];
 
 export default function FloatingNav() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
   const { subscribe } = useScrollY();
+  // Only the sections actually rendered — see useVisibleNavItems.
+  const navItems = useVisibleNavItems();
 
   useEffect(() => {
     const unsubscribe = subscribe((scrollY) => {
@@ -35,7 +27,7 @@ export default function FloatingNav() {
       }
     });
     return unsubscribe;
-  }, [subscribe]);
+  }, [subscribe, navItems]);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
