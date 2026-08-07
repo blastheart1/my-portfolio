@@ -125,9 +125,9 @@ export default function ContactSection({ heading, subheading }: { heading?: stri
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
+        <h2 className="text-4xl md:text-5xl font-light uppercase text-gray-900 dark:text-gray-100 tracking-[-0.02em] leading-[0.95]">
           {heading || 'Launch a conversation.'}<br />
-          <span className="text-gray-500 dark:text-gray-400 font-normal">{subheading || "Let's build something together."}</span>
+          <span className="text-gray-500 dark:text-gray-400 block mt-2 font-display font-light normal-case text-xl md:text-2xl tracking-[0.01em] leading-snug">{subheading || "Let's build something together."}</span>
         </h2>
       </motion.div>
 

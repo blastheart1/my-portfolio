@@ -554,9 +554,9 @@ export default function LabSection() {
           <FlaskConical className="w-6 h-6 text-green-400" />
           <span className="font-mono text-green-500 text-sm">~/lab $ ls -la</span>
         </div>
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
+        <h2 className="text-4xl md:text-5xl font-light uppercase text-gray-900 dark:text-gray-100 tracking-[-0.02em] leading-[0.95]">
           The Lab.<br />
-          <span className="text-gray-400 dark:text-gray-500 font-normal">Built with Claude Code.</span>
+          <span className="text-gray-400 dark:text-gray-500 block mt-2 font-display font-light normal-case text-xl md:text-2xl tracking-[0.01em] leading-snug">Built with Claude Code.</span>
         </h2>
       </motion.div>
 

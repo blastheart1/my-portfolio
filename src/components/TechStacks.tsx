@@ -101,9 +101,9 @@ export default function TechStacks({ heading, subheading }: TechStacksProps = {}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight">
+          <h2 className="text-4xl md:text-5xl font-light uppercase text-gray-900 dark:text-white tracking-[-0.02em] leading-[0.95]">
             {heading || 'Tech stack.'}<br />
-            <span className="text-gray-500 dark:text-gray-400 font-normal">{subheading || 'Tools I ship with daily.'}</span>
+            <span className="text-gray-500 dark:text-gray-400 block mt-2 font-display font-light normal-case text-xl md:text-2xl tracking-[0.01em] leading-snug">{subheading || 'Tools I ship with daily.'}</span>
           </h2>
         </motion.div>
 

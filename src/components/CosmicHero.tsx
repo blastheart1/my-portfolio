@@ -43,7 +43,7 @@ import { cn } from '@/lib/utils';
  * fill the extra distance, which is what made it feel heavy and over-clouded
  * near the end.
  */
-const SCENE_VH = 260;
+const SCENE_VH = 242;
 
 /**
  * Progress at which the scene is fully white.
@@ -113,27 +113,27 @@ const CLOUD_LAYERS = [
     // ~180px-tall strip that the mask all but erases, which is why mobile
     // showed a bare gradient. Mobile gets a much wider layer — width drives
     // height here — sitting higher up the viewport.
-    className: 'bottom-[18%] left-[-55%] w-[210%] opacity-50 md:bottom-[4%] md:left-[-20%] md:w-[86%]',
+    className: 'bottom-[18%] left-[-55%] w-[210%] opacity-50 md:bottom-[-6%] md:left-[-20%] md:w-[86%]',
   },
   {
     image: SPACE_IMAGES.cloudTwo, start: 0.06, end: 0.50, rise: 58, scale: 1.2, front: false,
-    className: 'bottom-[10%] right-[-50%] w-[200%] opacity-70 md:bottom-[-2%] md:right-[-22%] md:w-[94%]',
+    className: 'bottom-[10%] right-[-50%] w-[200%] opacity-70 md:bottom-[-12%] md:right-[-22%] md:w-[94%]',
   },
 
   // Waterline — reaches the feet and takes it under.
   {
     image: SPACE_IMAGES.cloudBanner, start: 0.18, end: 0.62, rise: 74, scale: 1.3, front: true,
-    className: 'bottom-[2%] left-[-45%] w-[230%] opacity-90 md:bottom-[-10%] md:left-[-16%] md:w-[112%]',
+    className: 'bottom-[2%] left-[-45%] w-[230%] opacity-90 md:bottom-[-20%] md:left-[-16%] md:w-[112%]',
   },
 
   // Closing over — across the body, then the helmet.
   {
     image: SPACE_IMAGES.cloudTwo, start: 0.32, end: 0.76, rise: 92, scale: 1.4, front: true,
-    className: 'bottom-[-8%] right-[-55%] w-[250%] md:bottom-[-20%] md:right-[-18%] md:w-[130%]',
+    className: 'bottom-[-8%] right-[-55%] w-[250%] md:bottom-[-30%] md:right-[-18%] md:w-[130%]',
   },
   {
     image: SPACE_IMAGES.cloudBanner, start: 0.44, end: 0.88, rise: 108, scale: 1.5, front: true,
-    className: 'bottom-[-18%] left-[-50%] w-[270%] md:bottom-[-28%] md:left-[-14%] md:w-[145%]',
+    className: 'bottom-[-18%] left-[-50%] w-[270%] md:bottom-[-38%] md:left-[-14%] md:w-[145%]',
   },
 ] as const;
 
@@ -366,7 +366,7 @@ export default function CosmicHero({
             nothing for the compositor to get wrong. */}
         <div
           ref={astronautRef}
-          className="pointer-events-none absolute left-1/2 top-[30vh] z-20 w-[clamp(10rem,23vw,21rem)]
+          className="pointer-events-none absolute left-1/2 top-[30vh] z-20 w-[clamp(10rem,26.2vw,23.9rem)]
                      -translate-x-1/2 will-change-transform"
         >
           <div className={cn('relative', reducedMotion ? undefined : 'cosmic-float')}>
@@ -382,7 +382,7 @@ export default function CosmicHero({
               height={SPACE_IMAGES.astronaut.height}
               alt={SPACE_IMAGES.astronaut.alt}
               priority
-              sizes="(max-width: 768px) 50vw, 23vw"
+              sizes="(max-width: 768px) 50vw, 26vw"
               className="relative h-auto w-full"
             />
           </div>

@@ -122,9 +122,9 @@ export default function ServicesSection({ initialTiers, heading, subheading }: {
         transition={{ duration: 0.6 }}
         viewport={{ once: true }}
       >
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
+        <h2 className="text-4xl md:text-5xl font-light uppercase text-gray-900 dark:text-gray-100 tracking-[-0.02em] leading-[0.95]">
           {heading || 'Pick your scope.'}<br />
-          <span className="text-gray-600 dark:text-gray-300 font-normal">{subheading || 'I handle the rest.'}</span>
+          <span className="text-gray-600 dark:text-gray-300 block mt-2 font-display font-light normal-case text-xl md:text-2xl tracking-[0.01em] leading-snug">{subheading || 'I handle the rest.'}</span>
         </h2>
       </motion.div>
 

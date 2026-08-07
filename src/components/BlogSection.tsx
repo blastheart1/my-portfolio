@@ -129,9 +129,9 @@ export default function BlogSection({ className = '', heading, subheading }: Blo
       <section className={`py-16 px-4 ${className}`}>
         <div className="max-w-6xl mx-auto">
           <div className="mb-12 px-4 md:px-6">
-            <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
+            <h2 className="text-4xl md:text-5xl font-light uppercase text-white tracking-[-0.02em] leading-[0.95]">
               {heading || 'Blog & Case Studies.'}<br />
-              <span className="text-neutral-500 font-normal">{subheading || 'Insights on tech and craft.'}</span>
+              <span className="text-neutral-500 block mt-2 font-display font-light normal-case text-xl md:text-2xl tracking-[0.01em] leading-snug">{subheading || 'Insights on tech and craft.'}</span>
             </h2>
           </div>
           <div className="flex items-center justify-center h-64">

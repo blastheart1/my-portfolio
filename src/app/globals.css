@@ -163,11 +163,18 @@ html {
     font-variant-numeric: oldstyle-nums;
   }
   
-  /* Standard typography — matches Services section header style */
+  /* Headings use the display face so the page reads as one system with the
+     hero. Body copy stays on Inter — Jost is geometric and lovely at display
+     sizes but tiring for paragraphs.
+
+     Tracking is looser than the old -0.03em: that was tuned for Inter, and on
+     a geometric face with near-circular bowls it closes the counters up and
+     looks cramped. */
   h1, h2, h3, h4, h5, h6 {
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.08;
   }
 
   p {
@@ -299,6 +306,16 @@ button:focus-visible, a:focus-visible {
      glyphs as the element moves. */
   background-attachment: scroll;
   background-repeat: no-repeat;
+}
+
+/* Letterspaced uppercase caption, matching the hero's tagline. Use on
+   eyebrows and small labels, not on running text. */
+.caption-mono {
+  font-family: var(--font-mono-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  line-height: 1.7;
 }
 
 /* Cloud layer feathering.

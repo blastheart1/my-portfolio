@@ -20,16 +20,16 @@ export default function AboutSection({ initialContent }: { initialContent?: Reco
   const resumeUrl  = initialContent?.resume_url || '/AntonioLuisSantos-Resume.pdf';
 
   return (
-    <section id="about" className="py-0 max-w-4xl mx-auto px-6">
+    <section id="about" className="py-0 max-w-6xl mx-auto px-6">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="mb-8"
       >
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
+        <h2 className="text-4xl md:text-5xl font-light uppercase text-gray-900 dark:text-gray-100 tracking-[-0.02em] leading-[0.95]">
           {heading}<br />
-          <span className="text-gray-400 dark:text-gray-500 font-normal">{subheading}</span>
+          <span className="text-gray-400 dark:text-gray-500 block mt-2 font-display font-light normal-case text-xl md:text-2xl tracking-[0.01em] leading-snug">{subheading}</span>
         </h2>
       </motion.div>
 
