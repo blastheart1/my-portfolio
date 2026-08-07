@@ -67,6 +67,20 @@ export async function POST(request: NextRequest) {
   // Sanitize filename — strip path traversal, keep alphanumeric + safe chars
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 100);
 
+  // put() reads this from the environment and throws an opaque error when it
+  // is absent, which surfaced as a bare 500 with nothing to act on. Check it
+  // here so a missing Blob store says so.
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.error('POST /api/admin/images: BLOB_READ_WRITE_TOKEN is not set');
+    return NextResponse.json(
+      {
+        error:
+          'File storage is not configured on this deployment (BLOB_READ_WRITE_TOKEN is missing). Connect a Blob store to the project and redeploy.',
+      },
+      { status: 500 }
+    );
+  }
+
   try {
     const blob = await put(`portfolio/${safeName}`, file, {
       access: 'public',
@@ -74,6 +88,11 @@ export async function POST(request: NextRequest) {
     });
 
     const sql = getSql();
+    // label is UNIQUE and the callers use it as a stable handle — the resume
+    // uploader always sends 'resume'. Replacing a file must therefore update
+    // the existing row rather than insert a second one, which is what made
+    // every upload after the first fail with a 23505 unique violation.
+    // created_at is bumped so the media list still orders by recency.
     const rows = (await sql`
       INSERT INTO media_assets (label, url, blob_pathname, mime_type, size_bytes)
       VALUES (
@@ -83,12 +102,26 @@ export async function POST(request: NextRequest) {
         ${file.type},
         ${file.size}
       )
+      ON CONFLICT (label) DO UPDATE SET
+        url           = EXCLUDED.url,
+        blob_pathname = EXCLUDED.blob_pathname,
+        mime_type     = EXCLUDED.mime_type,
+        size_bytes    = EXCLUDED.size_bytes,
+        created_at    = now()
       RETURNING *
     `) as unknown as Record<string, unknown>[];
 
     return NextResponse.json(rows[0], { status: 201 });
   } catch (err) {
     console.error('POST /api/admin/images error:', err);
-    return NextResponse.json({ error: 'Failed to upload image' }, { status: 500 });
+    return NextResponse.json(
+      {
+        error:
+          err instanceof Error
+            ? `Upload failed: ${err.message}`
+            : 'Failed to upload image',
+      },
+      { status: 500 }
+    );
   }
 }

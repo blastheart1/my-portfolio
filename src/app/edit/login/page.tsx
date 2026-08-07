@@ -1,13 +1,11 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -22,14 +20,20 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        router.push('/edit');
-      } else {
-        const data = await res.json();
-        setError(data.error ?? 'Login failed');
+        // A client-side router.push() reuses the Router Cache, which already
+        // holds the proxy's unauthenticated redirect back to this page — so
+        // the login form reappeared until a manual reload. A full document
+        // navigation discards that cache and re-runs the proxy with the
+        // session cookie now set. Login happens once, so the cost is fine.
+        window.location.assign('/edit');
+        return; // keep the button disabled while the browser navigates away
       }
+
+      const data = await res.json();
+      setError(data.error ?? 'Login failed');
+      setLoading(false);
     } catch {
       setError('Network error — please try again');
-    } finally {
       setLoading(false);
     }
   };
