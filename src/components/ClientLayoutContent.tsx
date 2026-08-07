@@ -9,6 +9,7 @@ import FloatingNav from './FloatingNav';
 import MobileNav from './MobileNav';
 import CustomCursor from './CustomCursor';
 import PortfolioChatbotWrapper from './PortfolioChatbotWrapper';
+import ChromeReveal from './ChromeReveal';
 
 interface ClientLayoutContentProps {
   children: React.ReactNode;
@@ -39,15 +40,26 @@ export default function ClientLayoutContent({ children }: ClientLayoutContentPro
     return <ScrollProvider>{children}</ScrollProvider>;
   }
 
+  // Only the home page carries the cosmic hero, so only there does the chrome
+  // wait. ChromeReveal still confirms against the DOM on mount, since the hero
+  // section can be switched off from the admin.
+  const expectHero = pathname === '/';
+
   return (
     <ScrollProvider>
       <CustomCursor />
-      <ThemeToggle isModalOpen={isModalOpen} />
-      <FloatingNav />
-      <MobileNav />
+      <ChromeReveal expectHero={expectHero}>
+        <ThemeToggle isModalOpen={isModalOpen} />
+        <FloatingNav />
+        <MobileNav />
+      </ChromeReveal>
       {children}
       <BackToTop isModalOpen={isModalOpen} />
-      <PortfolioChatbotWrapper />
+      {/* Kept in its own wrapper so the launcher stays after {children} in DOM
+          order, which is what puts it above the page content. */}
+      <ChromeReveal expectHero={expectHero}>
+        <PortfolioChatbotWrapper />
+      </ChromeReveal>
     </ScrollProvider>
   );
 }

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useScrollY } from '@/contexts/ScrollContext';
 import { SPACE_IMAGES } from '@/lib/space-assets';
 import { cn } from '@/lib/utils';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 /**
  * Scroll-driven space hero.
@@ -83,17 +84,6 @@ const CTA_CLASS =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ' +
   'focus-visible:ring-offset-2 focus-visible:ring-offset-transparent';
 
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = React.useState(false);
-  React.useEffect(() => {
-    const q = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduced(q.matches);
-    const on = (e: MediaQueryListEvent) => setReduced(e.matches);
-    q.addEventListener('change', on);
-    return () => q.removeEventListener('change', on);
-  }, []);
-  return reduced;
-}
 
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
 const range = (v: number, a: number, b: number) => clamp01((v - a) / (b - a));
@@ -270,6 +260,9 @@ export default function CosmicHero({
   return (
     <div
       ref={wrapperRef}
+      // ChromeReveal measures this element to know when the scene has
+      // resolved, rather than duplicating SCENE_VH.
+      data-hero-scene=""
       className={cn('relative', className)}
       style={{ height: `${SCENE_VH}vh` }}
     >
