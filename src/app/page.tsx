@@ -7,6 +7,7 @@ import TechStacks from "@/components/TechStacks";
 import ScrollFadeEffect from "@/components/ScrollFadeEffect";
 import SplashWrapper from "@/components/SplashWrapper";
 import LabSection from "@/components/LabSection";
+import FAQSection from "@/components/FAQSection";
 import {
   getExperienceEntries,
   getServiceTiers,
@@ -129,6 +130,15 @@ export default async function Home() {
           <ScrollFadeEffect fadeStartPoint={0.87} fadeIntensity={1.5}>
             <LabSection />
           </ScrollFadeEffect>
+
+          {/* Sits after The Lab so the highest-intent copy lands once the work
+              has spoken for itself. Also what makes the FAQPage JSON-LD in
+              StructuredData legitimate — the markup describes content that is
+              genuinely on the page. */}
+          <FAQSection
+            heading={headings.faq?.heading}
+            subheading={headings.faq?.subheading}
+          />
 
           {show('services') && (
             <ScrollFadeEffect fadeStartPoint={0.9} fadeIntensity={1.6}>

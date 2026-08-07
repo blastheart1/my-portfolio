@@ -68,12 +68,17 @@ describe('N8 — the wrong domain is gone everywhere', () => {
       .toEqual([]);
   });
 
-  it('sitemap and robots agree on the canonical origin', () => {
+  it('sitemap and robots derive their origin from SITE_URL', () => {
     const sitemap = readFileSync(path.join(SRC, 'app/sitemap.ts'), 'utf8');
     const robots = readFileSync(path.join(SRC, 'app/robots.ts'), 'utf8');
 
-    expect(sitemap).toContain('codebyluis.dev');
-    expect(robots).toContain('codebyluis.dev');
+    // Stronger than checking for the literal domain: importing the shared
+    // constant is what makes a future rename impossible to get half-done.
+    for (const [name, src] of [['sitemap', sitemap], ['robots', robots]] as const) {
+      expect(src, name).toMatch(/from ['"]@\/lib\/site['"]/);
+      expect(src, name).toContain('SITE_URL');
+      expect(src, `${name} still hardcodes an origin`).not.toMatch(/https?:\/\/[a-z]+\.dev/);
+    }
   });
 
   it('robots still disallows the admin area', () => {
@@ -81,9 +86,11 @@ describe('N8 — the wrong domain is gone everywhere', () => {
     expect(robots).toContain('/edit/');
   });
 
-  it('structured data uses the canonical origin', () => {
+  it('structured data derives its origin from SITE_URL', () => {
     const sd = readFileSync(path.join(SRC, 'components/StructuredData.tsx'), 'utf8');
-    expect(sd).toContain('codebyluis.dev');
+    expect(sd).toMatch(/from ['"]@\/lib\/site['"]/);
+    expect(sd).toContain('SITE_URL');
+    expect(sd, 'StructuredData still hardcodes an origin').not.toMatch(/https?:\/\/[a-z]+\.dev/);
   });
 });
 

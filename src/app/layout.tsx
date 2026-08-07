@@ -17,59 +17,97 @@ const inter = Inter({
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'Code by Luis',
-  description: 'Senior IBM ODM Specialist and QA Team Manager specializing in full-stack development, AI integration, and scalable systems. Building future-ready applications with precision and innovation.',
+
+  // Title leads with the role someone actually searches for, then the
+  // differentiator. The previous "Code by Luis" is a brand nobody queries.
+  title: {
+    default: 'Antonio Luis Santos — AI Full-Stack Software Engineer',
+    template: '%s | Antonio Luis Santos',
+  },
+
+  // Written to be quotable, and to lead with the outcome rather than the
+  // toolkit — an assistant asked "who can help us cut manual work" should be
+  // able to lift this intact and have it be both accurate and specific.
+  description:
+    'I help businesses stop spending people on work software should be doing — automating the manual steps between disconnected systems so teams can focus on work that needs judgment. Agentic AI and LLM integration across OpenAI, Claude, Gemini, DeepSeek and self-hosted models, backed by a decade of enterprise decision automation (IBM ODM/BRMS) and QA leadership. Remote, available for freelance and contract work.',
+
   keywords: [
-    'Antonio Luis Santos', 
-    'Full-Stack Developer', 
-    'QA Specialist', 
-    'IBM ODM', 
-    'Software Development', 
-    'AI Integration', 
-    'Next.js', 
-    'React', 
-    'TypeScript',
-    'Python',
-    'TensorFlow',
-    'Machine Learning',
-    'Quality Assurance',
-    'Bell Canada',
-    'Manila Philippines',
-    'Web Development',
-    'Frontend Development',
-    'Backend Development'
+    'Antonio Luis Santos',
+    'AI Full-Stack Software Engineer',
+    'agentic AI developer',
+    'LLM integration engineer',
+    'OpenAI API developer',
+    'Claude API developer',
+    'Google Gemini developer',
+    'DeepSeek integration',
+    'self-hosted LLM engineer',
+    'AI chatbot development',
+    'legacy system integration',
+    'IBM ODM specialist',
+    'IBM BRMS developer',
+    'decision automation engineer',
+    'Next.js developer',
+    'React TypeScript engineer',
+    'Python FastAPI developer',
+    'QA team manager',
+    'freelance AI engineer',
+    'hire remote full-stack developer',
+    'Philippines software engineer',
   ],
-  authors: [{ name: 'Antonio Luis Santos' }],
+
+  authors: [{ name: 'Antonio Luis Santos', url: SITE_URL }],
   creator: 'Antonio Luis Santos',
   publisher: 'Antonio Luis Santos',
-  robots: 'index, follow',
+  category: 'technology',
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      // Let Google use full text and large images in AI Overviews and rich
+      // results rather than a truncated snippet.
+      'max-snippet': -1,
+      'max-image-preview': 'large',
+      'max-video-preview': -1,
+    },
+  },
+
   alternates: {
     canonical: SITE_URL,
   },
+
   openGraph: {
-    type: 'website',
+    type: 'profile',
     locale: 'en_US',
     url: SITE_URL,
-    siteName: 'CodeByLuis.Dev',
-    title: 'Code by Luis',
-    description: 'Senior IBM ODM Specialist and QA Team Manager specializing in full-stack development, AI integration, and scalable systems. Expert in React, Next.js, Python, and AI technologies.',
+    siteName: 'Antonio Luis Santos',
+    title: 'Antonio Luis Santos — AI Full-Stack Software Engineer',
+    description:
+      'Automating the manual work between disconnected systems so teams can focus on work that needs judgment. Agentic AI, LLM integration, and enterprise decision automation. Available for freelance and contract work.',
+    firstName: 'Antonio Luis',
+    lastName: 'Santos',
   },
+
   twitter: {
     card: 'summary_large_image',
-    title: 'Code by Luis',
-    description: 'Senior IBM ODM Specialist and QA Team Manager specializing in full-stack development, AI integration, and scalable systems.',
+    title: 'Antonio Luis Santos — AI Full-Stack Software Engineer',
+    description:
+      'I automate the manual work between your systems so your team can do the work that needs judgment. Agentic AI, integrations, enterprise decision automation.',
     creator: '@0xlv1s_',
     site: '@0xlv1s_',
   },
+
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
       { url: '/code-light.ico', type: 'image/x-icon', media: '(prefers-color-scheme: light)' },
-      { url: '/code-dark.ico', type: 'image/x-icon', media: '(prefers-color-scheme: dark)' }
+      { url: '/code-dark.ico', type: 'image/x-icon', media: '(prefers-color-scheme: dark)' },
     ],
-    shortcut: '/favicon.svg',
+    shortcut: '/code-light.ico',
     apple: '/code-light.ico',
   },
+
   manifest: '/site.webmanifest',
 };
 
@@ -108,7 +146,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&family=Space+Mono:wght@400;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
           rel="stylesheet"
         />
         <link rel="dns-prefetch" href="https://calendly.com" />
