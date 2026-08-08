@@ -31,13 +31,43 @@ function sweep(now: number): void {
  * Resolve the client IP from proxy headers. Vercel sets x-forwarded-for; the
  * left-most entry is the original client.
  */
+/**
+ * The client address, from a source the caller cannot forge.
+ *
+ * This previously returned the LEFTMOST x-forwarded-for entry. Vercel appends
+ * the real address to whatever XFF header arrives, so the leftmost value is
+ * whatever the caller decided to send. Anyone could mint a fresh identity per
+ * request with `X-Forwarded-For: <random>` and walk straight through every
+ * rate limit here, including the admin login limiter.
+ *
+ * Order of trust:
+ *   1. x-vercel-forwarded-for — written by Vercel's proxy, overwrites any
+ *      client-supplied copy.
+ *   2. x-real-ip — likewise platform-set.
+ *   3. The RIGHTMOST x-forwarded-for entry — the hop nearest us, appended by
+ *      the proxy, rather than the hop furthest away, supplied by the client.
+ *
+ * Unknown callers share one bucket, which is deliberately the harshest
+ * outcome: an attacker who strips every header gets rate-limited against
+ * everyone else who did the same.
+ */
 export function getClientIp(request: NextRequest | Request): string {
   const headers = request.headers;
-  return (
-    headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    headers.get('x-real-ip') ||
-    'unknown'
-  );
+
+  const platform =
+    headers.get('x-vercel-forwarded-for')?.trim() || headers.get('x-real-ip')?.trim();
+  if (platform) return platform;
+
+  const forwarded = headers.get('x-forwarded-for');
+  if (forwarded) {
+    const hops = forwarded
+      .split(',')
+      .map(hop => hop.trim())
+      .filter(Boolean);
+    if (hops.length > 0) return hops[hops.length - 1];
+  }
+
+  return 'unknown';
 }
 
 /**

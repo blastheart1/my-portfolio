@@ -71,17 +71,21 @@ describe('getClientIp', () => {
   const req = (headers: Record<string, string>) =>
     new Request('https://codebyluis.dev/api/contact', { headers });
 
-  it('takes the left-most x-forwarded-for entry', () => {
+  // Corrected 2026-08-08. This previously asserted the LEFT-most entry, which
+  // encoded a vulnerability as a requirement: the left-most hop is whatever
+  // the caller sent, so every limiter keyed on it was trivially bypassable.
+  // See client-ip.test.ts for the spoofing cases.
+  it('takes the right-most x-forwarded-for entry, appended by the proxy', () => {
     expect(getClientIp(req({ 'x-forwarded-for': '203.0.113.7, 70.41.3.18' })))
-      .toBe('203.0.113.7');
+      .toBe('70.41.3.18');
   });
 
   it('trims whitespace', () => {
-    expect(getClientIp(req({ 'x-forwarded-for': '  203.0.113.7 , 70.41.3.18' })))
-      .toBe('203.0.113.7');
+    expect(getClientIp(req({ 'x-forwarded-for': '  203.0.113.7 , 70.41.3.18  ' })))
+      .toBe('70.41.3.18');
   });
 
-  it('falls back to x-real-ip', () => {
+  it('prefers x-real-ip over a client-supplied forwarded chain', () => {
     expect(getClientIp(req({ 'x-real-ip': '198.51.100.4' }))).toBe('198.51.100.4');
   });
 
