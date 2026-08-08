@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Loader2, ShieldCheck, ShieldAlert, Mic } from 'lucide-react';
 
 import type { DemoNote, DraftResult, Tone } from '@/lib/demo/relay/types';
+import DemoIntro, { RELAY_INTRO } from './DemoIntro';
 
 /**
  * The Relay demo.
@@ -85,7 +86,12 @@ export default function RelayDemo() {
   };
 
   return (
-    <div className="grid gap-0 md:grid-cols-[minmax(0,14rem)_1fr]">
+    <>
+      {/* Above the interface, in DOM order, so it is read before anything is
+          clicked and before any microphone prompt is possible. */}
+      <DemoIntro {...RELAY_INTRO} />
+
+      <div className="grid gap-0 md:grid-cols-[minmax(0,14rem)_1fr]">
       {/* Inbox */}
       <aside className="border-b border-gray-200 p-4 md:border-b-0 md:border-r dark:border-gray-700">
         <h3 className="text-xs uppercase tracking-wide text-gray-400">Inbox</h3>
@@ -176,7 +182,8 @@ export default function RelayDemo() {
           </>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

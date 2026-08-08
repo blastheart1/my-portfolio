@@ -1,7 +1,5 @@
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-
 import type { WorkProject } from '@/lib/work-projects';
+import Breadcrumbs from './Breadcrumbs';
 
 /**
  * Shared chrome for a case study at /work/[slug].
@@ -12,9 +10,10 @@ import type { WorkProject } from '@/lib/work-projects';
  * bordered frame, which is what makes it look like a product you can touch
  * instead of a screenshot.
  *
- * The back link is a real <Link> in a fixed position on every case study.
- * Visitors arriving from a search result have no history to go back to, so
- * relying on the browser control would strand them.
+ * Navigation is a breadcrumb rather than a single back link. A visitor
+ * arriving from a search result has no history to go back to, and the earlier
+ * "← Work" only reached the index — which itself had no way back to the site,
+ * so they were stranded one hop later. Both destinations are now one click.
  */
 export default function CaseStudyLayout({
   project,
@@ -26,14 +25,13 @@ export default function CaseStudyLayout({
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-6xl px-6 py-16">
-        <Link
-          href="/work"
-          className="inline-flex items-center gap-2 text-sm text-gray-500 transition-colors
-                     hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-        >
-          <ArrowLeft className="size-4" aria-hidden="true" />
-          Work
-        </Link>
+        <Breadcrumbs
+          trail={[
+            { label: 'Home', href: '/' },
+            { label: 'Work', href: '/work' },
+            { label: project.title },
+          ]}
+        />
 
         <header className="mt-10">
           <h1

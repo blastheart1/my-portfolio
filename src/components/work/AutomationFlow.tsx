@@ -9,6 +9,7 @@ import {
   type FlowNode,
   type NodeKind,
 } from '@/lib/automation-flows';
+import DemoIntro, { AUTOMATION_INTRO } from './DemoIntro';
 
 /**
  * The automation lab.
@@ -88,7 +89,10 @@ export default function AutomationFlowExplorer() {
   const active = AUTOMATION_FLOWS.find(f => f.id === activeId) ?? AUTOMATION_FLOWS[0];
 
   return (
-    <div className="p-6">
+    <>
+      <DemoIntro {...AUTOMATION_INTRO} />
+
+      <div className="p-6">
       <div role="tablist" aria-label="Automation flows" className="flex flex-wrap gap-2">
         {AUTOMATION_FLOWS.map(flow => (
           <button
@@ -134,5 +138,6 @@ export default function AutomationFlowExplorer() {
         work, and getting it wrong is why automations get switched off.
       </p>
     </div>
+    </>
   );
 }

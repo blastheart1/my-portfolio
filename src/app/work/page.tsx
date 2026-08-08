@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { isDemoVisible } from '@/lib/content-queries';
 import { WORK_PROJECTS } from '@/lib/work-projects';
 import { SITE_URL } from '@/lib/site';
+import Breadcrumbs from '@/components/work/Breadcrumbs';
 
 /**
  * /work — the case-study index.
@@ -37,8 +38,12 @@ export default async function WorkIndexPage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-6xl px-6 py-24">
+        {/* The index had only forward links, so anyone who reached it was
+            stranded here. */}
+        <Breadcrumbs trail={[{ label: 'Home', href: '/' }, { label: 'Work' }]} />
+
         <h1
-          className="text-4xl font-light uppercase leading-[0.95] tracking-[-0.02em]
+          className="mt-8 text-4xl font-light uppercase leading-[0.95] tracking-[-0.02em]
                      text-gray-900 md:text-5xl dark:text-gray-100"
         >
           Work.
