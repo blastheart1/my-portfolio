@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import dynamic from 'next/dynamic';
 import { ChevronDown } from 'lucide-react';
 
 import {
@@ -10,6 +11,17 @@ import {
   type NodeKind,
 } from '@/lib/automation-flows';
 import DemoIntro, { AUTOMATION_INTRO } from './DemoIntro';
+
+// Loaded on demand: React Flow is ~55KB gzipped and the mobile view never
+// mounts it. ssr:false because it measures the DOM to fit the view.
+const AutomationCanvas = dynamic(() => import('./AutomationCanvas'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[520px] items-center justify-center text-sm text-gray-400">
+      Loading the canvas…
+    </div>
+  ),
+});
 
 /**
  * The automation lab.
@@ -86,6 +98,7 @@ function Node({ node, index }: { node: FlowNode; index: number }) {
 
 export default function AutomationFlowExplorer() {
   const [activeId, setActiveId] = React.useState(AUTOMATION_FLOWS[0].id);
+  const [selected, setSelected] = React.useState<FlowNode | null>(null);
   const active = AUTOMATION_FLOWS.find(f => f.id === activeId) ?? AUTOMATION_FLOWS[0];
 
   return (
@@ -99,7 +112,10 @@ export default function AutomationFlowExplorer() {
             key={flow.id}
             role="tab"
             aria-selected={flow.id === activeId}
-            onClick={() => setActiveId(flow.id)}
+            onClick={() => {
+              setActiveId(flow.id);
+              setSelected(null);
+            }}
             className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
               flow.id === activeId
                 ? 'border-gray-900 text-gray-900 dark:border-gray-100 dark:text-gray-100'
@@ -126,7 +142,27 @@ export default function AutomationFlowExplorer() {
         </div>
       </div>
 
-      <ol className="mt-8">
+      {/* Desktop: the canvas. Mobile: the list, because a pannable graph on a
+          360px screen is unusable and the list already reads well. */}
+      <div className="mt-8 hidden overflow-hidden rounded-lg border border-gray-200 md:block dark:border-gray-700">
+        <AutomationCanvas flow={active} onSelect={setSelected} />
+      </div>
+
+      {selected && (
+        <div className="mt-4 hidden rounded-lg border border-gray-200 p-4 md:block dark:border-gray-700">
+          <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {selected.label}
+            <span className={`ml-2 rounded-full px-2 py-0.5 text-[11px] ${KIND_BADGE[selected.kind]}`}>
+              {NODE_KIND_LABEL[selected.kind]}
+            </span>
+          </h4>
+          <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+            {selected.detail}
+          </p>
+        </div>
+      )}
+
+      <ol className="mt-8 md:hidden">
         {active.nodes.map((node, i) => (
           <Node key={node.id} node={node} index={i} />
         ))}

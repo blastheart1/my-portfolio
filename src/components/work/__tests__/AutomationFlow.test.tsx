@@ -21,6 +21,8 @@ import { AUTOMATION_FLOWS, NODE_KIND_LABEL } from '@/lib/automation-flows';
  * included even where the product is generic: it is the combination that
  * identifies the client.
  */
+const ALLOWED = ['QuickBooks', 'Bill.com'];
+
 const MUST_NOT_APPEAR = [
   'Calimingo',
   'ProDBX',
@@ -36,6 +38,10 @@ const MUST_NOT_APPEAR = [
   'IPinfo',
   'PoolSight',
   'Bruntwork',
+  'Klaviyo',
+  'Asana',
+  'BroadVoice',
+  'MSSQL',
 ];
 
 /** Every string a visitor could read, across all flows and expanded nodes. */
@@ -148,5 +154,56 @@ describe('the claim the flows are meant to demonstrate', () => {
     const kinds = new Set(AUTOMATION_FLOWS.flatMap(f => f.nodes.map(n => n.kind)));
 
     expect(kinds).toEqual(new Set(['io', 'rule', 'model', 'human']));
+  });
+});
+
+
+describe('the expanded catalogue', () => {
+  it('offers at least ten workflows', () => {
+    expect(AUTOMATION_FLOWS.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it('names QuickBooks and Bill.com, which are published work', () => {
+    // The site already advertises "QuickBooks and Bill.com integration", so
+    // these two are deliberately not sanitized away.
+    const prose = allProse();
+    for (const vendor of ALLOWED) {
+      expect(prose).toContain(vendor);
+    }
+  });
+
+  it('still hides every other vendor and the client', () => {
+    const prose = allProse().toLowerCase();
+    for (const name of MUST_NOT_APPEAR) {
+      expect(prose, name).not.toContain(name.toLowerCase());
+    }
+  });
+
+  it('gives every flow a problem, an outcome, and enough steps to be a flow', () => {
+    for (const flow of AUTOMATION_FLOWS) {
+      expect(flow.problem.length, flow.id).toBeGreaterThan(40);
+      expect(flow.outcome.length, flow.id).toBeGreaterThan(40);
+      expect(flow.nodes.length, flow.id).toBeGreaterThanOrEqual(4);
+    }
+  });
+
+  it('keeps money-touching steps deterministic across every flow', () => {
+    // A model may suggest, summarise or classify. It must not be the step that
+    // creates an invoice, posts a credit, or marks something paid.
+    const writes = /invoice|credit|payment|bill|paid/i;
+    for (const flow of AUTOMATION_FLOWS) {
+      for (const node of flow.nodes) {
+        if (node.kind === 'model' && writes.test(node.label)) {
+          throw new Error(`${flow.id}: "${node.label}" is a model call touching money`);
+        }
+      }
+    }
+  });
+
+  it('gives every flow a unique id and title', () => {
+    const ids = AUTOMATION_FLOWS.map(f => f.id);
+    const titles = AUTOMATION_FLOWS.map(f => f.title);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(new Set(titles).size).toBe(titles.length);
   });
 });
