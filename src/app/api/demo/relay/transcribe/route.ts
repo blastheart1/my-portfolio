@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withDemoQuota } from '@/lib/demo-visitor';
 import { isDemoVisible } from '@/lib/content-queries';
 import { getProviderKey } from '@/lib/credentials-store';
+import { groupSegments } from '@/lib/demo/relay/segments';
 
 /**
  * Voice note to text.
@@ -91,6 +92,7 @@ export const POST = withDemoQuota('relay-transcribe', async (request: NextReques
   if (!key) {
     return NextResponse.json({
       text: '',
+      segments: [],
       degraded: true,
       note: 'Transcription needs a provider key. Pick one of the example notes instead.',
     });
@@ -99,6 +101,10 @@ export const POST = withDemoQuota('relay-transcribe', async (request: NextReques
   const upstream = new FormData();
   upstream.append('file', file, file.name || 'note.webm');
   upstream.append('model', 'whisper-1');
+  // Segment timestamps are what make the transcript scrubbable. verbose_json
+  // is the only response format that carries them.
+  upstream.append('response_format', 'verbose_json');
+  upstream.append('timestamp_granularities[]', 'segment');
 
   const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
     method: 'POST',
@@ -113,5 +119,11 @@ export const POST = withDemoQuota('relay-transcribe', async (request: NextReques
   }
 
   const body = await res.json();
-  return NextResponse.json({ text: body.text ?? '', degraded: false });
+  const raw = (body.segments ?? []) as Array<{ start: number; text: string }>;
+
+  return NextResponse.json({
+    text: body.text ?? '',
+    segments: groupSegments(raw),
+    degraded: false,
+  });
 }, validate);

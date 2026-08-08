@@ -47,12 +47,24 @@ export interface Draft {
   model: string | null;
 }
 
+/** One readable, timestamped chunk of a transcript. */
+export interface TranscriptSegment {
+  /** Seconds from the start, for seeking the audio element. */
+  start: number;
+  /** The same value as `m:ss`, for display. */
+  time: string;
+  text: string;
+}
+
 export interface DemoNote {
   id: string;
   /** Who the reply is to. */
   correspondent: string;
   context: string;
   transcript: string;
+  /** Timestamped chunks. Seeded notes carry static ones so the panel looks
+   *  identical without a recording. */
+  segments?: TranscriptSegment[];
   suggestedSubject: string;
   tone: Tone;
   length: Length;
