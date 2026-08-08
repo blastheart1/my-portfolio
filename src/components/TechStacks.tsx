@@ -68,11 +68,19 @@ export default function TechStacks({ heading, subheading }: TechStacksProps = {}
   const row2 = getRowTech(10);
   const row3 = getRowTech(20);
 
-  // Duplicate arrays for seamless scrolling
-  const createScrollingRow = (tech: TechStack[]): TechStack[] => [...tech, ...tech, ...tech];
+  // Tripled so the marquee can loop without a visible seam. Only the first
+  // pass is real content; the copies are presentational, so they are marked
+  // aria-hidden. Otherwise a screen reader reads the same thirty tools three
+  // times over, and text extractors see the tech list repeated like keyword
+  // stuffing rather than a list rendered once.
+  const createScrollingRow = (tech: TechStack[]) =>
+    [...tech, ...tech, ...tech].map((item, i) => ({ tech: item, isClone: i >= tech.length }));
 
-  const TechItem = ({ tech }: { tech: TechStack }) => (
-    <div className="flex-shrink-0 mx-4 flex flex-col items-center justify-center group cursor-pointer">
+  const TechItem = ({ tech, isClone }: { tech: TechStack; isClone?: boolean }) => (
+    <div
+      aria-hidden={isClone || undefined}
+      className="flex-shrink-0 mx-4 flex flex-col items-center justify-center group cursor-pointer"
+    >
       <Card className="w-20 h-20 bg-white/20 dark:bg-white/10 backdrop-blur-md rounded-xl shadow-lg flex items-center justify-center group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300 border border-white/30 dark:border-white/20 group-hover:border-white/50 dark:group-hover:border-white/40">
         <CardContent className="flex flex-col items-center justify-center p-2 h-full">
           {tech.icon ? (
@@ -112,8 +120,8 @@ export default function TechStacks({ heading, subheading }: TechStacksProps = {}
           {/* Row 1 - Left to Right */}
           <div className="relative overflow-hidden py-8 fade-container">
             <div className="flex animate-scroll-left">
-              {createScrollingRow(row1).map((tech, index) => (
-                <TechItem key={`row1-${index}`} tech={tech} />
+              {createScrollingRow(row1).map(({ tech, isClone }, index) => (
+                <TechItem key={`row1-${index}`} tech={tech} isClone={isClone} />
               ))}
             </div>
           </div>
@@ -121,8 +129,8 @@ export default function TechStacks({ heading, subheading }: TechStacksProps = {}
           {/* Row 2 - Right to Left */}
           <div className="relative overflow-hidden py-8 fade-container">
             <div className="flex animate-scroll-right">
-              {createScrollingRow(row2).map((tech, index) => (
-                <TechItem key={`row2-${index}`} tech={tech} />
+              {createScrollingRow(row2).map(({ tech, isClone }, index) => (
+                <TechItem key={`row2-${index}`} tech={tech} isClone={isClone} />
               ))}
             </div>
           </div>
@@ -130,8 +138,8 @@ export default function TechStacks({ heading, subheading }: TechStacksProps = {}
           {/* Row 3 - Left to Right (Slower) */}
           <div className="relative overflow-hidden py-8 fade-container">
             <div className="flex animate-scroll-left-slow">
-              {createScrollingRow(row3).map((tech, index) => (
-                <TechItem key={`row3-${index}`} tech={tech} />
+              {createScrollingRow(row3).map(({ tech, isClone }, index) => (
+                <TechItem key={`row3-${index}`} tech={tech} isClone={isClone} />
               ))}
             </div>
           </div>

@@ -14,6 +14,10 @@ import { FAQS } from '@/lib/faqs';
  * Server component — no "use client"; renders as a plain <script> tag.
  */
 
+// Static page, so this resolves at build time: it dates the published
+// version rather than the request, which is the honest reading of "modified".
+const LAST_MODIFIED = new Date().toISOString();
+
 const PERSON = `${SITE_URL}/#person`;
 const PRACTICE = `${SITE_URL}/#practice`;
 
@@ -210,6 +214,7 @@ export default function StructuredData() {
       '@type': 'ProfilePage',
       '@id': `${SITE_URL}/#webpage`,
       url: SITE_URL,
+      dateModified: LAST_MODIFIED,
       name: 'Antonio Luis Santos — AI Full-Stack Software Engineer',
       isPartOf: { '@id': `${SITE_URL}/#website` },
       about: { '@id': PERSON },

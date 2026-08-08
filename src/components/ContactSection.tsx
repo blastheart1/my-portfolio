@@ -364,7 +364,7 @@ export default function ContactSection({ heading, subheading }: { heading?: stri
             transition={{ duration: 0.6, delay: 0.6 }}
           >
             <HiOutlineLocationMarker className="text-xl" />
-            <span>Manila, Philippines</span>
+            <span>Quezon City, Philippines</span>
           </motion.div>
         </motion.div>
       </div>

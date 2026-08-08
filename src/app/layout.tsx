@@ -25,35 +25,12 @@ export const metadata = {
     template: '%s | Antonio Luis Santos',
   },
 
-  // Written to be quotable, and to lead with the outcome rather than the
-  // toolkit — an assistant asked "who can help us cut manual work" should be
-  // able to lift this intact and have it be both accurate and specific.
+  // Kept under 160 characters so it survives the search snippet intact. The
+  // long-form outcome framing lives in the FAQ and llms.txt, where there is
+  // room for it and nothing truncates.
   description:
-    'I help businesses stop spending people on work software should be doing — automating the manual steps between disconnected systems so teams can focus on work that needs judgment. Agentic AI and LLM integration across OpenAI, Claude, Gemini, DeepSeek and self-hosted models, backed by a decade of enterprise decision automation (IBM ODM/BRMS) and QA leadership. Remote, available for freelance and contract work.',
+    'AI full-stack engineer: LLM integration, API and workflow automation across OpenAI, Claude and Gemini, plus IBM ODM decision automation. Remote, for hire.',
 
-  keywords: [
-    'Antonio Luis Santos',
-    'AI Full-Stack Software Engineer',
-    'agentic AI developer',
-    'LLM integration engineer',
-    'OpenAI API developer',
-    'Claude API developer',
-    'Google Gemini developer',
-    'DeepSeek integration',
-    'self-hosted LLM engineer',
-    'AI chatbot development',
-    'legacy system integration',
-    'IBM ODM specialist',
-    'IBM BRMS developer',
-    'decision automation engineer',
-    'Next.js developer',
-    'React TypeScript engineer',
-    'Python FastAPI developer',
-    'QA team manager',
-    'freelance AI engineer',
-    'hire remote full-stack developer',
-    'Philippines software engineer',
-  ],
 
   authors: [{ name: 'Antonio Luis Santos', url: SITE_URL }],
   creator: 'Antonio Luis Santos',
