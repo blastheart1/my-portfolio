@@ -18,6 +18,7 @@ import {
   Tags,
   Image as ImageIcon,
   Bot,
+  KeyRound,
   ToggleLeft,
 } from 'lucide-react';
 
@@ -85,6 +86,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/edit/images', label: 'Images', icon: ImageIcon, group: 'site' },
 
   { href: '/edit/chatbot', label: 'Chatbot', icon: Bot, group: 'system', matchPrefix: '/edit/chatbot' },
+  { href: '/edit/credentials', label: 'Credentials', icon: KeyRound, group: 'system' },
 ];
 
 /** Items rendered above the groups. */

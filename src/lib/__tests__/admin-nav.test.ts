@@ -21,8 +21,11 @@ import {
 } from '../admin-nav';
 
 describe('nav config parity with the previous inline list', () => {
-  it('keeps exactly the eight original destinations', () => {
-    expect(NAV_ITEMS.map(i => i.href)).toEqual([
+  // The point of this guard is that the redesign never drops a destination.
+  // It is not that the nav can never grow — so it asserts the original eight
+  // survive, in order, rather than freezing the length.
+  it('keeps all eight original destinations, in order', () => {
+    const ORIGINAL = [
       '/edit',
       '/edit/content/hero',
       '/edit/experience',
@@ -31,7 +34,16 @@ describe('nav config parity with the previous inline list', () => {
       '/edit/sections',
       '/edit/images',
       '/edit/chatbot',
-    ]);
+    ];
+    const hrefs = NAV_ITEMS.map(i => i.href);
+
+    expect(hrefs.filter(href => ORIGINAL.includes(href))).toEqual(ORIGINAL);
+  });
+
+  it('has no duplicate destinations', () => {
+    const hrefs = NAV_ITEMS.map(i => i.href);
+
+    expect(new Set(hrefs).size).toBe(hrefs.length);
   });
 
   it('gives every item a label and an icon', () => {
