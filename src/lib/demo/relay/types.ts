@@ -38,6 +38,12 @@ export interface Verdict {
 export interface BodySegment {
   text: string;
   flagged?: boolean;
+  /**
+   * What the auditor wants confirmed about this phrase. Present only when the
+   * audit matched a fabrication to it; a span the model merely bracketed as
+   * inferred has no reason attached, because none was given.
+   */
+  reason?: string;
 }
 
 export interface Draft {

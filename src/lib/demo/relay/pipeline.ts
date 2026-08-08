@@ -1,7 +1,7 @@
 import { getProviderKey } from '@/lib/credentials-store';
 import { checkGuardRails } from '@/lib/chatbot/guardRails';
 
-import type { DemoNote, Draft, DraftResult, Verdict, BodySegment } from './types';
+import type { DemoNote, Draft, DraftResult, Verdict, BodySegment, Fabrication } from './types';
 import { degradedResult } from './seed';
 
 /**
@@ -40,8 +40,16 @@ function systemPrompt(note: DemoNote): string {
   ].join('\n');
 }
 
-/** Splits [[inferred]] spans out so the UI can highlight them. */
-export function segmentBody(body: string): BodySegment[] {
+/**
+ * Splits [[inferred]] spans out so the UI can highlight them, and attaches the
+ * auditor's reason to any span it questioned.
+ *
+ * The reason is the point. A highlight that says only "this was inferred"
+ * leaves the reader to work out what to check; "Confirm that the conversation
+ * happened yesterday" tells them. The verdict already carries these — until
+ * now they only appeared in a list underneath, detached from the phrase.
+ */
+export function segmentBody(body: string, fabrications: Fabrication[] = []): BodySegment[] {
   const segments: BodySegment[] = [];
   const pattern = /\[\[(.+?)\]\]/g;
   let last = 0;
@@ -49,12 +57,47 @@ export function segmentBody(body: string): BodySegment[] {
 
   while ((match = pattern.exec(body)) !== null) {
     if (match.index > last) segments.push({ text: body.slice(last, match.index) });
-    segments.push({ text: match[1], flagged: true });
+    segments.push({ text: match[1], flagged: true, reason: reasonFor(match[1], fabrications) });
     last = match.index + match[0].length;
   }
   if (last < body.length) segments.push({ text: body.slice(last) });
 
-  return segments.length > 0 ? segments : [{ text: body }];
+  const flagged = segments.length > 0 ? segments : [{ text: body }];
+
+  // A fabrication the model did not bracket still needs surfacing: match it
+  // against the plain runs and split them so the phrase can be highlighted.
+  return fabrications.reduce(splitOnFabrication, flagged);
+}
+
+/** Case-insensitive lookup of the auditor's note for a phrase. */
+function reasonFor(text: string, fabrications: Fabrication[]): string | undefined {
+  const needle = text.trim().toLowerCase();
+  return fabrications.find(f => {
+    const claim = f.text.trim().toLowerCase();
+    return claim === needle || needle.includes(claim) || claim.includes(needle);
+  })?.why;
+}
+
+/** Splits any unflagged run containing a fabrication so the phrase can be marked. */
+function splitOnFabrication(segments: BodySegment[], fabrication: Fabrication): BodySegment[] {
+  const claim = fabrication.text.trim();
+  if (!claim) return segments;
+
+  return segments.flatMap(segment => {
+    if (segment.flagged) return segment;
+    const index = segment.text.toLowerCase().indexOf(claim.toLowerCase());
+    if (index === -1) return segment;
+
+    const before = segment.text.slice(0, index);
+    const hit = segment.text.slice(index, index + claim.length);
+    const after = segment.text.slice(index + claim.length);
+
+    return [
+      ...(before ? [{ text: before }] : []),
+      { text: hit, flagged: true, reason: fabrication.why },
+      ...(after ? [{ text: after }] : []),
+    ];
+  });
 }
 
 async function callOpenAI(key: string, system: string, user: string): Promise<string> {
@@ -219,6 +262,16 @@ export async function runDraftPipeline(note: DemoNote): Promise<DraftResult> {
   }
 
   verdict = { ...verdict, attempts };
+
+  // Re-segment now that the audit has run. The draft was segmented before the
+  // verdict existed, so its flagged spans carried no reasons; this is what
+  // binds each highlight to what the auditor actually questioned.
+  if (verdict.fabrications.length > 0) {
+    draft = {
+      ...draft,
+      body: segmentBody(draft.body.map(s => s.text).join(''), verdict.fabrications),
+    };
+  }
 
   if (verdict.fabrications.length > 0) {
     verdict.reviewNote =

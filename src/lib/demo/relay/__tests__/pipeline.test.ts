@@ -194,3 +194,50 @@ describe('seed inbox', () => {
     expect(findSeedNote('nobody')).toBeUndefined();
   });
 });
+
+describe('flagged spans carry the auditor’s reason', () => {
+  it('attaches the reason to a bracketed span the auditor questioned', () => {
+    const segments = segmentBody('See you [[next Tuesday]] then.', [
+      { text: 'next Tuesday', severity: 'high', why: 'no date was mentioned' },
+    ]);
+
+    const flagged = segments.find(s => s.flagged);
+    expect(flagged).toMatchObject({ text: 'next Tuesday', reason: 'no date was mentioned' });
+  });
+
+  it('leaves a bracketed span the auditor did not question without a reason', () => {
+    const segments = segmentBody('Meeting [[Thursday]].', []);
+
+    // Inferred, but nobody said why — inventing one would be worse than none.
+    expect(segments.find(s => s.flagged)).toMatchObject({ text: 'Thursday' });
+    expect(segments.find(s => s.flagged)?.reason).toBeUndefined();
+  });
+
+  it('flags a fabrication the model never bracketed', () => {
+    const segments = segmentBody('It was great connecting yesterday.', [
+      { text: 'yesterday', severity: 'medium', why: 'confirm the call happened yesterday' },
+    ]);
+
+    expect(segments.find(s => s.flagged)).toMatchObject({
+      text: 'yesterday',
+      reason: 'confirm the call happened yesterday',
+    });
+  });
+
+  it('never loses or reorders a character while splitting', () => {
+    const original = 'It was great connecting yesterday, and [[Thursday]] works.';
+    const segments = segmentBody(original, [
+      { text: 'yesterday', severity: 'low', why: 'check' },
+    ]);
+
+    expect(segments.map(s => s.text).join('')).toBe(original.replace(/\[\[|\]\]/g, ''));
+  });
+
+  it('matches case-insensitively, since the auditor requotes freely', () => {
+    const segments = segmentBody('Speak Thursday.', [
+      { text: 'thursday', severity: 'low', why: 'no day was given' },
+    ]);
+
+    expect(segments.find(s => s.flagged)?.reason).toBe('no day was given');
+  });
+});
