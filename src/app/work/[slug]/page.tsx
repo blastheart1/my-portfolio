@@ -5,6 +5,7 @@ import { isDemoVisible } from '@/lib/content-queries';
 import { findWorkProject, WORK_PROJECTS } from '@/lib/work-projects';
 import { SITE_URL } from '@/lib/site';
 import CaseStudyLayout from '@/components/work/CaseStudyLayout';
+import AutomationFlowExplorer from '@/components/work/AutomationFlow';
 
 /**
  * /work/[slug] — one case study.
@@ -53,8 +54,7 @@ export default async function WorkProjectPage({
 
   return (
     <CaseStudyLayout project={project}>
-      {/* The demo mounts here in a later phase. Until then the case study
-          stands on its own rather than framing an empty box. */}
+      {project.slug === 'automation' ? <AutomationFlowExplorer /> : null}
     </CaseStudyLayout>
   );
 }
