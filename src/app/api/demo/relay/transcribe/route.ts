@@ -27,7 +27,13 @@ const ALLOWED_TYPES = [
   'audio/x-m4a',
 ];
 
-export const POST = withDemoQuota('relay-transcribe', async (request: NextRequest) => {
+/**
+ * Everything here is cheap and happens before a provider call, so it runs as a
+ * precheck: a visitor who records 90 seconds by accident should not lose one of
+ * three runs to a validation error. Abuse is bounded by the global ceiling, not
+ * by charging for malformed requests.
+ */
+async function validate(request: NextRequest): Promise<NextResponse | null> {
   if (!(await isDemoVisible('demo_relay'))) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -73,6 +79,14 @@ export const POST = withDemoQuota('relay-transcribe', async (request: NextReques
     );
   }
 
+  return null;
+}
+
+export const POST = withDemoQuota('relay-transcribe', async (request: NextRequest) => {
+  // Re-read the body: validate() consumed its own copy. Cheap for a 5 MB cap.
+  const form = await request.formData();
+  const file = form.get('audio') as File;
+
   const key = await getProviderKey('openai');
   if (!key) {
     return NextResponse.json({
@@ -100,4 +114,4 @@ export const POST = withDemoQuota('relay-transcribe', async (request: NextReques
 
   const body = await res.json();
   return NextResponse.json({ text: body.text ?? '', degraded: false });
-});
+}, validate);

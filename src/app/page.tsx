@@ -7,6 +7,7 @@ import TechStacks from "@/components/TechStacks";
 import ScrollFadeEffect from "@/components/ScrollFadeEffect";
 import SplashWrapper from "@/components/SplashWrapper";
 import LabSection from "@/components/LabSection";
+import FeaturedWork from "@/components/work/FeaturedWork";
 import FAQSection from "@/components/FAQSection";
 import {
   getExperienceEntries,
@@ -119,6 +120,11 @@ export default async function Home() {
 
           {show('projects') && (
             <ScrollFadeEffect fadeStartPoint={0.85} fadeIntensity={1.5}>
+              {/* Hand-built case studies sit above the database-managed cards.
+                  Renders nothing when both demos are hidden. */}
+              <div className="max-w-6xl mx-auto px-6">
+                <FeaturedWork />
+              </div>
               <ProjectsSection
                 initialProjects={projectRows}
                 heading={headings.projects?.heading}

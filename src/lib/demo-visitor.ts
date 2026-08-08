@@ -88,10 +88,23 @@ export function quotaRefusal(result: QuotaResult, visitor: DemoVisitor): NextRes
  */
 export function withDemoQuota(
   demoId: string,
-  handler: (request: NextRequest, visitor: DemoVisitor) => Promise<NextResponse>
+  handler: (request: NextRequest, visitor: DemoVisitor) => Promise<NextResponse>,
+  /**
+   * Checked before any quota is spent. A request that is going to be refused
+   * anyway — a hidden demo, an unknown note — must not cost the visitor one of
+   * their three runs. Without this, hitting a switched-off demo once put the
+   * caller into a five-minute cooldown for a request that never ran — and an
+   * oversized upload cost a run despite never reaching a provider.
+   */
+  precheck?: (request: NextRequest) => Promise<NextResponse | null>
 ) {
   return async (request: NextRequest): Promise<NextResponse> => {
     const visitor = identifyVisitor(request);
+
+    if (precheck) {
+      const refusal = await precheck(request);
+      if (refusal) return attachVisitorCookie(refusal, visitor);
+    }
 
     const quota = await consumeDemoQuota({
       demoId,

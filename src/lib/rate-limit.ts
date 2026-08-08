@@ -28,10 +28,6 @@ function sweep(now: number): void {
 }
 
 /**
- * Resolve the client IP from proxy headers. Vercel sets x-forwarded-for; the
- * left-most entry is the original client.
- */
-/**
  * The client address, from a source the caller cannot forge.
  *
  * This previously returned the LEFTMOST x-forwarded-for entry. Vercel appends
@@ -44,8 +40,10 @@ function sweep(now: number): void {
  *   1. x-vercel-forwarded-for — written by Vercel's proxy, overwrites any
  *      client-supplied copy.
  *   2. x-real-ip — likewise platform-set.
- *   3. The RIGHTMOST x-forwarded-for entry — the hop nearest us, appended by
- *      the proxy, rather than the hop furthest away, supplied by the client.
+ *   3. Off-platform only, the RIGHTMOST x-forwarded-for entry — the hop nearest
+ *      us rather than the hop furthest away. On Vercel this is never reached,
+ *      because a request without the platform header did not come through the
+ *      proxy and its whole chain is caller-supplied.
  *
  * Unknown callers share one bucket, which is deliberately the harshest
  * outcome: an attacker who strips every header gets rate-limited against
@@ -57,6 +55,18 @@ export function getClientIp(request: NextRequest | Request): string {
   const platform =
     headers.get('x-vercel-forwarded-for')?.trim() || headers.get('x-real-ip')?.trim();
   if (platform) return platform;
+
+  // On Vercel the platform header is always present, so reaching here means the
+  // request did not come through the proxy — and then x-forwarded-for is
+  // entirely caller-supplied, rightmost entry included. Trusting it would hand a
+  // fresh identity to anyone who asks, which is the exact hole this function was
+  // fixed to close. Everyone who strips the headers shares one bucket instead.
+  //
+  // Gated on VERCEL rather than NODE_ENV because bundlers inline NODE_ENV at
+  // build time, and a security decision should not depend on a value frozen by
+  // the compiler. Off-platform, the forwarded chain is honoured so local runs
+  // and self-hosting still work.
+  if (process.env.VERCEL) return 'unknown';
 
   const forwarded = headers.get('x-forwarded-for');
   if (forwarded) {

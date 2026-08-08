@@ -194,6 +194,30 @@ export default function StructuredData() {
       publisher: { '@id': PERSON },
     },
 
+    // The demos are separate works, not just pages: naming them lets an
+    // assistant answer "show me something they built" with a URL a person can
+    // actually open.
+    {
+      '@type': 'CreativeWork',
+      '@id': `${SITE_URL}/work/relay#work`,
+      name: 'Relay',
+      url: `${SITE_URL}/work/relay`,
+      creator: { '@id': PERSON },
+      abstract:
+        'Turns a spoken voice note into a drafted email, with a second model from a different vendor auditing the draft against the transcript and flagging unsupported claims.',
+      keywords: 'voice to email, LLM auditing, cross-model verification, Whisper, OpenAI, Anthropic Claude',
+    },
+    {
+      '@type': 'CreativeWork',
+      '@id': `${SITE_URL}/work/automation#work`,
+      name: 'Automation Lab',
+      url: `${SITE_URL}/work/automation`,
+      creator: { '@id': PERSON },
+      abstract:
+        'Three sanitized production workflows with every step marked as a deterministic rule, a model call, an integration, or a human decision.',
+      keywords: 'workflow automation, lead routing, decision automation, human in the loop',
+    },
+
     // Mirrors the visible FAQSection, from the same FAQS array.
     {
       '@type': 'FAQPage',

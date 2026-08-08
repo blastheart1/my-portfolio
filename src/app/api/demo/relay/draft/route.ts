@@ -26,10 +26,6 @@ const BodySchema = z.object({
 });
 
 export const POST = withDemoQuota('relay', async (request: NextRequest) => {
-  if (!(await isDemoVisible('demo_relay'))) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-
   let raw: unknown;
   try {
     raw = await request.json();
@@ -72,4 +68,12 @@ export const POST = withDemoQuota('relay', async (request: NextRequest) => {
   }
 
   return NextResponse.json(await runDraftPipeline(note));
-});
+},
+  // Visibility is checked before any quota is spent: switching the demo off in
+  // /edit must stop the spending, and a request to a hidden demo must not cost
+  // the visitor a run.
+  async () =>
+    (await isDemoVisible('demo_relay'))
+      ? null
+      : NextResponse.json({ error: 'Not found' }, { status: 404 })
+);

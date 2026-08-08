@@ -79,6 +79,19 @@ Freelance and contract engagements, priced in PHP and USD.
 Also available: AI chatbot integration, API and platform integration work,
 workflow automation, and QA/test-strategy consulting.
 
+## Live demos on this site
+
+These run in the browser at codebyluis.dev, no signup:
+
+- **Relay** — https://codebyluis.dev/work/relay — turns a spoken voice note
+  into a drafted email. One model writes it; a model from a different vendor
+  audits the draft against the transcript and flags any claim the recording
+  does not support. Rate limited, since it calls paid providers.
+- **Automation Lab** — https://codebyluis.dev/work/automation — three real
+  workflows (lead intake and routing, missed-call handling, photo-based
+  progress billing), sanitized, with every step marked as a deterministic rule,
+  a model call, an integration, or a human decision.
+
 ## Selected work
 
 - **Advanced Chatbot** — portfolio chatbot combining TensorFlow.js intent
