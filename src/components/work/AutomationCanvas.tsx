@@ -33,19 +33,8 @@ import { toGraph } from '@/lib/automation-graph';
  * separated on a canvas is what makes that claim concrete.
  */
 
-const KIND_ACCENT: Record<NodeKind, string> = {
-  io: 'border-l-gray-400 dark:border-l-gray-500',
-  rule: 'border-l-emerald-500 dark:border-l-emerald-400',
-  model: 'border-l-violet-500 dark:border-l-violet-400',
-  human: 'border-l-amber-500 dark:border-l-amber-400',
-};
-
-const KIND_BADGE: Record<NodeKind, string> = {
-  io: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-  rule: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
-  model: 'bg-violet-50 text-violet-800 dark:bg-violet-950 dark:text-violet-200',
-  human: 'bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200',
-};
+/** One neutral treatment; the words carry the meaning. */
+const KIND_BADGE = 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
 
 type StepData = { step: FlowNode; index: number };
 
@@ -54,8 +43,11 @@ function StepNode({ data }: NodeProps) {
 
   return (
     <div
-      className={`w-56 rounded-lg border border-l-4 border-gray-200 bg-white p-3 text-left shadow-sm
-                  dark:border-gray-700 dark:bg-gray-900 ${KIND_ACCENT[step.kind]}`}
+      // Uniform. The kind is carried by the badge below, in words — colour was
+      // never the accessible signal, so removing it loses nothing and the
+      // canvas reads far calmer with twelve flows in it.
+      className="w-56 rounded-lg border border-gray-200 bg-white p-3 text-left shadow-sm
+                 dark:border-gray-700 dark:bg-gray-900"
     >
       <Handle type="target" position={Position.Left} className="!bg-gray-300 dark:!bg-gray-600" />
 
@@ -68,7 +60,7 @@ function StepNode({ data }: NodeProps) {
 
       {/* The kind is always spelled out, never carried by the accent colour
           alone — this has to survive greyscale and colour blindness. */}
-      <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] ${KIND_BADGE[step.kind]}`}>
+      <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] ${KIND_BADGE}`}>
         {NODE_KIND_LABEL[step.kind]}
       </span>
 

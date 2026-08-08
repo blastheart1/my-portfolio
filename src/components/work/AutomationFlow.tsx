@@ -36,26 +36,15 @@ const AutomationCanvas = dynamic(() => import('./AutomationCanvas'), {
  * distinguish the hues.
  */
 
-const KIND_STYLES: Record<NodeKind, string> = {
-  io: 'border-l-gray-400 dark:border-l-gray-500',
-  rule: 'border-l-emerald-500 dark:border-l-emerald-400',
-  model: 'border-l-violet-500 dark:border-l-violet-400',
-  human: 'border-l-amber-500 dark:border-l-amber-400',
-};
-
-const KIND_BADGE: Record<NodeKind, string> = {
-  io: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-  rule: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
-  model: 'bg-violet-50 text-violet-800 dark:bg-violet-950 dark:text-violet-200',
-  human: 'bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200',
-};
+/** One neutral treatment; the kind label carries the meaning. */
+const KIND_BADGE = 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
 
 function Node({ node, index }: { node: FlowNode; index: number }) {
   const [open, setOpen] = React.useState(false);
   const detailId = `${node.id}-detail`;
 
   return (
-    <li className={`border-l-2 pl-4 ${KIND_STYLES[node.kind]}`}>
+    <li className="border-l border-gray-200 pl-4 dark:border-gray-700">
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
@@ -69,7 +58,7 @@ function Node({ node, index }: { node: FlowNode; index: number }) {
               {String(index + 1).padStart(2, '0')}
             </span>
             <span className="font-medium text-gray-900 dark:text-gray-100">{node.label}</span>
-            <span className={`rounded-full px-2 py-0.5 text-[11px] ${KIND_BADGE[node.kind]}`}>
+            <span className={`rounded-full px-2 py-0.5 text-[11px] ${KIND_BADGE}`}>
               {NODE_KIND_LABEL[node.kind]}
             </span>
           </span>
@@ -105,29 +94,65 @@ export default function AutomationFlowExplorer() {
     <>
       <DemoIntro {...AUTOMATION_INTRO} />
 
-      <div className="p-6">
-      <div role="tablist" aria-label="Automation flows" className="flex flex-wrap gap-2">
-        {AUTOMATION_FLOWS.map(flow => (
-          <button
-            key={flow.id}
-            role="tab"
-            aria-selected={flow.id === activeId}
-            onClick={() => {
-              setActiveId(flow.id);
-              setSelected(null);
-            }}
-            className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
-              flow.id === activeId
-                ? 'border-gray-900 text-gray-900 dark:border-gray-100 dark:text-gray-100'
-                : 'border-gray-200 text-gray-500 hover:border-gray-400 dark:border-gray-700 dark:text-gray-400'
-            }`}
-          >
-            {flow.title}
-          </button>
-        ))}
+      <div className="grid gap-6 p-6 md:grid-cols-[minmax(0,15rem)_1fr]">
+      <div>
+      {/* A uniform list, not pills. Twelve titles of differing length wrapped
+          into an uneven tag cloud, and it did not match the examples list in
+          the other demo. Same visual language, fixed row height, one-line
+          summary. */}
+      <div className="hidden md:block">
+        <h3 className="text-xs uppercase tracking-wide text-gray-400">Workflows</h3>
+        <ul className="mt-3 space-y-1">
+          {AUTOMATION_FLOWS.map(flow => (
+            <li key={flow.id}>
+              <button
+                type="button"
+                aria-current={flow.id === activeId}
+                onClick={() => {
+                  setActiveId(flow.id);
+                  setSelected(null);
+                }}
+                className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
+                  flow.id === activeId
+                    ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
+                    : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800/50'
+                }`}
+              >
+                <span className="block truncate text-sm font-medium">{flow.title}</span>
+                <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                  {flow.nodes.length} steps
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      <div className="mt-6 grid gap-2 sm:grid-cols-2">
+      {/* Below md a sidebar plus a canvas does not fit, so the same choice is
+          a native select. */}
+      <label className="block md:hidden">
+        <span className="text-xs uppercase tracking-wide text-gray-400">Workflow</span>
+        <select
+          value={activeId}
+          onChange={e => {
+            setActiveId(e.target.value);
+            setSelected(null);
+          }}
+          className="mt-1 w-full rounded-lg border border-gray-200 bg-transparent px-3 py-2
+                     text-sm dark:border-gray-700"
+        >
+          {AUTOMATION_FLOWS.map(flow => (
+            <option key={flow.id} value={flow.id}>
+              {flow.title}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      </div>
+
+      <div className="min-w-0">
+      <div className="grid gap-2 sm:grid-cols-2">
         <div>
           <h3 className="text-xs uppercase tracking-wide text-gray-400">The problem</h3>
           <p className="mt-1 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
@@ -152,7 +177,7 @@ export default function AutomationFlowExplorer() {
         <div className="mt-4 hidden rounded-lg border border-gray-200 p-4 md:block dark:border-gray-700">
           <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
             {selected.label}
-            <span className={`ml-2 rounded-full px-2 py-0.5 text-[11px] ${KIND_BADGE[selected.kind]}`}>
+            <span className={`ml-2 rounded-full px-2 py-0.5 text-[11px] ${KIND_BADGE}`}>
               {NODE_KIND_LABEL[selected.kind]}
             </span>
           </h4>
@@ -173,6 +198,7 @@ export default function AutomationFlowExplorer() {
         handle input no rulebook would finish describing. Deciding which is which is most of the
         work, and getting it wrong is why automations get switched off.
       </p>
+      </div>
     </div>
     </>
   );

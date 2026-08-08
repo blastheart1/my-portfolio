@@ -86,7 +86,7 @@ describe('happy path', () => {
     const user = userEvent.setup();
     render(<AutomationFlowExplorer />);
 
-    await user.click(screen.getByRole('tab', { name: AUTOMATION_FLOWS[1].title }));
+    await user.click(screen.getByRole('button', { name: new RegExp(AUTOMATION_FLOWS[1].title) }));
 
     expect(screen.getByText(AUTOMATION_FLOWS[1].nodes[0].label)).toBeInTheDocument();
     expect(screen.queryByText(AUTOMATION_FLOWS[0].nodes[0].label)).toBeNull();
@@ -205,5 +205,57 @@ describe('the expanded catalogue', () => {
     const titles = AUTOMATION_FLOWS.map(f => f.title);
     expect(new Set(ids).size).toBe(ids.length);
     expect(new Set(titles).size).toBe(titles.length);
+  });
+});
+
+
+describe('the flow selector is a uniform list', () => {
+  it('offers no pill tablist', () => {
+    render(<AutomationFlowExplorer />);
+
+    // Twelve titles of differing length wrapped into an uneven tag cloud.
+    expect(screen.queryAllByRole('tab')).toHaveLength(0);
+  });
+
+  it('lists every flow as a row', () => {
+    render(<AutomationFlowExplorer />);
+
+    for (const flow of AUTOMATION_FLOWS) {
+      expect(screen.getByRole('button', { name: new RegExp(flow.title) })).toBeInTheDocument();
+    }
+  });
+
+  it('marks the active row rather than restyling it alone', () => {
+    render(<AutomationFlowExplorer />);
+
+    const active = screen.getByRole('button', { name: new RegExp(AUTOMATION_FLOWS[0].title) });
+    expect(active).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('offers a native select below md, where a sidebar does not fit', () => {
+    render(<AutomationFlowExplorer />);
+
+    const select = screen.getByRole('combobox');
+    expect(select).toBeInTheDocument();
+    expect(screen.getAllByRole('option')).toHaveLength(AUTOMATION_FLOWS.length);
+  });
+});
+
+describe('nodes carry no colour-only meaning', () => {
+  it('uses one neutral badge treatment for every kind', () => {
+    const { container } = render(<AutomationFlowExplorer />);
+
+    // Colour was never the accessible signal — the kind label is — so the
+    // per-kind palette only added noise across twelve flows.
+    expect(container.innerHTML).not.toMatch(/emerald|violet|amber-/);
+  });
+
+  it('still states each kind in words', () => {
+    render(<AutomationFlowExplorer />);
+
+    for (const node of AUTOMATION_FLOWS[0].nodes) {
+      const row = screen.getByRole('button', { name: new RegExp(node.label) });
+      expect(within(row).getByText(NODE_KIND_LABEL[node.kind])).toBeInTheDocument();
+    }
   });
 });
