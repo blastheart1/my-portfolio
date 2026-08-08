@@ -53,16 +53,58 @@ type Row = Record<string, unknown>;
 
 // ─── Section Visibility ───────────────────────────────────────────────────────
 
+/**
+ * Sections that gate a demo calling a paid provider, rather than editorial
+ * copy. These resolve fail-closed; see isDemoVisible.
+ */
+export const DEMO_SECTION_IDS = [
+  'demo_relay',
+  'demo_resume_ai',
+  'automation_lab',
+] as const;
+
+export type DemoSectionId = (typeof DEMO_SECTION_IDS)[number];
+
 export async function getSectionVisibility(): Promise<Record<string, boolean>> {
   try {
     const sql = getSql();
     const rows = (await sql`SELECT id, visible FROM sections ORDER BY sort_order`) as Row[];
     return Object.fromEntries(rows.map((r) => [r.id as string, r.visible as boolean]));
   } catch {
+    // Editorial sections stay visible: a database hiccup must not blank the
+    // site's actual content, and page.tsx reads this as `!== false`.
+    //
+    // The demo ids are listed explicitly as false rather than left out. Absence
+    // would also read as hidden through `!== false`, but only by accident, and
+    // the next person to add a demo would have no signal that omission was
+    // load-bearing.
     return {
       hero: true, about: true, experience: true, skills: true,
       projects: true, services: true, blog: true, contact: true,
+      ...Object.fromEntries(DEMO_SECTION_IDS.map((id) => [id, false])),
     };
+  }
+}
+
+/**
+ * Whether a demo section may be served.
+ *
+ * Deliberately the inverse of the `visibility[id] !== false` rule the home page
+ * uses. An unknown or unreadable editorial section should still render; an
+ * unknown or unreadable *demo* must not, because these routes spend money and
+ * their quota counters live in the same database that just failed to answer.
+ *
+ * Absent row, unknown id, or a thrown query all mean hidden.
+ */
+export async function isDemoVisible(id: string): Promise<boolean> {
+  if (!(DEMO_SECTION_IDS as readonly string[]).includes(id)) return false;
+
+  try {
+    const sql = getSql();
+    const rows = (await sql`SELECT visible FROM sections WHERE id = ${id}`) as Row[];
+    return rows[0]?.visible === true;
+  } catch {
+    return false;
   }
 }
 

@@ -32,13 +32,13 @@ afterEach(() => {
 });
 
 describe('P4 — fallbacks when the database is unavailable', () => {
-  it('getSectionVisibility returns every section visible', async () => {
+  it('getSectionVisibility keeps every editorial section visible', async () => {
     const { getSectionVisibility } = await import('../content-queries');
     const visibility = await getSectionVisibility();
 
     // page.tsx does `visibility[id] !== false`, so the safe default is "show".
     // Returning {} would also work, but an explicit map documents intent.
-    expect(visibility).toEqual({
+    expect(visibility).toMatchObject({
       hero: true,
       about: true,
       experience: true,
@@ -48,6 +48,18 @@ describe('P4 — fallbacks when the database is unavailable', () => {
       blog: true,
       contact: true,
     });
+  });
+
+  it('getSectionVisibility hides the demo sections', async () => {
+    const { getSectionVisibility, DEMO_SECTION_IDS } = await import('../content-queries');
+    const visibility = await getSectionVisibility();
+
+    // The opposite default, deliberately. These gate endpoints that spend
+    // money, and their quota counters live in the database that just failed to
+    // answer — so an outage must hide them, not expose them.
+    for (const id of DEMO_SECTION_IDS) {
+      expect(visibility[id]).toBe(false);
+    }
   });
 
   it('getSectionContent returns an empty record', async () => {
