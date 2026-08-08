@@ -6,6 +6,7 @@ import { findWorkProject, WORK_PROJECTS } from '@/lib/work-projects';
 import { SITE_URL } from '@/lib/site';
 import CaseStudyLayout from '@/components/work/CaseStudyLayout';
 import AutomationFlowExplorer from '@/components/work/AutomationFlow';
+import RelayDemo from '@/components/work/RelayDemo';
 
 /**
  * /work/[slug] — one case study.
@@ -54,7 +55,8 @@ export default async function WorkProjectPage({
 
   return (
     <CaseStudyLayout project={project}>
-      {project.slug === 'automation' ? <AutomationFlowExplorer /> : null}
+      {project.slug === 'automation' && <AutomationFlowExplorer />}
+      {project.slug === 'relay' && <RelayDemo />}
     </CaseStudyLayout>
   );
 }
