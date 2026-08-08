@@ -34,8 +34,11 @@ export default function Tooltip({
         onMouseLeave={() => setOpen(false)}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
-        // Touch has no hover: tapping toggles instead of doing nothing.
-        onClick={() => setOpen(o => !o)}
+        // Touch has no hover, so a tap has to open it. Deliberately not a
+        // toggle: a tap fires pointerover and focus first, both of which have
+        // already opened it, so toggling would close it again and one tap
+        // would show nothing. Blur, pointer-leave and Escape close it.
+        onClick={() => setOpen(true)}
         onKeyDown={e => {
           if (e.key === 'Escape') setOpen(false);
         }}
@@ -48,9 +51,9 @@ export default function Tooltip({
         <span
           id={id}
           role="tooltip"
-          className="absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-[16rem] -translate-x-1/2
-                     rounded-lg bg-gray-900 px-3 py-2 text-left text-xs font-normal leading-relaxed
-                     text-white shadow-lg dark:bg-gray-800"
+          className="absolute bottom-full right-0 z-50 mb-2 w-max max-w-[22rem]
+                     whitespace-pre-line rounded-lg bg-gray-900 px-3 py-2 text-left text-xs
+                     font-normal leading-relaxed text-white shadow-lg dark:bg-gray-800"
         >
           {content}
         </span>

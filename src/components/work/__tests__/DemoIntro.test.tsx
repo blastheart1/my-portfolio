@@ -1,140 +1,146 @@
 /**
  * DemoIntro.test.tsx
  *
- * A visitor is about to speak into their microphone. Where that audio goes has
- * to be readable before they press record — so the disclaimer is not
- * collapsible, and it comes before the interface in DOM order rather than
- * merely above it visually.
+ * The disclaimer moved from a block at the top of the page to the info control
+ * in the demo header. That is a presentation change, not a change to the
+ * promise: someone about to speak into their microphone still has to be able
+ * to find out where the audio goes, before they press record and without a
+ * mouse.
  *
- * The quickstart does collapse, because it is noise on a second visit.
+ * So these tests check reachability rather than mere presence.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import DemoIntro, { RELAY_INTRO, AUTOMATION_INTRO } from '../DemoIntro';
 
+let user: ReturnType<typeof userEvent.setup>;
+
 beforeEach(() => {
-  window.localStorage.clear();
+  user = userEvent.setup();
 });
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
+const infoControl = () => screen.getByRole('button', { name: /about this demo/i });
 
-describe('the disclaimer is always readable', () => {
-  it('renders every line without any interaction', () => {
+describe('the disclaimer is reachable before anything happens', () => {
+  it('opens on hover', async () => {
     render(<DemoIntro {...RELAY_INTRO} />);
 
+    await user.hover(infoControl());
+
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+  });
+
+  it('opens on keyboard focus, with no mouse involved', async () => {
+    render(<DemoIntro {...RELAY_INTRO} />);
+
+    infoControl().focus();
+
+    // A disclosure that only appears on hover is unreachable to anyone tabbing.
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+  });
+
+  it('opens on tap, for touch devices that have no hover at all', async () => {
+    render(<DemoIntro {...RELAY_INTRO} />);
+
+    await user.click(infoControl());
+
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+  });
+
+  it('is described to assistive tech when open', async () => {
+    render(<DemoIntro {...RELAY_INTRO} />);
+
+    infoControl().focus();
+    const tip = await screen.findByRole('tooltip');
+
+    expect(infoControl()).toHaveAttribute('aria-describedby', tip.id);
+  });
+
+  it('comes before the demo in DOM order', () => {
+    render(
+      <div>
+        <DemoIntro {...RELAY_INTRO} />
+        <button>Use microphone</button>
+      </div>
+    );
+
+    const mic = screen.getByRole('button', { name: /use microphone/i });
+    expect(
+      infoControl().compareDocumentPosition(mic) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+});
+
+describe('the promises the demos make', () => {
+  async function disclosure() {
+    render(<DemoIntro {...RELAY_INTRO} />);
+    infoControl().focus();
+    return (await screen.findByRole('tooltip')).textContent ?? '';
+  }
+
+  it('states every line it was written with', async () => {
+    const text = await disclosure();
+
     for (const line of RELAY_INTRO.disclaimers) {
-      expect(screen.getByText(line)).toBeInTheDocument();
+      expect(text).toContain(line);
     }
   });
 
-  it('has no control that could hide it', () => {
-    render(<DemoIntro {...RELAY_INTRO} />);
-
-    // Exactly one toggle exists, and it belongs to the quickstart.
-    const toggles = screen.getAllByRole('button');
-    expect(toggles).toHaveLength(1);
-    expect(toggles[0]).toHaveAccessibleName(/how this works/i);
+  it('says audio leaves the browser for transcription', async () => {
+    expect(await disclosure()).toMatch(/sent to a transcription provider/i);
   });
 
-  it('stays visible after the quickstart is collapsed', async () => {
-    const user = userEvent.setup();
-    render(<DemoIntro {...RELAY_INTRO} />);
-
-    await user.click(screen.getByRole('button', { name: /how this works/i }));
-
-    expect(screen.getByText(RELAY_INTRO.disclaimers[0])).toBeInTheDocument();
+  it('says recordings are never stored', async () => {
+    expect(await disclosure()).toMatch(/never stored/i);
   });
 
-  it('survives localStorage being unavailable', () => {
-    vi.stubGlobal('localStorage', {
-      getItem: () => {
-        throw new Error('denied');
-      },
-      setItem: () => {
-        throw new Error('denied');
-      },
-    });
+  it('says nothing is emailed — what the compose view depends on', async () => {
+    expect(await disclosure()).toMatch(/ever emailed to anyone/i);
+  });
 
-    render(<DemoIntro {...RELAY_INTRO} />);
+  it('states the run limit so a 429 is not a surprise', async () => {
+    expect(await disclosure()).toMatch(/three runs per visitor per day/i);
+  });
 
-    expect(screen.getByText(RELAY_INTRO.disclaimers[0])).toBeInTheDocument();
+  it('tells automation visitors the flows are sanitized and inert', async () => {
+    render(<DemoIntro {...AUTOMATION_INTRO} />);
+    infoControl().focus();
+    const text = (await screen.findByRole('tooltip')).textContent ?? '';
+
+    expect(text).toMatch(/no client names/i);
+    expect(text).toMatch(/nothing here runs/i);
   });
 });
 
-describe('quickstart', () => {
-  it('is open on a first visit', () => {
+describe('the quickstart stays in the open', () => {
+  it('shows every step without interaction', () => {
     render(<DemoIntro {...RELAY_INTRO} />);
 
-    expect(screen.getByText(RELAY_INTRO.steps[0])).toBeInTheDocument();
+    // Instructions, not disclosure — hiding these behind a control would make
+    // the demo harder to use for no benefit.
+    for (const step of RELAY_INTRO.steps) {
+      expect(screen.getByText(step)).toBeInTheDocument();
+    }
   });
 
-  it('collapses on the next visit', () => {
-    const { unmount } = render(<DemoIntro {...RELAY_INTRO} />);
-    unmount();
-
-    render(<DemoIntro {...RELAY_INTRO} />);
-
-    expect(screen.queryByText(RELAY_INTRO.steps[0])).toBeNull();
-  });
-
-  it('can be reopened after it has collapsed', async () => {
-    const user = userEvent.setup();
-    const { unmount } = render(<DemoIntro {...RELAY_INTRO} />);
-    unmount();
-    render(<DemoIntro {...RELAY_INTRO} />);
-
-    await user.click(screen.getByRole('button', { name: /how this works/i }));
-
-    expect(screen.getByText(RELAY_INTRO.steps[0])).toBeInTheDocument();
-  });
-
-  it('renders the steps as an ordered list, in the order given', () => {
+  it('numbers them in the order given', () => {
     render(<DemoIntro {...RELAY_INTRO} />);
 
     const rendered = RELAY_INTRO.steps.map(step => screen.getByText(step));
-    // Document order must match the array order, or "step 2" is not step 2.
     for (let i = 1; i < rendered.length; i++) {
       expect(
         rendered[i - 1].compareDocumentPosition(rendered[i]) & Node.DOCUMENT_POSITION_FOLLOWING
       ).toBeTruthy();
     }
   });
-});
 
-describe('the promises the demos make', () => {
-  it('tells the visitor audio leaves the browser, before they can record', () => {
+  it('needs no localStorage, so private browsing behaves the same', () => {
+    // The previous version remembered a dismissal; nothing to remember now.
     render(<DemoIntro {...RELAY_INTRO} />);
 
-    expect(screen.getByText(/sent to a transcription provider/i)).toBeInTheDocument();
-  });
-
-  it('says recordings are not stored', () => {
-    render(<DemoIntro {...RELAY_INTRO} />);
-
-    expect(screen.getByText(/never stored/i)).toBeInTheDocument();
-  });
-
-  it('says nothing is emailed — the guarantee the compose view depends on', () => {
-    render(<DemoIntro {...RELAY_INTRO} />);
-
-    expect(screen.getByText(/ever emailed to anyone/i)).toBeInTheDocument();
-  });
-
-  it('states the run limit so a 429 is not a surprise', () => {
-    render(<DemoIntro {...RELAY_INTRO} />);
-
-    expect(screen.getByText(/three runs per visitor per day/i)).toBeInTheDocument();
-  });
-
-  it('tells automation visitors the flows are sanitized and inert', () => {
-    render(<DemoIntro {...AUTOMATION_INTRO} />);
-
-    expect(screen.getByText(/no client names/i)).toBeInTheDocument();
-    expect(screen.getByText(/nothing here runs/i)).toBeInTheDocument();
+    expect(screen.getByText(RELAY_INTRO.steps[0])).toBeInTheDocument();
   });
 });

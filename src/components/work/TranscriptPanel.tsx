@@ -58,7 +58,12 @@ export default function TranscriptPanel({
         </div>
       )}
 
-      <div className="max-h-80 overflow-y-auto px-4 py-3">
+      {/* Fixed height, not max-height. With max-h the panel grew and shrank
+          as you switched between notes with different segment counts, pushing
+          everything below it and scrolling the page under the pointer. The
+          header and player sit outside this region so the controls never
+          scroll away. */}
+      <div className="h-80 overflow-y-auto px-4 py-3">
         {segments && segments.length > 0 ? (
           <ol className="space-y-3">
             {segments.map(segment => (
