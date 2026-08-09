@@ -123,7 +123,10 @@ export default async function Home() {
               {/* Hand-built case studies sit above the database-managed cards.
                   Renders nothing when both demos are hidden. */}
               <div className="max-w-6xl mx-auto px-6">
-                <FeaturedWork />
+                <FeaturedWork
+                  heading={headings.work?.heading}
+                  subheading={headings.work?.subheading}
+                />
               </div>
               <ProjectsSection
                 initialProjects={projectRows}

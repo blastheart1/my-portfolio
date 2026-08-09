@@ -16,7 +16,13 @@ import { WORK_PROJECTS } from '@/lib/work-projects';
  * Renders nothing when both demos are hidden, so the home page shows no
  * heading pointing at an empty index.
  */
-export default async function FeaturedWork() {
+export default async function FeaturedWork({
+  heading,
+  subheading,
+}: {
+  heading?: string;
+  subheading?: string;
+} = {}) {
   const entries = await Promise.all(
     WORK_PROJECTS.map(async project => ({
       project,
@@ -28,9 +34,19 @@ export default async function FeaturedWork() {
   if (featured.length === 0) return null;
 
   return (
-    <div className="mb-12">
+    <div className="mb-12 mt-24">
+      {/* Same heading treatment as every other section on the page — Jost
+          Light uppercase with a sentence-case subheading. Both come from
+          section_content so they are editable from /edit like the rest, with a
+          fallback for a database outage. */}
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <h3 className="text-xs uppercase tracking-wide text-gray-400">Try them yourself</h3>
+        <h2 className="text-4xl font-light uppercase leading-[0.95] tracking-[-0.02em] text-gray-900 md:text-5xl dark:text-gray-100">
+          {heading || 'Work.'}
+          <span className="mt-2 block font-display text-xl font-light normal-case leading-snug tracking-[0.01em] text-gray-400 md:text-2xl dark:text-gray-500">
+            {subheading || 'Things you can actually try, not screenshots.'}
+          </span>
+        </h2>
+
         <Link
           href="/work"
           className="inline-flex items-center gap-1 text-sm text-gray-500 transition-colors
@@ -41,7 +57,7 @@ export default async function FeaturedWork() {
         </Link>
       </div>
 
-      <ul className="mt-4 grid gap-4 md:grid-cols-2">
+      <ul className="mt-10 grid gap-4 md:grid-cols-2">
         {featured.map(project => (
           <li key={project.slug}>
             <Link
