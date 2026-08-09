@@ -107,11 +107,16 @@ export default function RecorderPanel({
             type="button"
             onClick={rec.toggle}
             disabled={busy || rec.recState === 'requesting' || rec.recState === 'denied'}
-            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium
+            // Secondary, matching Upload beside it. Recording is an input,
+            // not the action — the filled treatment belongs to Draft, and two
+            // dark buttons in one view means neither reads as the primary one.
+            // Only the active recording state fills, because stopping is
+            // urgent in a way that starting is not.
+            className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium
                         transition-colors disabled:opacity-50 ${
                           recording
                             ? 'bg-red-600 text-white hover:bg-red-700'
-                            : 'bg-gray-900 text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200'
+                            : 'border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
                         }`}
           >
             {recording ? (
@@ -138,8 +143,9 @@ export default function RecorderPanel({
           onClick={() => inputRef.current?.click()}
           disabled={busy || recording}
           className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2
-                     text-sm transition-colors hover:bg-gray-50 disabled:opacity-50
-                     dark:border-gray-700 dark:hover:bg-gray-800"
+                     text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50
+                     disabled:opacity-50 dark:border-gray-700 dark:text-gray-300
+                     dark:hover:bg-gray-800"
         >
           <Upload className="size-4" aria-hidden="true" />
           Upload a clip

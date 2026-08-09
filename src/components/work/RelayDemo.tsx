@@ -14,6 +14,7 @@ import Tooltip from '@/components/ui/tooltip';
 import DemoIntro, { RELAY_INTRO } from './DemoIntro';
 import RecorderPanel, { type CapturedAudio } from './RecorderPanel';
 import TranscriptPanel from './TranscriptPanel';
+import RelayInbox from './RelayInbox';
 
 /**
  * The Relay demo.
@@ -195,56 +196,53 @@ export default function RelayDemo() {
       <DemoIntro {...RELAY_INTRO} />
 
       <div className="p-4 sm:p-6">
-        {/* Header: what is being drafted, and its state. The reference app
-            carries an app sidebar here; this is one page inside a portfolio,
-            so the example picker takes that job instead. */}
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h3 className="flex flex-wrap items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {result?.draft.subject ?? selected?.suggestedSubject ?? 'Draft review'}
-              {result && (
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-normal ${
-                    result.status === 'ready'
-                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
-                      : 'bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200'
-                  }`}
-                >
-                  {result.status === 'ready' ? 'Draft ready' : 'Needs review'}
-                </span>
-              )}
-            </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {usingCapture
-                ? 'From your recording · captured just now'
-                : selected
-                  ? `${selected.context} · example`
-                  : 'Pick an example, record, or upload a clip'}
-            </p>
-          </div>
+        {/* The examples as an inbox, not a select. A dropdown hid what they
+            were until you opened it and gave no sense that each demonstrates
+            something different, which is the only reason there are three. */}
+        <RelayInbox
+          rows={notes.map(note => ({
+            note,
+            status:
+              result && !usingCapture && note.id === selectedId
+                ? result.status === 'ready'
+                  ? ('Draft ready' as const)
+                  : ('Needs review' as const)
+                : undefined,
+          }))}
+          selectedId={usingCapture ? null : selectedId}
+          disabled={running || transcribing}
+          onSelect={id => {
+            setSelectedId(id);
+            setCaptured(null);
+            setCaptureText('');
+            setCaptureSegments([]);
+            setResult(null);
+            setError(null);
+          }}
+        />
 
-          <label className="shrink-0">
-            <span className="sr-only">Example note</span>
-            <select
-              value={usingCapture ? '' : (selectedId ?? '')}
-              onChange={e => {
-                setSelectedId(e.target.value);
-                setCaptured(null);
-                setCaptureText('');
-                setCaptureSegments([]);
-                setResult(null);
-                setError(null);
-              }}
-              className="rounded-lg border border-gray-200 bg-transparent px-3 py-1.5 text-sm dark:border-gray-700"
-            >
-              {usingCapture && <option value="">Your recording</option>}
-              {notes.map(note => (
-                <option key={note.id} value={note.id}>
-                  {note.correspondent} — {note.context}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div className="mt-6 min-w-0">
+          <h3 className="flex flex-wrap items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+            {result?.draft.subject ?? selected?.suggestedSubject ?? 'Draft review'}
+            {result && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-normal ${
+                  result.status === 'ready'
+                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
+                    : 'bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200'
+                }`}
+              >
+                {result.status === 'ready' ? 'Draft ready' : 'Needs review'}
+              </span>
+            )}
+          </h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {usingCapture
+              ? 'From your recording · captured just now'
+              : selected
+                ? `${selected.context} · example`
+                : 'Pick an example, record, or upload a clip'}
+          </p>
         </div>
 
         {/* Tone, length and model on one row, as in the reference. */}

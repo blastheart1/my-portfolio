@@ -81,8 +81,14 @@ export interface TranscriptSegment {
   text: string;
 }
 
+/** What the reply is: shown as the row label in the inbox. */
+export type NoteKind = 'Follow-up' | 'Intro' | 'Reply' | 'Note';
+
 export interface DemoNote {
   id: string;
+  kind: NoteKind;
+  /** Relative time shown in the inbox. Static, since these are examples. */
+  captured: string;
   /** Who the reply is to. */
   correspondent: string;
   context: string;

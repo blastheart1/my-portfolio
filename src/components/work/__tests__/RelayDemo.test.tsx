@@ -71,9 +71,12 @@ describe('happy path', () => {
     primeMount();
     render(<RelayDemo />);
 
-    const picker = await screen.findByRole('combobox', { name: /example note/i });
+    // The select became an inbox list: a dropdown hid what the examples were
+    // until you opened it.
     for (const note of SEED_NOTES) {
-      expect(within(picker).getByRole('option', { name: new RegExp(note.correspondent) })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('button', { name: new RegExp(note.suggestedSubject, 'i') })
+      ).toBeInTheDocument();
     }
     // The transcript now renders as timestamped segments rather than one blob.
     expect(await screen.findByText(SEED_NOTES[0].segments![0].text)).toBeInTheDocument();
@@ -352,5 +355,90 @@ describe('the review panels', () => {
     // A partial response reaching .filter() took the whole panel down, after
     // the visitor had already spent one of three runs.
     expect(await screen.findByText(/faithfulness check/i)).toBeInTheDocument();
+  });
+});
+
+describe('the example inbox', () => {
+  it('shows every example at once, with enough to tell them apart', async () => {
+    primeMount();
+    render(<RelayDemo />);
+
+    for (const note of SEED_NOTES) {
+      const row = await screen.findByRole('button', { name: new RegExp(note.suggestedSubject, 'i') });
+      // Kind, correspondent and subject are all visible without opening
+      // anything — the reason a list replaced the select.
+      expect(row).toHaveTextContent(note.correspondent);
+      expect(row).toHaveTextContent(note.kind);
+    }
+  });
+
+  it('offers no dropdown to choose an example', async () => {
+    primeMount();
+    render(<RelayDemo />);
+    await screen.findByRole('button', { name: /draft the reply/i });
+
+    expect(screen.queryByRole('combobox')).toBeNull();
+  });
+
+  it('marks the selected row rather than only restyling it', async () => {
+    primeMount();
+    render(<RelayDemo />);
+
+    const first = await screen.findByRole('button', {
+      name: new RegExp(SEED_NOTES[0].suggestedSubject, 'i'),
+    });
+    expect(first).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('labels a row Example until a draft exists for it', async () => {
+    primeMount();
+    render(<RelayDemo />);
+
+    const row = await screen.findByRole('button', {
+      name: new RegExp(SEED_NOTES[0].suggestedSubject, 'i'),
+    });
+    expect(row).toHaveTextContent('Example');
+  });
+
+  it('shows the draft status on the row once one has run', async () => {
+    primeMount();
+    fetchMock.mockResolvedValueOnce(jsonResponse(CLEAN_RESULT));
+
+    await draft();
+
+    const row = await screen.findByRole('button', {
+      name: new RegExp(SEED_NOTES[0].suggestedSubject, 'i'),
+    });
+    expect(row).toHaveTextContent('Draft ready');
+  });
+});
+
+describe('one primary action', () => {
+  it('keeps capture controls secondary to drafting', async () => {
+    primeMount();
+    render(<RelayDemo />);
+
+    const mic = await screen.findByRole('button', { name: /use microphone/i });
+    const upload = screen.getByRole('button', { name: /upload a clip/i });
+    const drafting = screen.getByRole('button', { name: /draft the reply/i });
+
+    // Two filled dark buttons in one view means neither reads as the primary
+    // one. Capture is an input; drafting is the action.
+    expect(drafting.className).toMatch(/bg-gray-900/);
+    expect(mic.className).not.toMatch(/bg-gray-900/);
+    expect(upload.className).not.toMatch(/bg-gray-900/);
+  });
+
+  it('gives the two capture controls the same treatment as each other', async () => {
+    primeMount();
+    render(<RelayDemo />);
+
+    const mic = await screen.findByRole('button', { name: /use microphone/i });
+    const upload = screen.getByRole('button', { name: /upload a clip/i });
+
+    for (const cls of ['border', 'text-sm', 'font-medium', 'rounded-lg']) {
+      expect(mic.className, cls).toContain(cls);
+      expect(upload.className, cls).toContain(cls);
+    }
   });
 });

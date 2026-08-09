@@ -15,6 +15,8 @@ import type { DemoNote, DraftResult } from './types';
 export const SEED_NOTES: DemoNote[] = [
   {
     id: 'lewis',
+    kind: 'Follow-up',
+    captured: 'Just now',
     correspondent: 'Lewis',
     context: 'Follow-up after an intro call about onboarding',
     transcript:
@@ -30,6 +32,8 @@ export const SEED_NOTES: DemoNote[] = [
   },
   {
     id: 'testarossa',
+    kind: 'Reply',
+    captured: '8:02 AM',
     correspondent: 'Testarossa',
     context: 'Reply to a workflow document sent for review',
     transcript:
@@ -45,6 +49,8 @@ export const SEED_NOTES: DemoNote[] = [
   },
   {
     id: 'rimuru',
+    kind: 'Reply',
+    captured: 'Yesterday',
     correspondent: 'Rimuru',
     context: 'Declining a partnership, keeping the door open',
     transcript:
