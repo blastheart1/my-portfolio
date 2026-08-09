@@ -42,6 +42,15 @@ const AutomationCanvas = dynamic(() => import('./AutomationCanvas'), {
 /** One neutral treatment; the kind label carries the meaning. */
 const KIND_BADGE = 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
 
+/**
+ * Time on each step while running.
+ *
+ * Raised from 900ms: the canvas now pans to follow the active node, and that
+ * ease takes 500ms of the window on its own, leaving too little to actually
+ * read the step once it arrived.
+ */
+const STEP_MS = 1100;
+
 function Node({ node, index, showFailures }: { node: FlowNode; index: number; showFailures: boolean }) {
   const [open, setOpen] = React.useState(false);
   const detailId = `${node.id}-detail`;
@@ -123,7 +132,7 @@ export default function AutomationFlowExplorer() {
       setPlaying(false);
       return;
     }
-    timer.current = setTimeout(() => setCursor(c => c + 1), 900);
+    timer.current = setTimeout(() => setCursor(c => c + 1), STEP_MS);
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };

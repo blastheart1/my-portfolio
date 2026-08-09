@@ -14,7 +14,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import AutomationFlowExplorer from '../AutomationFlow';
-import { AUTOMATION_FLOWS, NODE_KIND_LABEL } from '@/lib/automation-flows';
+import { AUTOMATION_FLOWS, NODE_KIND_LABEL, FLOW_BANDS } from '@/lib/automation-flows';
 
 /**
  * Names from the source material that must never reach the page. Vendors are
@@ -404,5 +404,46 @@ describe('scenarios', () => {
     // success is the same omission as having no onFailure data at all.
     const withFailure = AUTOMATION_FLOWS.filter(f => f.scenarios?.some(s => s.failsAt));
     expect(withFailure.length).toBeGreaterThanOrEqual(10);
+  });
+});
+
+describe('the catalogue is ordered by value, not by accident', () => {
+  it('follows the declared bands in order', () => {
+    // Array order is exactly the kind of thing that drifts when someone
+    // appends a flow, so the intended order is asserted rather than assumed.
+    const expected = Object.values(FLOW_BANDS).flat();
+
+    expect(AUTOMATION_FLOWS.map(f => f.id)).toEqual(expected);
+  });
+
+  it('bands cover every flow, with none listed twice', () => {
+    const banded = Object.values(FLOW_BANDS).flat();
+
+    expect(new Set(banded).size).toBe(banded.length);
+    expect(new Set(banded)).toEqual(new Set(AUTOMATION_FLOWS.map(f => f.id)));
+  });
+
+  it('opens on revenue work rather than housekeeping', () => {
+    // A visitor who opens one thing lands on the one that best shows the work.
+    expect(FLOW_BANDS['Money in']).toContain(AUTOMATION_FLOWS[0].id);
+  });
+});
+
+describe('steps are not compacted past the point of being useful', () => {
+  it('keeps the headline flows detailed', () => {
+    // These map to the largest zaps in the export. Collapsing them into tidy
+    // five-step lines is what made the first version misrepresent the work.
+    for (const id of ['lead-intake', 'card-payment']) {
+      const flow = AUTOMATION_FLOWS.find(f => f.id === id)!;
+      expect(flow.nodes.length, id).toBeGreaterThanOrEqual(15);
+    }
+  });
+
+  it('does not reduce a whole automation to a single step', () => {
+    // Card eligibility was one box inside two other flows before it turned out
+    // to be the most heavily branched automation in the export.
+    const card = AUTOMATION_FLOWS.find(f => f.id === 'card-payment')!;
+
+    expect(card.nodes.filter(n => (n.next?.length ?? 0) > 1 && !n.fanOut).length).toBeGreaterThanOrEqual(3);
   });
 });
