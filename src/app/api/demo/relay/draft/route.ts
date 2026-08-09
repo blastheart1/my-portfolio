@@ -54,6 +54,12 @@ export const POST = withDemoQuota('relay', async (request: NextRequest) => {
     : transcript
       ? {
           id: 'captured',
+          // A visitor's own recording is a note like any other, so it carries
+          // the same fields the inbox rows use. These were added to DemoNote
+          // for the inbox and this construction was missed, which is what
+          // broke the deploy.
+          kind: 'Note',
+          captured: 'Just now',
           correspondent: correspondent?.trim() || 'there',
           context: 'Captured in the demo',
           transcript,
