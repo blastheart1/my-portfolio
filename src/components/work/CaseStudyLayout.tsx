@@ -23,9 +23,19 @@ import Breadcrumbs from './Breadcrumbs';
 export default function CaseStudyLayout({
   project,
   children,
+  /**
+   * Pins the demo frame to the viewport on desktop and lets its panes scroll
+   * internally, instead of the whole page growing past the fold.
+   *
+   * Opt-in rather than automatic: it only makes sense for a demo whose panes
+   * can each own their scrolling. A demo that is simply tall would be worse
+   * inside a fixed-height box than outside one.
+   */
+  fillViewport = false,
 }: {
   project: WorkProject;
   children?: React.ReactNode;
+  fillViewport?: boolean;
 }) {
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -77,8 +87,16 @@ export default function CaseStudyLayout({
         // of glass.
         <div className="mx-auto w-full max-w-[120rem] px-4 pb-16 pt-8 sm:px-6">
           <div
-            className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm
-                       dark:border-gray-700 dark:bg-gray-900"
+            className={`overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm
+                        dark:border-gray-700 dark:bg-gray-900 ${
+                          fillViewport
+                            ? // Sticks once the header has scrolled past, then
+                              // fills the viewport. Nothing above it sets
+                              // overflow on html or body, which is what would
+                              // silently break position: sticky.
+                              'md:sticky md:top-6 md:flex md:max-h-[calc(100vh-3rem)] md:flex-col'
+                            : ''
+                        }`}
           >
             {children}
           </div>

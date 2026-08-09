@@ -169,26 +169,28 @@ export default function AutomationFlowExplorer() {
   }, [activeNodeId, active.nodes]);
 
   return (
-    <>
+    // min-h-0 on the flex child is what actually lets the panes scroll; without
+    // it a flex item refuses to shrink below its content and the whole frame
+    // grows instead.
+    <div className="flex min-h-0 flex-col md:h-full">
       <DemoIntro {...AUTOMATION_INTRO} />
 
-      <div className="grid gap-6 p-4 sm:p-6 md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
+      <div className="grid gap-6 p-4 sm:p-6 md:min-h-0 md:flex-1 md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
       <div>
       {/* A uniform list, not pills. Twelve titles of differing length wrapped
           into an uneven tag cloud, and it did not match the examples list in
           the other demo. Same visual language, fixed row height, one-line
           summary. */}
-      <div className="hidden md:block">
+      <div className="hidden md:flex md:min-h-0 md:flex-col">
         <div className="flex items-baseline justify-between gap-2">
           <h3 className="text-xs uppercase tracking-wide text-gray-400">Workflows</h3>
           <span className="text-[11px] tabular-nums text-gray-400">{AUTOMATION_FLOWS.length}</span>
         </div>
 
-        {/* Ten rows, then it scrolls. A row is ~52px (title, step count, py-2)
-            plus 4px of gap, so ten is 35rem. Sixteen flows at full height made
-            the column taller than the canvas beside it, which pushed the
-            diagram down the page for no benefit. */}
-        <ul className="mt-3 max-h-[35rem] space-y-1 overflow-y-auto pr-1">
+        {/* No item cap: the frame is height-bounded now, so the list simply
+            fills whatever is left and scrolls. A fixed row count was always a
+            guess at the viewport. */}
+        <ul className="mt-3 space-y-1 overflow-y-auto pr-1 md:min-h-0 md:flex-1">
           {AUTOMATION_FLOWS.map(flow => (
             <li key={flow.id}>
               <button
@@ -244,7 +246,7 @@ export default function AutomationFlowExplorer() {
 
       </div>
 
-      <div className="min-w-0">
+      <div className="min-w-0 md:min-h-0 md:overflow-y-auto md:pr-1">
       {/* The canvas on every screen, transposed to portrait below md so the
           flow runs down the phone rather than across it. The step list below
           stays as the linear reading, which is still the better way to read
@@ -433,6 +435,6 @@ export default function AutomationFlowExplorer() {
       </p>
       </div>
     </div>
-    </>
+    </div>
   );
 }

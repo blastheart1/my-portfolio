@@ -55,17 +55,25 @@ describe('the case study runs to the viewport', () => {
   });
 });
 
-describe('the workflow list is bounded', () => {
-  it('scrolls rather than growing past about ten rows', () => {
+describe('the workflow list is bounded by the frame, not by a row count', () => {
+  it('scrolls', () => {
     const { container } = render(<AutomationFlowExplorer />);
 
     const list = container.querySelector('ul.overflow-y-auto');
     expect(list, 'the workflow list should scroll').not.toBeNull();
-    expect(list!.className).toMatch(/max-h-/);
   });
 
-  it('holds more flows than it shows at once', () => {
-    // The cap only matters because the catalogue outgrew it.
+  it('caps itself on the available height rather than a fixed row count', () => {
+    const { container } = render(<AutomationFlowExplorer />);
+
+    const list = container.querySelector('ul.overflow-y-auto')!;
+    // A fixed max-height was always a guess at the viewport. The frame is
+    // height-bounded now, so the list just fills what is left.
+    expect(list.className).not.toMatch(/max-h-\[/);
+    expect(list.className).toMatch(/flex-1/);
+  });
+
+  it('holds more flows than fit on a screen', () => {
     expect(AUTOMATION_FLOWS.length).toBeGreaterThan(10);
   });
 
@@ -124,5 +132,41 @@ describe('the diagram comes before the copy', () => {
     // The scenario description and a separate "Running:" line printed the same
     // sentence one after the other.
     expect(screen.getAllByText(summary)).toHaveLength(1);
+  });
+});
+
+
+describe('the demo frame can fill the viewport', () => {
+  it('pins and bounds its height when asked', () => {
+    const { container } = render(
+      <CaseStudyLayout project={WORK_PROJECTS[0]} fillViewport>
+        <div>demo</div>
+      </CaseStudyLayout>
+    );
+
+    const frame = container.querySelector('.rounded-xl')!;
+    expect(frame.className).toContain('md:sticky');
+    expect(frame.className).toMatch(/md:max-h-/);
+  });
+
+  it('leaves the frame alone by default', () => {
+    const { container } = render(
+      <CaseStudyLayout project={WORK_PROJECTS[0]}>
+        <div>demo</div>
+      </CaseStudyLayout>
+    );
+
+    // Opt-in: a demo that is simply tall would be worse inside a fixed-height
+    // box than outside one.
+    expect(container.querySelector('.rounded-xl')!.className).not.toContain('md:sticky');
+  });
+
+  it('gives each pane its own scroll region', () => {
+    const { container } = render(<AutomationFlowExplorer />);
+
+    const scrollers = container.querySelectorAll('.md\\:overflow-y-auto, ul.overflow-y-auto');
+    // The list and the diagram column scroll independently, so reading one
+    // never moves the other.
+    expect(scrollers.length).toBeGreaterThanOrEqual(2);
   });
 });

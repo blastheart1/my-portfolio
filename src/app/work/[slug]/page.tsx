@@ -54,7 +54,7 @@ export default async function WorkProjectPage({
   if (!(await isDemoVisible(project.sectionId))) notFound();
 
   return (
-    <CaseStudyLayout project={project}>
+    <CaseStudyLayout project={project} fillViewport={project.slug === 'automation'}>
       {project.slug === 'automation' && <AutomationFlowExplorer />}
       {project.slug === 'relay' && <RelayDemo />}
     </CaseStudyLayout>
