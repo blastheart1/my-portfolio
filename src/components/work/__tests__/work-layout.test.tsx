@@ -204,3 +204,49 @@ describe('the demo frame can fill the viewport', () => {
     expect(scrollers.length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe('the chain that lets a pane scroll is unbroken', () => {
+  /**
+   * Every link below was individually missing at some point while building
+   * this, and each time the markup still looked correct — the list simply
+   * grew and got clipped by the frame instead of scrolling. These assert the
+   * chain rather than the appearance.
+   */
+  it('sizes the grid row as a fraction, not to content', () => {
+    const { container } = render(<AutomationFlowExplorer />);
+
+    const grid = container.querySelector('.grid')!;
+    // An auto row sizes to the tallest column, so nothing inside it can ever
+    // have a bounded height to scroll within.
+    expect(grid.className).toMatch(/md:grid-rows-\[minmax\(0,1fr\)\]/);
+    expect(grid.className).toMatch(/md:min-h-0/);
+  });
+
+  it('constrains the grid item itself, not only a div inside it', () => {
+    const { container } = render(<AutomationFlowExplorer />);
+
+    const grid = container.querySelector('.grid')!;
+    const firstItem = grid.firstElementChild!;
+
+    // The flex column used to be one level deeper than the grid item, so the
+    // item grew to content and the constraint never reached the list.
+    expect(firstItem.className).toMatch(/md:min-h-0/);
+    expect(firstItem.className).toMatch(/md:flex-col/);
+  });
+
+  it('lets the list grow into the space and scroll', () => {
+    const { container } = render(<AutomationFlowExplorer />);
+
+    const list = container.querySelector('ul.overflow-y-auto')!;
+    expect(list.className).toMatch(/md:flex-1/);
+    expect(list.className).toMatch(/md:min-h-0/);
+  });
+
+  it('keeps the list header from being squeezed', () => {
+    const { container } = render(<AutomationFlowExplorer />);
+
+    const heading = screen.getByText('Workflows').parentElement!;
+    // Without shrink-0 the header compresses as the list claims height.
+    expect(heading.className).toMatch(/shrink-0/);
+  });
+});

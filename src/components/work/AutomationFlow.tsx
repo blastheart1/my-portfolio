@@ -178,14 +178,19 @@ export default function AutomationFlowExplorer() {
         <DemoIntro {...AUTOMATION_INTRO} />
       </div>
 
-      <div className="grid gap-6 p-4 sm:p-6 md:min-h-0 md:flex-1 md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
-      <div>
+      <div
+        className="grid gap-6 p-4 sm:p-6 md:min-h-0 md:flex-1
+                   md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]
+                   md:grid-rows-[minmax(0,1fr)]
+                   xl:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]"
+      >
+      <div className="md:flex md:min-h-0 md:flex-col">
       {/* A uniform list, not pills. Twelve titles of differing length wrapped
           into an uneven tag cloud, and it did not match the examples list in
           the other demo. Same visual language, fixed row height, one-line
           summary. */}
-      <div className="hidden md:flex md:min-h-0 md:flex-col">
-        <div className="flex items-baseline justify-between gap-2">
+      <div className="hidden md:flex md:min-h-0 md:flex-1 md:flex-col">
+        <div className="shrink-0 flex items-baseline justify-between gap-2">
           <h3 className="text-xs uppercase tracking-wide text-gray-400">Workflows</h3>
           <span className="text-[11px] tabular-nums text-gray-400">{AUTOMATION_FLOWS.length}</span>
         </div>
