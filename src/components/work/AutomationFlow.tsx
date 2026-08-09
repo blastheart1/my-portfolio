@@ -169,11 +169,14 @@ export default function AutomationFlowExplorer() {
   }, [activeNodeId, active.nodes]);
 
   return (
-    // min-h-0 on the flex child is what actually lets the panes scroll; without
-    // it a flex item refuses to shrink below its content and the whole frame
-    // grows instead.
+    // md:h-full resolves only because the frame above sets a definite height
+    // rather than a maximum. min-h-0 is the other half: a flex item refuses to
+    // shrink below its content by default, so without it the panes never
+    // scroll and the frame grows instead.
     <div className="flex min-h-0 flex-col md:h-full">
-      <DemoIntro {...AUTOMATION_INTRO} />
+      <div className="md:shrink-0">
+        <DemoIntro {...AUTOMATION_INTRO} />
+      </div>
 
       <div className="grid gap-6 p-4 sm:p-6 md:min-h-0 md:flex-1 md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
       <div>

@@ -39,7 +39,15 @@ export default function CaseStudyLayout({
 }) {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto w-full max-w-[120rem] px-4 pt-12 sm:px-6">
+      {/* Header and frame share one container on purpose. A sticky element
+          only travels within its containing block, and the frame used to be
+          the sole child of its own wrapper — so the wrapper was exactly as
+          tall as the frame, there was nowhere to stick to, and md:sticky was
+          applied while doing nothing. The travel it needs is the header's
+          height plus this container's bottom padding — both of which have to
+          be inside the same container, or scrolling them drags the frame off
+          the top instead of holding it there. */}
+      <div className="mx-auto w-full max-w-[120rem] px-4 pb-16 pt-12 sm:px-6">
         <Breadcrumbs
           trail={[
             { label: 'Home', href: '/' },
@@ -79,31 +87,24 @@ export default function CaseStudyLayout({
           ))}
         </ul>
 
-      </div>
-
-      {children && (
-        // Outside the reading column: full width up to a generous ceiling, so
-        // an ultrawide monitor does not stretch a node canvas across a metre
-        // of glass.
-        <div className="mx-auto w-full max-w-[120rem] px-4 pb-16 pt-8 sm:px-6">
+        {children && (
           <div
-            className={`overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm
+            className={`mt-8 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm
                         dark:border-gray-700 dark:bg-gray-900 ${
                           fillViewport
-                            ? // Sticks once the header has scrolled past, then
-                              // fills the viewport. Nothing above it sets
-                              // overflow on html or body, which is what would
-                              // silently break position: sticky.
-                              'md:sticky md:top-6 md:flex md:max-h-[calc(100vh-3rem)] md:flex-col'
+                            ? // A definite height, not a maximum. h-full on a
+                              // child resolves against the parent's height, and
+                              // against max-height it resolves to auto — which
+                              // is why the panes inside refused to scroll and
+                              // simply grew instead.
+                              'md:sticky md:top-6 md:flex md:h-[calc(100vh-3rem)] md:flex-col'
                             : ''
                         }`}
           >
             {children}
           </div>
-        </div>
-      )}
-
-      {!children && <div className="pb-16" />}
+        )}
+      </div>
     </main>
   );
 }

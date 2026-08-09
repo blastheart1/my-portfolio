@@ -146,7 +146,41 @@ describe('the demo frame can fill the viewport', () => {
 
     const frame = container.querySelector('.rounded-xl')!;
     expect(frame.className).toContain('md:sticky');
-    expect(frame.className).toMatch(/md:max-h-/);
+    // A definite height, not a maximum. h-full on a descendant resolves
+    // against the parent's height; against max-height it resolves to auto, and
+    // the panes inside then refuse to scroll and grow instead. That was the
+    // bug, so the assertion is on the property that fixes it.
+    expect(frame.className).toMatch(/md:h-\[/);
+    expect(frame.className).not.toMatch(/md:max-h-/);
+  });
+
+  it('shares a container with the header, so sticky has somewhere to travel', () => {
+    const { container } = render(
+      <CaseStudyLayout project={WORK_PROJECTS[0]} fillViewport>
+        <div data-testid="demo">demo</div>
+      </CaseStudyLayout>
+    );
+
+    const frame = container.querySelector('.rounded-xl')!;
+    const heading = screen.getByRole('heading', { level: 1 });
+
+    // A sticky element only moves within its containing block. When the frame
+    // was the sole child of its own wrapper, the wrapper was exactly as tall
+    // as the frame and md:sticky did nothing at all.
+    expect(frame.parentElement!.contains(heading)).toBe(true);
+  });
+
+  it('keeps the bottom spacing inside that container', () => {
+    const { container } = render(
+      <CaseStudyLayout project={WORK_PROJECTS[0]} fillViewport>
+        <div>demo</div>
+      </CaseStudyLayout>
+    );
+
+    const wrapper = container.querySelector('.rounded-xl')!.parentElement!;
+    // Padding outside the container would add page scroll without adding
+    // travel, dragging the frame back off the top instead of holding it.
+    expect(wrapper.className).toMatch(/pb-16/);
   });
 
   it('leaves the frame alone by default', () => {
