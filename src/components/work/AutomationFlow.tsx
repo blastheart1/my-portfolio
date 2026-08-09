@@ -12,6 +12,7 @@ import {
 } from '@/lib/automation-flows';
 import { runOrder, nodeStates } from '@/lib/automation-runner';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { useIsNarrow } from '@/hooks/useIsNarrow';
 import { Play, Pause, SkipForward, RotateCcw, AlertTriangle } from 'lucide-react';
 import DemoIntro, { AUTOMATION_INTRO } from './DemoIntro';
 
@@ -20,7 +21,7 @@ import DemoIntro, { AUTOMATION_INTRO } from './DemoIntro';
 const AutomationCanvas = dynamic(() => import('./AutomationCanvas'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[520px] items-center justify-center text-sm text-gray-400">
+    <div className="flex h-[min(70vh,44rem)] items-center justify-center text-sm text-gray-400">
       Loading the canvas…
     </div>
   ),
@@ -106,6 +107,7 @@ export default function AutomationFlowExplorer() {
   const active = AUTOMATION_FLOWS.find(f => f.id === activeId) ?? AUTOMATION_FLOWS[0];
 
   const reducedMotion = usePrefersReducedMotion();
+  const narrow = useIsNarrow();
 
   // Which run is being shown. Defaults to the first, which is always the happy
   // path; the rest are the edge cases the flow was actually built for.
@@ -170,15 +172,23 @@ export default function AutomationFlowExplorer() {
     <>
       <DemoIntro {...AUTOMATION_INTRO} />
 
-      <div className="grid gap-6 p-6 md:grid-cols-[minmax(0,15rem)_1fr]">
+      <div className="grid gap-6 p-4 sm:p-6 md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
       <div>
       {/* A uniform list, not pills. Twelve titles of differing length wrapped
           into an uneven tag cloud, and it did not match the examples list in
           the other demo. Same visual language, fixed row height, one-line
           summary. */}
       <div className="hidden md:block">
-        <h3 className="text-xs uppercase tracking-wide text-gray-400">Workflows</h3>
-        <ul className="mt-3 space-y-1">
+        <div className="flex items-baseline justify-between gap-2">
+          <h3 className="text-xs uppercase tracking-wide text-gray-400">Workflows</h3>
+          <span className="text-[11px] tabular-nums text-gray-400">{AUTOMATION_FLOWS.length}</span>
+        </div>
+
+        {/* Ten rows, then it scrolls. A row is ~52px (title, step count, py-2)
+            plus 4px of gap, so ten is 35rem. Sixteen flows at full height made
+            the column taller than the canvas beside it, which pushed the
+            diagram down the page for no benefit. */}
+        <ul className="mt-3 max-h-[35rem] space-y-1 overflow-y-auto pr-1">
           {AUTOMATION_FLOWS.map(flow => (
             <li key={flow.id}>
               <button
@@ -354,10 +364,13 @@ export default function AutomationFlowExplorer() {
         </p>
       )}
 
-      {/* Desktop: the canvas. Mobile: the list, because a pannable graph on a
-          360px screen is unusable and the list already reads well. */}
-      <div className="mt-8 hidden overflow-hidden rounded-lg border border-gray-200 md:block dark:border-gray-700">
+      {/* The canvas on every screen, transposed to portrait below md so the
+          flow runs down the phone rather than across it. The step list below
+          stays as the linear reading, which is still the better way to read
+          detail on a small screen. */}
+      <div className="mt-8 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
         <AutomationCanvas
+          orientation={narrow ? 'portrait' : 'landscape'}
           flow={active}
           onSelect={setSelected}
           activeNodeId={activeNodeId}
@@ -367,7 +380,7 @@ export default function AutomationFlowExplorer() {
       </div>
 
       {selected && (
-        <div className="mt-4 hidden rounded-lg border border-gray-200 p-4 md:block dark:border-gray-700">
+        <div className="mt-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
           <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
             {selected.label}
             <span className={`ml-2 rounded-full px-2 py-0.5 text-[11px] ${KIND_BADGE}`}>

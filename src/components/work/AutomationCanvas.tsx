@@ -20,7 +20,7 @@ import {
   type AutomationFlow,
   type FlowNode,
 } from '@/lib/automation-flows';
-import { toGraph } from '@/lib/automation-graph';
+import { toGraph, type Orientation } from '@/lib/automation-graph';
 import type { NodeRunState } from '@/lib/automation-runner';
 
 /**
@@ -46,6 +46,7 @@ type StepData = {
   isActive: boolean;
   runState: NodeRunState;
   showFailures: boolean;
+  orientation: Orientation;
 };
 
 /**
@@ -75,8 +76,12 @@ const RUN_LABEL: Partial<Record<NodeRunState, string>> = {
 };
 
 function StepNode({ data }: NodeProps) {
-  const { step, index, isActive, runState, showFailures } = data as unknown as StepData;
+  const { step, index, isActive, runState, showFailures, orientation } =
+    data as unknown as StepData;
   const runLabel = RUN_LABEL[runState];
+  // Handles move to the short edges in portrait, or every edge would cross the
+  // node it is trying to reach.
+  const portrait = orientation === 'portrait';
 
   return (
     <div
@@ -92,7 +97,11 @@ function StepNode({ data }: NodeProps) {
                   ${isActive ? 'ring-2 ring-gray-900/15 dark:ring-gray-100/20' : ''}
                   ${runState === 'untaken' ? 'opacity-35' : ''}`}
     >
-      <Handle type="target" position={Position.Left} className="!bg-gray-300 dark:!bg-gray-600" />
+      <Handle
+        type="target"
+        position={portrait ? Position.Top : Position.Left}
+        className="!bg-gray-300 dark:!bg-gray-600"
+      />
 
       <div className="flex items-center gap-2">
         <span className="text-[10px] tabular-nums text-gray-400">
@@ -131,7 +140,11 @@ function StepNode({ data }: NodeProps) {
         </span>
       )}
 
-      <Handle type="source" position={Position.Right} className="!bg-gray-300 dark:!bg-gray-600" />
+      <Handle
+        type="source"
+        position={portrait ? Position.Bottom : Position.Right}
+        className="!bg-gray-300 dark:!bg-gray-600"
+      />
     </div>
   );
 }
@@ -144,6 +157,7 @@ interface CanvasProps {
   activeNodeId?: string | null;
   runStates?: Map<string, NodeRunState>;
   showFailures?: boolean;
+  orientation?: Orientation;
 }
 
 /**
@@ -155,25 +169,26 @@ interface CanvasProps {
  */
 function FollowActiveNode({
   activeNodeId,
-  flow,
+  nodes,
 }: {
   activeNodeId?: string | null;
-  flow: AutomationFlow;
+  nodes: { id: string; position: { x: number; y: number } }[];
 }) {
   const { setCenter, getZoom } = useReactFlow();
 
   React.useEffect(() => {
     if (!activeNodeId) return;
-    const node = flow.nodes.find(n => n.id === activeNodeId);
-    if (!node?.position) return;
+    const node = nodes.find(n => n.id === activeNodeId);
+    if (!node) return;
 
     // Centre on the node's middle rather than its origin, or a wide node sits
-    // half off the edge. 224 x 120 is the rendered card.
+    // half off the edge. 224 x 120 is the rendered card. Uses the laid-out
+    // position, not the authored one, so this follows correctly in portrait.
     setCenter(node.position.x + 112, node.position.y + 60, {
       zoom: Math.max(getZoom(), 0.8),
       duration: 500,
     });
-  }, [activeNodeId, flow, setCenter, getZoom]);
+  }, [activeNodeId, nodes, setCenter, getZoom]);
 
   return null;
 }
@@ -184,8 +199,9 @@ function Canvas({
   activeNodeId,
   runStates,
   showFailures = false,
+  orientation = 'landscape',
 }: CanvasProps) {
-  const base = React.useMemo(() => toGraph(flow), [flow]);
+  const base = React.useMemo(() => toGraph(flow, orientation), [flow, orientation]);
 
   // Run state is merged into node data rather than held inside React Flow, so
   // the graph itself stays a pure function of the flow.
@@ -198,14 +214,20 @@ function Canvas({
           isActive: node.id === activeNodeId,
           runState: runStates?.get(node.id) ?? 'pending',
           showFailures,
+          orientation,
         },
       })),
-    [base.nodes, activeNodeId, runStates, showFailures]
+    [base.nodes, activeNodeId, runStates, showFailures, orientation]
   );
   const edges = base.edges;
 
   return (
-    <div className="h-[520px] w-full" data-testid="automation-canvas">
+    <div
+      // Viewport-relative so a wide screen actually gains canvas rather than
+      // whitespace, capped so it cannot exceed a comfortable reading height.
+      className="h-[min(70vh,44rem)] w-full"
+      data-testid="automation-canvas"
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -220,7 +242,7 @@ function Canvas({
         <Background gap={16} className="!bg-gray-50 dark:!bg-gray-950" />
         <Controls showInteractive={false} />
         <MiniMap pannable zoomable className="!hidden md:!block" />
-        <FollowActiveNode activeNodeId={activeNodeId} flow={flow} />
+        <FollowActiveNode activeNodeId={activeNodeId} nodes={nodes} />
       </ReactFlow>
     </div>
   );

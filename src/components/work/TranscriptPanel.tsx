@@ -63,7 +63,7 @@ export default function TranscriptPanel({
           everything below it and scrolling the page under the pointer. The
           header and player sit outside this region so the controls never
           scroll away. */}
-      <div className="h-80 overflow-y-auto px-4 py-3">
+      <div className="h-56 overflow-y-auto px-4 py-3 sm:h-80">
         {segments && segments.length > 0 ? (
           <ol className="space-y-3">
             {segments.map(segment => (

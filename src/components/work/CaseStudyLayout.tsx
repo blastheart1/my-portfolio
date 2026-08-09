@@ -10,6 +10,12 @@ import Breadcrumbs from './Breadcrumbs';
  * bordered frame, which is what makes it look like a product you can touch
  * instead of a screenshot.
  *
+ * The prose column stays narrow because long measure is hard to read, but the
+ * demo frame breaks out to the full viewport on large screens. Both demos are
+ * horizontal — a node canvas and a two-pane editor — and constraining them to
+ * a reading width forced people to scroll or pan to see work that would
+ * otherwise fit on one screen.
+ *
  * Navigation is a breadcrumb rather than a single back link. A visitor
  * arriving from a search result has no history to go back to, and the earlier
  * "← Work" only reached the index — which itself had no way back to the site,
@@ -24,7 +30,7 @@ export default function CaseStudyLayout({
 }) {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-6xl px-6 py-16">
+      <div className="mx-auto max-w-6xl px-6 pt-16">
         <Breadcrumbs
           trail={[
             { label: 'Home', href: '/' },
@@ -64,15 +70,23 @@ export default function CaseStudyLayout({
           ))}
         </ul>
 
-        {children && (
+      </div>
+
+      {children && (
+        // Outside the reading column: full width up to a generous ceiling, so
+        // an ultrawide monitor does not stretch a node canvas across a metre
+        // of glass.
+        <div className="mx-auto w-full max-w-[120rem] px-4 pb-16 pt-12 sm:px-6">
           <div
-            className="mt-12 overflow-hidden rounded-xl border border-gray-200
-                       bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900"
+            className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm
+                       dark:border-gray-700 dark:bg-gray-900"
           >
             {children}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {!children && <div className="pb-16" />}
     </main>
   );
 }

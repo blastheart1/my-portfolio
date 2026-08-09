@@ -25,16 +25,35 @@ export interface GraphEdge {
 /** Column spacing when a flow has no authored positions. */
 const COLUMN = 280;
 
-export function toGraph(flow: AutomationFlow): { nodes: GraphNode[]; edges: GraphEdge[] } {
-  const nodes: GraphNode[] = flow.nodes.map((step, i) => ({
-    id: step.id,
-    type: 'step',
-    // Authored position wins; otherwise lay out left to right with a slight
-    // stagger so long labels do not collide.
-    position: step.position ?? { x: i * COLUMN, y: (i % 2) * 40 },
-    data: { step, index: i } as unknown as Record<string, unknown>,
-    draggable: false,
-  }));
+/** Portrait needs more vertical room per step than landscape needs horizontal. */
+const PORTRAIT_SCALE = 1.35;
+
+export type Orientation = 'landscape' | 'portrait';
+
+/**
+ * Positions are authored left-to-right. Portrait transposes them — a column
+ * becomes a row — so the same data lays out down a phone screen instead of
+ * across it, and a branch fans sideways rather than stacking.
+ */
+export function toGraph(
+  flow: AutomationFlow,
+  orientation: Orientation = 'landscape'
+): { nodes: GraphNode[]; edges: GraphEdge[] } {
+  const nodes: GraphNode[] = flow.nodes.map((step, i) => {
+    const authored = step.position ?? { x: i * COLUMN, y: (i % 2) * 40 };
+    const position =
+      orientation === 'portrait'
+        ? { x: authored.y * 1.6, y: authored.x * PORTRAIT_SCALE }
+        : authored;
+
+    return {
+      id: step.id,
+      type: 'step',
+      position,
+      data: { step, index: i } as unknown as Record<string, unknown>,
+      draggable: false,
+    };
+  });
 
   const edges: GraphEdge[] = flow.nodes.flatMap((step, i) => {
     const targets = step.next ?? (flow.nodes[i + 1] ? [flow.nodes[i + 1].id] : []);

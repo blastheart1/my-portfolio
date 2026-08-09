@@ -194,7 +194,7 @@ export default function RelayDemo() {
           clicked and before any microphone prompt is possible. */}
       <DemoIntro {...RELAY_INTRO} />
 
-      <div className="grid gap-0 lg:grid-cols-[minmax(0,13rem)_1fr]">
+      <div className="grid gap-0 md:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]">
         <aside className="border-b border-gray-200 p-4 lg:border-b-0 lg:border-r dark:border-gray-700">
           <h3 className="text-xs uppercase tracking-wide text-gray-400">Examples</h3>
           <ul className="mt-3 space-y-1">
@@ -227,7 +227,7 @@ export default function RelayDemo() {
           </ul>
         </aside>
 
-        <div className="space-y-5 p-5">
+        <div className="space-y-5 p-4 sm:p-5">
           <RecorderPanel onCaptured={onCaptured} busy={running || transcribing} />
 
           {transcribing && (
