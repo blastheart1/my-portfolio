@@ -45,14 +45,23 @@ export default function ClientLayoutContent({ children }: ClientLayoutContentPro
   // section can be switched off from the admin.
   const expectHero = pathname === '/';
 
+  // The /work pages are full-bleed demos with their own breadcrumb. A floating
+  // nav pill and a theme switch parked over a node canvas compete with the
+  // thing they are sitting on, and the nav is section-scroll based so its
+  // entries point at sections these pages do not have. Same reasoning as the
+  // admin gate above, applied to a different surface.
+  const isWork = pathname === '/work' || (pathname?.startsWith('/work/') ?? false);
+
   return (
     <ScrollProvider>
       <CustomCursor />
-      <ChromeReveal expectHero={expectHero}>
-        <ThemeToggle isModalOpen={isModalOpen} />
-        <FloatingNav />
-        <MobileNav />
-      </ChromeReveal>
+      {!isWork && (
+        <ChromeReveal expectHero={expectHero}>
+          <ThemeToggle isModalOpen={isModalOpen} />
+          <FloatingNav />
+          <MobileNav />
+        </ChromeReveal>
+      )}
       {children}
       <BackToTop isModalOpen={isModalOpen} />
       {/* Kept in its own wrapper so the launcher stays after {children} in DOM

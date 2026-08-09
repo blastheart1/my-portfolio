@@ -245,7 +245,60 @@ export default function AutomationFlowExplorer() {
       </div>
 
       <div className="min-w-0">
-      <div className="grid gap-2 sm:grid-cols-2">
+      {/* The canvas on every screen, transposed to portrait below md so the
+          flow runs down the phone rather than across it. The step list below
+          stays as the linear reading, which is still the better way to read
+          detail on a small screen. */}
+      <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+        <AutomationCanvas
+          orientation={narrow ? 'portrait' : 'landscape'}
+          flow={active}
+          onSelect={setSelected}
+          activeNodeId={activeNodeId}
+          runStates={states}
+          showFailures={showFailures}
+        />
+      </div>
+
+      {selected && (
+        <div className="mt-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+          <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {selected.label}
+            <span className={`ml-2 rounded-full px-2 py-0.5 text-[11px] ${KIND_BADGE}`}>
+              {NODE_KIND_LABEL[selected.kind]}
+            </span>
+          </h4>
+          <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+            {selected.detail}
+          </p>
+
+          {selected.sample && (
+            <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div>
+                <dt className="text-[11px] uppercase tracking-wide text-gray-400">Receives</dt>
+                <dd className="mt-1 rounded bg-gray-50 px-2 py-1.5 font-mono text-xs text-gray-700 dark:bg-gray-800/60 dark:text-gray-300">
+                  {selected.sample.in}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] uppercase tracking-wide text-gray-400">Produces</dt>
+                <dd className="mt-1 rounded bg-gray-50 px-2 py-1.5 font-mono text-xs text-gray-700 dark:bg-gray-800/60 dark:text-gray-300">
+                  {selected.sample.out}
+                </dd>
+              </div>
+            </dl>
+          )}
+
+          {selected.onFailure && (
+            <p className="mt-3 border-t border-gray-100 pt-3 text-sm text-gray-600 dark:border-gray-800 dark:text-gray-300">
+              <span className="font-medium">{FAILURE_LABEL[selected.onFailure.behaviour]}.</span>{' '}
+              {selected.onFailure.detail}
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className="mt-8 grid gap-2 sm:grid-cols-2">
         <div>
           <h3 className="text-xs uppercase tracking-wide text-gray-400">The problem</h3>
           <p className="mt-1 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
@@ -286,6 +339,14 @@ export default function AutomationFlowExplorer() {
           {scenario && (
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-gray-600 dark:text-gray-300">
               {scenario.summary}
+            </p>
+          )}
+
+          {/* The sample record only when no scenario narrows it, so the same
+              sentence is never printed twice. */}
+          {!scenario && (
+            <p className="mt-2 max-w-3xl text-sm text-gray-500 dark:text-gray-400">
+              {active.sampleRecord}
             </p>
           )}
         </div>
@@ -353,68 +414,10 @@ export default function AutomationFlowExplorer() {
         )}
       </div>
 
-      <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-        <span className="text-gray-400">Running:</span>{' '}
-        {scenario ? scenario.summary : active.sampleRecord}
-      </p>
-
       {active.instances && (
         <p className="mt-1 text-xs text-gray-400">
           Deployed {active.instances.count} times — {active.instances.label}.
         </p>
-      )}
-
-      {/* The canvas on every screen, transposed to portrait below md so the
-          flow runs down the phone rather than across it. The step list below
-          stays as the linear reading, which is still the better way to read
-          detail on a small screen. */}
-      <div className="mt-8 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-        <AutomationCanvas
-          orientation={narrow ? 'portrait' : 'landscape'}
-          flow={active}
-          onSelect={setSelected}
-          activeNodeId={activeNodeId}
-          runStates={states}
-          showFailures={showFailures}
-        />
-      </div>
-
-      {selected && (
-        <div className="mt-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-          <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-            {selected.label}
-            <span className={`ml-2 rounded-full px-2 py-0.5 text-[11px] ${KIND_BADGE}`}>
-              {NODE_KIND_LABEL[selected.kind]}
-            </span>
-          </h4>
-          <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-            {selected.detail}
-          </p>
-
-          {selected.sample && (
-            <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div>
-                <dt className="text-[11px] uppercase tracking-wide text-gray-400">Receives</dt>
-                <dd className="mt-1 rounded bg-gray-50 px-2 py-1.5 font-mono text-xs text-gray-700 dark:bg-gray-800/60 dark:text-gray-300">
-                  {selected.sample.in}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-[11px] uppercase tracking-wide text-gray-400">Produces</dt>
-                <dd className="mt-1 rounded bg-gray-50 px-2 py-1.5 font-mono text-xs text-gray-700 dark:bg-gray-800/60 dark:text-gray-300">
-                  {selected.sample.out}
-                </dd>
-              </div>
-            </dl>
-          )}
-
-          {selected.onFailure && (
-            <p className="mt-3 border-t border-gray-100 pt-3 text-sm text-gray-600 dark:border-gray-800 dark:text-gray-300">
-              <span className="font-medium">{FAILURE_LABEL[selected.onFailure.behaviour]}.</span>{' '}
-              {selected.onFailure.detail}
-            </p>
-          )}
-        </div>
       )}
 
       <ol className="mt-8 md:hidden">

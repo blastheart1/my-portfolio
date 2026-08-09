@@ -21,20 +21,20 @@ import AutomationFlowExplorer from '../AutomationFlow';
 import { WORK_PROJECTS } from '@/lib/work-projects';
 import { AUTOMATION_FLOWS } from '@/lib/automation-flows';
 
-describe('the demo frame is not trapped in the reading column', () => {
-  it('puts the demo outside the prose container', () => {
+describe('the case study runs to the viewport', () => {
+  it('constrains no part of the page to a reading-width column', () => {
     const { container } = render(
       <CaseStudyLayout project={WORK_PROJECTS[0]}>
         <div data-testid="demo">demo</div>
       </CaseStudyLayout>
     );
 
-    const prose = container.querySelector('.max-w-6xl')!;
-    const demo = screen.getByTestId('demo');
-
-    // Both demos are horizontal. Constraining them to a reading width forced
-    // people to pan to see work that fits on one screen.
-    expect(prose.contains(demo)).toBe(false);
+    // This previously asserted the demo sat outside a max-w-6xl prose column.
+    // The header runs full width too now — a narrow header above a full-width
+    // demo read as two different pages stacked — so there is no such column
+    // left to escape from.
+    expect(container.querySelector('.max-w-6xl')).toBeNull();
+    expect(screen.getByTestId('demo')).toBeInTheDocument();
   });
 
   it('still caps the width, so an ultrawide does not stretch a canvas', () => {
@@ -89,5 +89,40 @@ describe('the transcript pane leaves room on a phone', () => {
     // 20rem of transcript plus a player fills a 667px screen on its own.
     expect(region.className).toContain('h-56');
     expect(region.className).toContain('sm:h-80');
+  });
+});
+
+describe('the diagram comes before the copy', () => {
+  it('puts the canvas above the problem and outcome', () => {
+    const { container } = render(<AutomationFlowExplorer />);
+
+    const canvas = container.querySelector('.overflow-hidden.rounded-lg')!;
+    const problem = screen.getByText(/the problem/i);
+
+    // Landing on a case study should land on the thing itself. The framing
+    // reads better after you have seen what it is describing.
+    expect(
+      canvas.compareDocumentPosition(problem) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it('puts the run controls below the diagram too', () => {
+    const { container } = render(<AutomationFlowExplorer />);
+
+    const canvas = container.querySelector('.overflow-hidden.rounded-lg')!;
+    const run = screen.getByRole('button', { name: /run it/i });
+
+    expect(
+      canvas.compareDocumentPosition(run) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it('states the running record once, not twice', () => {
+    render(<AutomationFlowExplorer />);
+    const summary = AUTOMATION_FLOWS[0].scenarios![0].summary;
+
+    // The scenario description and a separate "Running:" line printed the same
+    // sentence one after the other.
+    expect(screen.getAllByText(summary)).toHaveLength(1);
   });
 });
