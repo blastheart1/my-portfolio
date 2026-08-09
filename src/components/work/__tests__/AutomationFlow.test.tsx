@@ -282,9 +282,10 @@ describe('the flow selector is a uniform list', () => {
   it('offers a native select below md, where a sidebar does not fit', () => {
     render(<AutomationFlowExplorer />);
 
-    const select = screen.getByRole('combobox');
-    expect(select).toBeInTheDocument();
-    expect(screen.getAllByRole('option')).toHaveLength(AUTOMATION_FLOWS.length);
+    // Named explicitly: there are two selects on the page now, the other being
+    // the scenario picker.
+    const select = screen.getByRole('combobox', { name: /workflow/i });
+    expect(within(select).getAllByRole('option')).toHaveLength(AUTOMATION_FLOWS.length);
   });
 });
 
@@ -351,5 +352,57 @@ describe('only real, built automations', () => {
         expect(node.onFailure, `${flow.id}:${node.id}`).toBeDefined();
       }
     }
+  });
+});
+
+
+describe('scenarios', () => {
+  it('offers the flow’s scenarios, happy path first', () => {
+    render(<AutomationFlowExplorer />);
+
+    const picker = screen.getByRole('combobox', { name: /scenario/i });
+    const flow = AUTOMATION_FLOWS[0];
+    expect(within(picker).getAllByRole('option')).toHaveLength(flow.scenarios!.length);
+    expect((picker as HTMLSelectElement).value).toBe(flow.scenarios![0].id);
+  });
+
+  it('explains what makes the selected run different', async () => {
+    const user = userEvent.setup();
+    render(<AutomationFlowExplorer />);
+    const flow = AUTOMATION_FLOWS[0];
+    const edge = flow.scenarios![1];
+
+    await user.selectOptions(screen.getByRole('combobox', { name: /scenario/i }), edge.id);
+
+    expect(screen.getAllByText(edge.summary).length).toBeGreaterThan(0);
+  });
+
+  it('gives every flow a happy path and at least one edge case', () => {
+    for (const flow of AUTOMATION_FLOWS) {
+      // A diagram with only the happy path does not justify half its steps.
+      expect(flow.scenarios?.length, flow.id).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('routes and fails only at nodes that exist', () => {
+    for (const flow of AUTOMATION_FLOWS) {
+      const ids = new Set(flow.nodes.map(n => n.id));
+      for (const scenario of flow.scenarios ?? []) {
+        if (scenario.failsAt) {
+          expect(ids.has(scenario.failsAt), `${flow.id}:${scenario.id}`).toBe(true);
+        }
+        for (const [from, to] of Object.entries(scenario.takes ?? {})) {
+          expect(ids.has(from), `${flow.id}:${scenario.id}:${from}`).toBe(true);
+          expect(ids.has(to), `${flow.id}:${scenario.id}:${to}`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('covers a failure somewhere in every flow that can fail', () => {
+    // The error handling is half the design; a catalogue that only ever shows
+    // success is the same omission as having no onFailure data at all.
+    const withFailure = AUTOMATION_FLOWS.filter(f => f.scenarios?.some(s => s.failsAt));
+    expect(withFailure.length).toBeGreaterThanOrEqual(10);
   });
 });

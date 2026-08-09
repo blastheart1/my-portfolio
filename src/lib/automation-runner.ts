@@ -1,4 +1,4 @@
-import type { AutomationFlow, FlowNode } from '@/lib/automation-flows';
+import type { AutomationFlow, FlowNode, FlowScenario } from '@/lib/automation-flows';
 
 /**
  * Walks the sample record through a flow.
@@ -14,8 +14,19 @@ import type { AutomationFlow, FlowNode } from '@/lib/automation-flows';
  * watching.
  */
 
+/**
+ * How a node behaves in a given run, which is what the glow encodes.
+ *
+ *   done    ran and succeeded
+ *   choice  a decision point — the run picked one path here
+ *   failed  the step that breaks in this scenario; the run stops
+ *   pending not reached yet
+ *   untaken not on this run's path at all
+ */
+export type NodeRunState = 'done' | 'choice' | 'failed' | 'pending' | 'untaken';
+
 /** The order run mode visits nodes, from the trigger to a terminal step. */
-export function runOrder(flow: AutomationFlow): string[] {
+export function runOrder(flow: AutomationFlow, scenario?: FlowScenario): string[] {
   const byId = new Map(flow.nodes.map(node => [node.id, node]));
   const order: string[] = [];
   const seen = new Set<string>();
@@ -31,14 +42,23 @@ export function runOrder(flow: AutomationFlow): string[] {
 
     seen.add(id);
     order.push(id);
-    queue.push(...nextFor(flow, node));
+
+    // A scenario that fails here stops the run: nothing downstream happened,
+    // and showing it as reached would misrepresent the failure.
+    if (scenario?.failsAt === id) break;
+
+    queue.push(...nextFor(flow, node, scenario));
   }
 
   return order;
 }
 
 /** The targets the sample record actually reaches from this node. */
-export function nextFor(flow: AutomationFlow, node: FlowNode): string[] {
+export function nextFor(
+  flow: AutomationFlow,
+  node: FlowNode,
+  scenario?: FlowScenario
+): string[] {
   const index = flow.nodes.findIndex(n => n.id === node.id);
   const declared = node.next ?? (flow.nodes[index + 1] ? [flow.nodes[index + 1].id] : []);
 
@@ -47,13 +67,59 @@ export function nextFor(flow: AutomationFlow, node: FlowNode): string[] {
   // A decision: one path only. Falling back to the first target would quietly
   // invent a decision the data never made, so an unset sampleTakes is an
   // authoring bug the tests catch rather than something to paper over here.
-  return node.sampleTakes ? [node.sampleTakes] : declared.slice(0, 1);
+  // A scenario can route the same diagram differently, which is the whole
+  // point of having several of them.
+  const chosen = scenario?.takes?.[node.id] ?? node.sampleTakes;
+  return chosen ? [chosen] : declared.slice(0, 1);
 }
 
-/** Nodes the sample record never reaches — dimmed while running. */
-export function untakenNodes(flow: AutomationFlow): Set<string> {
-  const taken = new Set(runOrder(flow));
+/** Nodes this run never reaches — dimmed rather than hidden. */
+export function untakenNodes(flow: AutomationFlow, scenario?: FlowScenario): Set<string> {
+  const taken = new Set(runOrder(flow, scenario));
   return new Set(flow.nodes.filter(node => !taken.has(node.id)).map(node => node.id));
+}
+
+/**
+ * What each node is doing at a point in the run.
+ *
+ * `cursor` is the index into runOrder; -1 means the run has not started, in
+ * which case nothing is coloured at all — a diagram at rest should not imply
+ * an outcome.
+ */
+export function nodeStates(
+  flow: AutomationFlow,
+  cursor: number,
+  scenario?: FlowScenario
+): Map<string, NodeRunState> {
+  const order = runOrder(flow, scenario);
+  const reached = new Set(order);
+  const states = new Map<string, NodeRunState>();
+
+  for (const node of flow.nodes) {
+    if (cursor < 0) {
+      states.set(node.id, 'pending');
+      continue;
+    }
+    if (!reached.has(node.id)) {
+      states.set(node.id, 'untaken');
+      continue;
+    }
+
+    const position = order.indexOf(node.id);
+    if (position > cursor) {
+      states.set(node.id, 'pending');
+    } else if (scenario?.failsAt === node.id) {
+      states.set(node.id, 'failed');
+    } else if ((node.next?.length ?? 0) > 1 && !node.fanOut) {
+      // A decision the run made, worth marking differently from a step that
+      // merely succeeded.
+      states.set(node.id, 'choice');
+    } else {
+      states.set(node.id, 'done');
+    }
+  }
+
+  return states;
 }
 
 /** Terminal steps: nodes nothing leads on from. */

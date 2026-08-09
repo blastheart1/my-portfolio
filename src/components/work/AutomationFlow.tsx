@@ -10,7 +10,7 @@ import {
   FAILURE_LABEL,
   type FlowNode,
 } from '@/lib/automation-flows';
-import { runOrder, untakenNodes } from '@/lib/automation-runner';
+import { runOrder, nodeStates } from '@/lib/automation-runner';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { Play, Pause, SkipForward, RotateCcw, AlertTriangle } from 'lucide-react';
 import DemoIntro, { AUTOMATION_INTRO } from './DemoIntro';
@@ -97,8 +97,13 @@ export default function AutomationFlowExplorer() {
   const active = AUTOMATION_FLOWS.find(f => f.id === activeId) ?? AUTOMATION_FLOWS[0];
 
   const reducedMotion = usePrefersReducedMotion();
-  const order = React.useMemo(() => runOrder(active), [active]);
-  const untaken = React.useMemo(() => untakenNodes(active), [active]);
+
+  // Which run is being shown. Defaults to the first, which is always the happy
+  // path; the rest are the edge cases the flow was actually built for.
+  const [scenarioId, setScenarioId] = React.useState(active.scenarios?.[0]?.id);
+  const scenario = active.scenarios?.find(s => s.id === scenarioId) ?? active.scenarios?.[0];
+
+  const order = React.useMemo(() => runOrder(active, scenario), [active, scenario]);
 
   // -1 means "not running". Advancing is a timeout chain rather than an
   // interval so pausing cannot leave one queued tick still pending.
@@ -143,6 +148,10 @@ export default function AutomationFlowExplorer() {
   };
 
   const activeNodeId = cursor >= 0 ? order[cursor] : null;
+  const states = React.useMemo(
+    () => nodeStates(active, cursor, scenario),
+    [active, cursor, scenario]
+  );
 
   React.useEffect(() => {
     if (activeNodeId) setSelected(active.nodes.find(n => n.id === activeNodeId) ?? null);
@@ -170,6 +179,7 @@ export default function AutomationFlowExplorer() {
                   stop();
                   setCursor(-1);
                   setActiveId(flow.id);
+                  setScenarioId(flow.scenarios?.[0]?.id);
                   setSelected(null);
                 }}
                 className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
@@ -195,9 +205,11 @@ export default function AutomationFlowExplorer() {
         <select
           value={activeId}
           onChange={e => {
+            const next = AUTOMATION_FLOWS.find(f => f.id === e.target.value);
             stop();
             setCursor(-1);
             setActiveId(e.target.value);
+            setScenarioId(next?.scenarios?.[0]?.id);
             setSelected(null);
           }}
           className="mt-1 w-full rounded-lg border border-gray-200 bg-transparent px-3 py-2
@@ -228,6 +240,37 @@ export default function AutomationFlowExplorer() {
           </p>
         </div>
       </div>
+
+      {active.scenarios && active.scenarios.length > 1 && (
+        <div className="mt-6">
+          <label className="block">
+            <span className="text-[11px] uppercase tracking-wide text-gray-400">Scenario</span>
+            <select
+              value={scenario?.id}
+              onChange={e => {
+                stop();
+                setCursor(-1);
+                setSelected(null);
+                setScenarioId(e.target.value);
+              }}
+              className="mt-1 block w-full max-w-md rounded-lg border border-gray-200 bg-transparent
+                         px-3 py-2 text-sm dark:border-gray-700"
+            >
+              {active.scenarios.map(s => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {scenario && (
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+              {scenario.summary}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Run controls. Under reduced motion the Play button is withheld and
           Step is the only advance, so nothing moves on its own but the same
@@ -292,7 +335,8 @@ export default function AutomationFlowExplorer() {
       </div>
 
       <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-        <span className="text-gray-400">Running:</span> {active.sampleRecord}
+        <span className="text-gray-400">Running:</span>{' '}
+        {scenario ? scenario.summary : active.sampleRecord}
       </p>
 
       {active.instances && (
@@ -308,7 +352,7 @@ export default function AutomationFlowExplorer() {
           flow={active}
           onSelect={setSelected}
           activeNodeId={activeNodeId}
-          untaken={cursor >= 0 ? untaken : undefined}
+          runStates={states}
           showFailures={showFailures}
         />
       </div>

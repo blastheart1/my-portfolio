@@ -57,6 +57,26 @@ export interface FlowNode {
   onFailure?: { behaviour: FailureBehaviour; detail: string };
 }
 
+/**
+ * A specific run worth showing: the happy path, and the edge cases that
+ * justify half the steps.
+ *
+ * `takes` overrides the branch choices for this scenario, so one diagram can
+ * demonstrate several routes. `failsAt` marks the step that breaks — the run
+ * stops there and the node's onFailure explains what happens next, which is
+ * the only way to show the error handling without it being a claim in prose.
+ */
+export interface FlowScenario {
+  id: string;
+  label: string;
+  /** One line on what makes this run different. */
+  summary: string;
+  /** nodeId -> the path taken, overriding sampleTakes. */
+  takes?: Record<string, string>;
+  /** The step that fails in this scenario. */
+  failsAt?: string;
+}
+
 export interface AutomationFlow {
   id: string;
   title: string;
@@ -66,6 +86,11 @@ export interface AutomationFlow {
   sampleRecord: string;
   /** For designs deployed many times over, e.g. one per partner. */
   instances?: { count: number; label: string };
+  /**
+   * Runs a visitor can choose between. The first is always the happy path;
+   * the rest are the edge cases the flow was actually built for.
+   */
+  scenarios?: FlowScenario[];
   nodes: FlowNode[];
 }
 
@@ -88,6 +113,40 @@ export const AUTOMATION_FLOWS: AutomationFlow[] = [
     id: "lead-intake",
     title: "Lead intake and routing",
     sampleRecord: "A quote request submitted at 21:40 on a Sunday, from a paid campaign, with no region field filled in.",
+      scenarios: [
+        {
+          id: "happy",
+          label: "Paid campaign lead",
+          summary: "Complete details, clean attribution, an owner available in that region.",
+          takes: { "source-branch": "path-campaign", "assign-branch": "notify-owner" },
+        },
+        {
+          id: "unattributed",
+          label: "No attribution at all",
+          summary: "Someone typed the address in directly. The enrichment step cannot help, and the record is marked unattributed rather than guessed at.",
+          takes: { "source-branch": "path-direct", "assign-branch": "notify-owner" },
+        },
+        {
+          id: "nobody",
+          label: "No owner for the region",
+          summary: "A valid lead in a region nobody covers. It goes to the queue rather than to whoever is first alphabetically.",
+          takes: { "source-branch": "path-marketplace", "assign-branch": "notify-queue" },
+        },
+        {
+          id: "crm-down",
+          label: "The CRM is unreachable",
+          summary: "Everything upstream succeeded and the one write that matters fails. This is why it retries and then alerts with the payload rather than dropping.",
+          takes: { "source-branch": "path-campaign" },
+          failsAt: "crm",
+        },
+        {
+          id: "spam",
+          label: "Caught by the gate",
+          summary: "An obvious junk submission. Dropped before any write, with the rule that caught it recorded — the reason this step is a rule and not a model.",
+          takes: { "source-branch": "path-direct" },
+          failsAt: "gate",
+        },
+      ],
     problem: "Enquiries arrived from a dozen forms and marketplaces, each with its own shape. Someone re-typed them into the CRM, and roughly a third arrived without enough information to tell where they came from.",
     outcome: "Enquiries land already classified, deduplicated and attributed, with junk filtered before anyone sees it and paperwork filed before anyone asks.",
     nodes: [
@@ -451,6 +510,33 @@ export const AUTOMATION_FLOWS: AutomationFlow[] = [
     id: "folder-repair",
     title: "Self-healing folder repair",
     sampleRecord: "A nightly sweep finds a job whose Permits folder was renamed by hand and whose Design folder is missing entirely.",
+      scenarios: [
+        {
+          id: "happy",
+          label: "A missing folder",
+          summary: "The safe case: something that should exist does not, so it is recreated without asking.",
+          takes: { "diff": "fix-missing" },
+        },
+        {
+          id: "renamed",
+          label: "Someone renamed a folder",
+          summary: "Never undone automatically. A person renamed it for a reason, and silently reverting their change is how automation loses trust.",
+          takes: { "diff": "fix-renamed" },
+        },
+        {
+          id: "ambiguous",
+          label: "Two folders with the same name",
+          summary: "Cannot be resolved from names alone. Guessing here merges or orphans documents, so it waits.",
+          takes: { "diff": "escalate" },
+        },
+        {
+          id: "verify-fails",
+          label: "The repair did not work",
+          summary: "The repair reported success and the re-check disagrees. This is the one failure this flow cannot tolerate silently.",
+          takes: { "diff": "fix-missing" },
+          failsAt: "verify",
+        },
+      ],
     problem: "The provisioning automation occasionally lost a race, and people renamed and moved folders by hand. Broken trees were found weeks later by whoever needed a document.",
     outcome: "Broken trees are found and repaired nightly, and only genuinely ambiguous cases reach a person.",
     nodes: [
@@ -670,6 +756,27 @@ export const AUTOMATION_FLOWS: AutomationFlow[] = [
       label: "referral partners, one design",
     },
     sampleRecord: "A referral submitted through one partner’s own branded form, for a customer already in the system.",
+      scenarios: [
+        {
+          id: "happy",
+          label: "A new customer",
+          summary: "A referral for someone not in the system. The simple path.",
+          takes: { "dupe": "fresh" },
+        },
+        {
+          id: "existing",
+          label: "A customer already known",
+          summary: "The common case, and the source of every commission argument. Attached to the existing record rather than duplicated.",
+          takes: { "dupe": "existing" },
+        },
+        {
+          id: "dashboard-down",
+          label: "The partner dashboard fails",
+          summary: "The credit is recorded but the partner cannot see it. Retries, then alerts — a partner who cannot see their referrals will ask.",
+          takes: { "dupe": "existing" },
+          failsAt: "dashboard",
+        },
+      ],
     problem: "Each referral partner wanted their own form, their own branding and their own view of what they had sent. Eleven partners meant eleven of everything.",
     outcome: "One design, deployed eleven times. A new partner is a configuration entry and a form, not a new build.",
     nodes: [
@@ -843,6 +950,25 @@ export const AUTOMATION_FLOWS: AutomationFlow[] = [
     id: "partner-onboarding",
     title: "Partner onboarding",
     sampleRecord: "A new referral partner signs up, supplying a logo and their commission terms.",
+      scenarios: [
+        {
+          id: "happy",
+          label: "A standard signup",
+          summary: "Terms inside the agreed band, logo supplied, everything created.",
+        },
+        {
+          id: "terms",
+          label: "Terms outside the band",
+          summary: "A commission rate above what was agreed. Held rather than accepted — the step that stops a typo becoming a contract.",
+          failsAt: "validate",
+        },
+        {
+          id: "form",
+          label: "The form fails to deploy",
+          summary: "Everything else can be repaired later. Without a form the partner cannot refer anyone, so this one alerts rather than retrying quietly.",
+          failsAt: "form",
+        },
+      ],
     problem: "Onboarding a partner meant a folder, a form, a dashboard, credentials and a welcome pack, all created by hand over several days.",
     outcome: "A partner is live within minutes of signing up, with every artefact created consistently.",
     nodes: [
@@ -1017,6 +1143,33 @@ export const AUTOMATION_FLOWS: AutomationFlow[] = [
     id: "build-contract",
     title: "Signed contract to invoice",
     sampleRecord: "A signed build contract that includes structural engineering, so it takes the engineering-specific path.",
+      scenarios: [
+        {
+          id: "happy",
+          label: "Structural engineering",
+          summary: "Takes the engineering schedule, which bills a design stage up front.",
+          takes: { "type": "engineering" },
+        },
+        {
+          id: "standard",
+          label: "A standard pool",
+          summary: "Four milestones, no design stage.",
+          takes: { "type": "standard" },
+        },
+        {
+          id: "materials",
+          label: "Materials only",
+          summary: "Deposit and balance, nothing else.",
+          takes: { "type": "materials" },
+        },
+        {
+          id: "replay",
+          label: "A replayed signature event",
+          summary: "Idempotency on the contract id stops a second invoice — the failure customers actually notice.",
+          takes: { "type": "standard" },
+          failsAt: "invoice",
+        },
+      ],
     problem: "A signed contract sat in the CRM until someone noticed and keyed the same numbers into QuickBooks, days later, differently each time.",
     outcome: "Signing raises the right invoice within seconds, against the right schedule for that contract type.",
     nodes: [
@@ -1211,6 +1364,27 @@ export const AUTOMATION_FLOWS: AutomationFlow[] = [
     id: "reporting-sync",
     title: "Scheduled reporting sync",
     sampleRecord: "The 02:00 run, on a night when one batch of records fails validation.",
+      scenarios: [
+        {
+          id: "happy",
+          label: "A clean night",
+          summary: "Everything validates, the snapshot swaps atomically.",
+          takes: { "validate": "load" },
+        },
+        {
+          id: "rejects",
+          label: "A batch with rejects",
+          summary: "Six rows fail validation. They are quarantined with reasons rather than dropped or forced through.",
+          takes: { "validate": "quarantine" },
+        },
+        {
+          id: "load-fails",
+          label: "The load fails midway",
+          summary: "The previous snapshot stays readable throughout. Yesterday complete beats today partial.",
+          takes: { "validate": "load" },
+          failsAt: "load",
+        },
+      ],
     problem: "Reporting ran against the live system, so heavy queries slowed the tool the team was using and the numbers changed under whoever was reading them.",
     outcome: "Reporting reads a stable overnight snapshot, and the operational system is never queried by a dashboard.",
     nodes: [
@@ -1364,6 +1538,31 @@ export const AUTOMATION_FLOWS: AutomationFlow[] = [
     id: "qbo-to-billcom",
     title: "Invoice sync: QuickBooks to Bill.com",
     sampleRecord: "An invoice raised in QuickBooks with three line items and 30-day terms.",
+      scenarios: [
+        {
+          id: "happy",
+          label: "A straightforward invoice",
+          summary: "Three line items, terms that map cleanly, both systems available.",
+        },
+        {
+          id: "duplicate",
+          label: "A replayed webhook",
+          summary: "The same invoice arrives twice. Deduplication stops it there, which is the difference between a sync and a stream of duplicate bills.",
+          failsAt: "idempotent",
+        },
+        {
+          id: "mismatch",
+          label: "Totals do not reconcile",
+          summary: "The mapped lines do not sum to the source total. Nothing is written — a bill wrong by a penny is worse than a bill that is late.",
+          failsAt: "reconcile",
+        },
+        {
+          id: "billcom-down",
+          label: "Bill.com is unavailable",
+          summary: "Retries with backoff, then alerts with the payload. A lost invoice surfaces at month end when it is expensive.",
+          failsAt: "push",
+        },
+      ],
     problem: "Invoices raised in QuickBooks had to be recreated in Bill.com for approval and payment. Two people, two keyboards, and a monthly reconciliation to find what had drifted.",
     outcome: "An invoice appears in Bill.com within a minute, line items intact, with a record of exactly what was sent.",
     nodes: [
@@ -1513,6 +1712,19 @@ export const AUTOMATION_FLOWS: AutomationFlow[] = [
     id: "billcom-to-qbo",
     title: "Bill sync: Bill.com to QuickBooks",
     sampleRecord: "A bill approved in Bill.com from a supplier whose name differs slightly from the QuickBooks record.",
+      scenarios: [
+        {
+          id: "happy",
+          label: "A known vendor",
+          summary: "Matched with high confidence and coded from history.",
+        },
+        {
+          id: "fuzzy",
+          label: "A vendor name that nearly matches",
+          summary: "Below the confidence floor it waits. A bill against the wrong vendor is harder to unpick than one that waited.",
+          failsAt: "vendor",
+        },
+      ],
     problem: "Bills approved in Bill.com were re-entered into QuickBooks by hand, so the books lagged approvals by days.",
     outcome: "An approved bill lands in QuickBooks coded to the right account without anyone retyping it.",
     nodes: [
@@ -1622,6 +1834,25 @@ export const AUTOMATION_FLOWS: AutomationFlow[] = [
     id: "credit-sync",
     title: "Credit memos and vendor credits",
     sampleRecord: "A vendor credit raised in Bill.com against a bill already paid.",
+      scenarios: [
+        {
+          id: "happy",
+          label: "A vendor credit",
+          summary: "Raised against an unpaid bill, matched and posted.",
+        },
+        {
+          id: "paid",
+          label: "The bill was already paid",
+          summary: "A credit against a paid bill is a refund, not a reduction. Treating them the same is how a supplier gets paid twice.",
+          failsAt: "paid",
+        },
+        {
+          id: "unlinked",
+          label: "Nothing to offset",
+          summary: "A credit with no reference. Held for a person rather than posted somewhere plausible.",
+          failsAt: "link",
+        },
+      ],
     problem: "Credits were the exception nobody automated, entered by hand in whichever system someone remembered, drifting in the direction that flatters the books.",
     outcome: "Credits move both directions on the same rails as invoices, with the same audit trail and the same refusal to guess.",
     nodes: [
@@ -1771,6 +2002,24 @@ export const AUTOMATION_FLOWS: AutomationFlow[] = [
     id: "payment-verification",
     title: "Payment verification back to the CRM",
     sampleRecord: "A card payment that clears three days after the invoice was raised.",
+      scenarios: [
+        {
+          id: "happy",
+          label: "A full payment",
+          summary: "Clears, matches, updates the job.",
+        },
+        {
+          id: "partial",
+          label: "A deposit only",
+          summary: "Part-paid is the common case and means something different downstream.",
+        },
+        {
+          id: "unmatched",
+          label: "Payment with no reference",
+          summary: "Held for review. Guessing which job a payment belongs to is how the wrong job starts.",
+          failsAt: "match",
+        },
+      ],
     problem: "Payment landed in the accounting system and nowhere else, so the team scheduling work had no idea whether a deposit had cleared.",
     outcome: "A cleared payment updates the job within minutes, and schedulers stop asking accounts.",
     nodes: [
@@ -1880,6 +2129,24 @@ export const AUTOMATION_FLOWS: AutomationFlow[] = [
     id: "customer-lifecycle",
     title: "Customer lifecycle: archive, revive, cold",
     sampleRecord: "A lead with no contact for 90 days that gets in touch again the week after being archived.",
+      scenarios: [
+        {
+          id: "happy",
+          label: "A quiet lead is archived",
+          summary: "Ninety days with no contact.",
+        },
+        {
+          id: "revive",
+          label: "They get in touch again",
+          summary: "Immediate reactivation. An archive a customer cannot escape by getting in touch loses them twice.",
+        },
+        {
+          id: "partial",
+          label: "Archived in some systems only",
+          summary: "A partial archive is reported, because a half-archived customer still receives marketing email.",
+          failsAt: "archive",
+        },
+      ],
     problem: "Dead leads stayed in the active list forever, so the pipeline was inflated and the team worked records nobody expected to convert.",
     outcome: "The list reflects reality, and a returning customer comes straight back without anyone noticing they had gone.",
     nodes: [
@@ -1989,6 +2256,24 @@ export const AUTOMATION_FLOWS: AutomationFlow[] = [
     id: "document-provisioning",
     title: "Document folder provisioning",
     sampleRecord: "A new job created on a Friday afternoon, where the folder root already exists from a cancelled earlier job.",
+      scenarios: [
+        {
+          id: "happy",
+          label: "A new job",
+          summary: "Root created, five subfolders, permissions applied.",
+        },
+        {
+          id: "exists",
+          label: "The root already exists",
+          summary: "From a cancelled earlier job. Find-or-create means a re-run does not produce a second tree.",
+        },
+        {
+          id: "permissions",
+          label: "Permissions fail to apply",
+          summary: "Stops and alerts. An open folder is a real problem, not a cosmetic one.",
+          failsAt: "permissions",
+        },
+      ],
     problem: "Every new job needed a folder structure created by hand, so half were missing, misnamed, or in the wrong place, and photos ended up in personal drives.",
     outcome: "A consistent tree exists before anyone needs it, named the same way every time, with permissions already right.",
     nodes: [
@@ -2138,6 +2423,19 @@ export const AUTOMATION_FLOWS: AutomationFlow[] = [
     id: "estimate-to-invoice",
     title: "Signed estimate to invoice",
     sampleRecord: "A design estimate signed online, for a customer paying by card.",
+      scenarios: [
+        {
+          id: "happy",
+          label: "Signed and invoiced",
+          summary: "The straightforward path.",
+        },
+        {
+          id: "replay",
+          label: "A replayed signature",
+          summary: "Idempotency stops a second invoice.",
+          failsAt: "invoice",
+        },
+      ],
     problem: "A signed estimate sat in the CRM until somebody noticed and keyed the numbers into QuickBooks, days late.",
     outcome: "Signing raises the invoice within seconds, with a payment link attached.",
     nodes: [
@@ -2247,6 +2545,24 @@ export const AUTOMATION_FLOWS: AutomationFlow[] = [
     id: "salesperson-routing",
     title: "Salesperson lead routing",
     sampleRecord: "A lead from one salesperson’s personal enquiry form, arriving while they are on leave.",
+      scenarios: [
+        {
+          id: "happy",
+          label: "Owner available",
+          summary: "Straight to the person named on the form.",
+        },
+        {
+          id: "leave",
+          label: "Owner on leave",
+          summary: "Falls back to the general queue, which is always staffed. A lead sitting with someone on holiday is the failure this prevents.",
+        },
+        {
+          id: "unknown",
+          label: "Unknown owner id",
+          summary: "Stops rather than routing arbitrarily.",
+          failsAt: "owner",
+        },
+      ],
     problem: "Each salesperson wanted enquiries from their own contacts to reach them directly rather than the general queue.",
     outcome: "Personal enquiries route straight to their owner, with cover when that person is unavailable.",
     nodes: [
@@ -2356,6 +2672,24 @@ export const AUTOMATION_FLOWS: AutomationFlow[] = [
     id: "notifications",
     title: "Notifications and escalation",
     sampleRecord: "A batch of routine events plus one failed payment sync at 03:00.",
+      scenarios: [
+        {
+          id: "happy",
+          label: "A routine batch",
+          summary: "Summarised into one digest.",
+        },
+        {
+          id: "urgent",
+          label: "One urgent event",
+          summary: "Skips the digest and goes to the loud channel.",
+        },
+        {
+          id: "unacked",
+          label: "Nobody acknowledges",
+          summary: "Escalates. An alert nobody acknowledges is not an alert.",
+          failsAt: "escalate",
+        },
+      ],
     problem: "Alerts went to a shared inbox everyone had muted, so urgent things waited alongside routine noise.",
     outcome: "Routine updates stay quiet, and the few things needing a person now reach one.",
     nodes: [

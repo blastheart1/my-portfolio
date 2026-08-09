@@ -9,7 +9,7 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { runOrder, nextFor, untakenNodes, terminals } from '../automation-runner';
+import { runOrder, nextFor, untakenNodes, terminals, nodeStates } from '../automation-runner';
 import { AUTOMATION_FLOWS, type AutomationFlow } from '../automation-flows';
 
 const byId = (id: string) => AUTOMATION_FLOWS.find(f => f.id === id)!;
@@ -125,3 +125,78 @@ describe('malformed input does not hang', () => {
     expect(runOrder({ ...byId('credit-sync'), nodes: [] })).toEqual([]);
   });
 });
+
+describe('scenarios route and stop the run', () => {
+  it('follows the scenario’s branch choices over the default', () => {
+    const flow = byId('lead-intake');
+    const nobody = flow.scenarios!.find(s => s.id === 'nobody')!;
+
+    const order = runOrder(flow, nobody);
+
+    expect(order).toContain('notify-queue');
+    expect(order).not.toContain('notify-owner');
+  });
+
+  it('stops at the failing step, so nothing downstream looks like it ran', () => {
+    const flow = byId('lead-intake');
+    const down = flow.scenarios!.find(s => s.id === 'crm-down')!;
+
+    const order = runOrder(flow, down);
+
+    expect(order).toContain('crm');
+    // The lead never went live; showing the terminal node reached would be a
+    // lie about what happened.
+    expect(order).not.toContain('done');
+  });
+
+  it('marks the failing node failed and the rest of the path done', () => {
+    const flow = byId('qbo-to-billcom');
+    const mismatch = flow.scenarios!.find(s => s.id === 'mismatch')!;
+    const order = runOrder(flow, mismatch);
+
+    const states = nodeStates(flow, order.length - 1, mismatch);
+
+    expect(states.get('reconcile')).toBe('failed');
+    expect(states.get('fetch')).toBe('done');
+    expect(states.get('push')).toBe('untaken');
+  });
+
+  it('marks a decision node as a choice rather than merely done', () => {
+    const flow = byId('lead-intake');
+    const order = runOrder(flow, flow.scenarios![0]);
+
+    const states = nodeStates(flow, order.length - 1, flow.scenarios![0]);
+
+    expect(states.get('source-branch')).toBe('choice');
+    expect(states.get('normalise')).toBe('done');
+  });
+
+  it('colours nothing before the run starts', () => {
+    const flow = byId('lead-intake');
+
+    const states = nodeStates(flow, -1, flow.scenarios![0]);
+
+    // A diagram at rest must not imply an outcome.
+    expect([...states.values()].every(v => v === 'pending')).toBe(true);
+  });
+
+  it('leaves steps ahead of the cursor pending', () => {
+    const flow = byId('credit-sync');
+    const order = runOrder(flow, flow.scenarios![0]);
+
+    const states = nodeStates(flow, 1, flow.scenarios![0]);
+
+    expect(states.get(order[0])).not.toBe('pending');
+    expect(states.get(order[order.length - 1])).toBe('pending');
+  });
+
+  it('terminates for every scenario of every flow', () => {
+    for (const flow of AUTOMATION_FLOWS) {
+      for (const scenario of flow.scenarios ?? []) {
+        const order = runOrder(flow, scenario);
+        expect(order.length, `${flow.id}:${scenario.id}`).toBeGreaterThan(0);
+        expect(new Set(order).size, `${flow.id}:${scenario.id}`).toBe(order.length);
+      }
+    }
+  });
+})
