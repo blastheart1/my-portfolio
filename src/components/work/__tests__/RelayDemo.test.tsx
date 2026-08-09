@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import RelayDemo from '../RelayDemo';
@@ -34,7 +34,20 @@ function primeMount(providers: Array<{ id: string; label: string }> = [{ id: 'op
 
 const CLEAN_RESULT = {
   draft: { subject: 'Onboarding frameworks', body: [{ text: 'Hi Lewis,' }], provider: 'openai', model: 'gpt-4o-mini' },
-  verdict: { faithful: true, accuracy: 0.97, fabrications: [], omissions: [], auditorProvider: 'anthropic', attempts: 1 },
+  verdict: {
+    faithful: true,
+    accuracy: 0.97,
+    fabrications: [],
+    omissions: [],
+    changes: [
+      { text: 'Left the recipient email blank because it was not dictated.', needsLook: true },
+      { text: 'Removed filler and tightened repeated phrasing.', needsLook: false },
+    ],
+    styleScore: 0.88,
+    styleNotes: 'Warm and on-brand; the rhythm and sign-off match.',
+    auditorProvider: 'anthropic',
+    attempts: 1,
+  },
   status: 'ready',
   degraded: false,
 };
@@ -47,8 +60,10 @@ beforeEach(() => {
 async function draft() {
   const user = userEvent.setup();
   render(<RelayDemo />);
-  await screen.findByRole('button', { name: /Lewis/ });
-  await user.click(screen.getByRole('button', { name: /draft the reply/i }));
+  // The examples rail became a select when the layout moved to the reference's
+  // two-pane review, so wait on the draft control rather than an example row.
+  const button = await screen.findByRole('button', { name: /draft the reply/i });
+  await user.click(button);
 }
 
 describe('happy path', () => {
@@ -56,8 +71,9 @@ describe('happy path', () => {
     primeMount();
     render(<RelayDemo />);
 
+    const picker = await screen.findByRole('combobox', { name: /example note/i });
     for (const note of SEED_NOTES) {
-      expect(await screen.findByRole('button', { name: new RegExp(note.correspondent) })).toBeInTheDocument();
+      expect(within(picker).getByRole('option', { name: new RegExp(note.correspondent) })).toBeInTheDocument();
     }
     // The transcript now renders as timestamped segments rather than one blob.
     expect(await screen.findByText(SEED_NOTES[0].segments![0].text)).toBeInTheDocument();
@@ -70,9 +86,12 @@ describe('happy path', () => {
 
     await draft();
 
-    expect(await screen.findByText('Onboarding frameworks')).toBeInTheDocument();
+    // The subject now appears twice by design: as the page heading, the way
+    // the reference does it, and again above the draft body.
+    expect((await screen.findAllByText('Onboarding frameworks')).length).toBeGreaterThan(0);
+    expect(screen.getByRole('heading', { name: /onboarding frameworks/i })).toBeInTheDocument();
     expect(screen.getByText(/audited by anthropic/i)).toBeInTheDocument();
-    expect(screen.getByText(/every claim traced back/i)).toBeInTheDocument();
+    expect(screen.getByText(/grounded in the voice note/i)).toBeInTheDocument();
   });
 
   it('updates the remaining-runs indicator from the response header', async () => {
@@ -95,7 +114,7 @@ describe('never overstates what happened', () => {
     await draft();
 
     expect(await screen.findByText(/not audited/i)).toBeInTheDocument();
-    expect(screen.queryByText(/every claim traced back/i)).toBeNull();
+    expect(screen.queryByText(/grounded in the voice note/i)).toBeNull();
   });
 
   it('labels a stored example as one', async () => {
@@ -124,7 +143,8 @@ describe('never overstates what happened', () => {
 
     await draft();
 
-    expect(await screen.findByText(/1 claim the note does not support/i)).toBeInTheDocument();
+    expect(await screen.findByText(/could not be traced back to the note/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 to confirm/i)).toBeInTheDocument();
     expect(screen.getByText(/no date was mentioned/)).toBeInTheDocument();
     expect(screen.getByText(/redrafted once/i)).toBeInTheDocument();
   });
@@ -259,5 +279,78 @@ describe('nothing can be sent', () => {
     // go looking for the endpoint behind it.
     expect(screen.queryByRole('button', { name: /^send/i })).toBeNull();
     expect(screen.getByText(/nothing is sent/i)).toBeInTheDocument();
+  });
+});
+
+
+describe('the review panels', () => {
+  it('lists what Relay changed and assumed, with a count of what needs a look', async () => {
+    primeMount();
+    fetchMock.mockResolvedValueOnce(jsonResponse(CLEAN_RESULT));
+
+    await draft();
+
+    expect(await screen.findByText(/what relay changed & assumed/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 need a look/i)).toBeInTheDocument();
+    expect(screen.getByText(/left the recipient email blank/i)).toBeInTheDocument();
+  });
+
+  it('separates assumptions to confirm from changes already made', async () => {
+    primeMount();
+    fetchMock.mockResolvedValueOnce(jsonResponse(CLEAN_RESULT));
+    await draft();
+
+    // The icon is not the only signal: each row states which kind it is, or
+    // the distinction is lost to anyone not reading colour and glyphs.
+    expect(await screen.findByText(/needs a look:/i)).toBeInTheDocument();
+    expect(screen.getByText(/^done:/i)).toBeInTheDocument();
+  });
+
+  it('shows the faithfulness verdict with its score and auditor', async () => {
+    primeMount();
+    fetchMock.mockResolvedValueOnce(jsonResponse(CLEAN_RESULT));
+
+    await draft();
+
+    expect(await screen.findByText(/faithfulness check/i)).toBeInTheDocument();
+    expect(screen.getByText('Grounded')).toBeInTheDocument();
+    expect(screen.getByText('97% accurate')).toBeInTheDocument();
+    expect(screen.getByText(/audited by anthropic/i)).toBeInTheDocument();
+  });
+
+  it('reports accuracy and style together when the auditor gave both', async () => {
+    primeMount();
+    fetchMock.mockResolvedValueOnce(jsonResponse(CLEAN_RESULT));
+
+    await draft();
+
+    expect(await screen.findByText(/accuracy 97% · style 88%/i)).toBeInTheDocument();
+  });
+
+  it('claims no verdict at all when nothing audited the draft', async () => {
+    primeMount();
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        ...CLEAN_RESULT,
+        verdict: { ...CLEAN_RESULT.verdict, auditorProvider: null, changes: [] },
+      })
+    );
+
+    await draft();
+
+    expect(await screen.findByText('Not audited')).toBeInTheDocument();
+    expect(screen.queryByText('Grounded')).toBeNull();
+  });
+
+  it('survives a verdict with no changes array at all', async () => {
+    primeMount();
+    const { changes: _drop, ...verdict } = CLEAN_RESULT.verdict;
+    fetchMock.mockResolvedValueOnce(jsonResponse({ ...CLEAN_RESULT, verdict }));
+
+    await draft();
+
+    // A partial response reaching .filter() took the whole panel down, after
+    // the visitor had already spent one of three runs.
+    expect(await screen.findByText(/faithfulness check/i)).toBeInTheDocument();
   });
 });

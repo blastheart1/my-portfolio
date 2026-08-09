@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Mic } from 'lucide-react';
 
 import type { TranscriptSegment } from '@/lib/demo/relay/types';
+import Tooltip from '@/components/ui/tooltip';
 
 /**
  * The voice note: a player, and the transcript beside a timestamp gutter.
@@ -69,15 +70,19 @@ export default function TranscriptPanel({
             {segments.map(segment => (
               <li key={`${segment.start}-${segment.time}`} className="flex gap-4">
                 {audioURL ? (
-                  <button
-                    type="button"
-                    onClick={() => seek(segment.start)}
-                    aria-label={`Play from ${segment.time}`}
-                    className="shrink-0 pt-0.5 font-mono text-xs tabular-nums text-gray-400
-                               transition-colors hover:text-gray-900 dark:hover:text-gray-100"
-                  >
-                    {segment.time}
-                  </button>
+                  // Wrapped rather than a title attribute: a native tooltip is
+                  // slow to appear, unstyled, and never shows on focus, and
+                  // this is the affordance that tells you the timestamps do
+                  // anything at all.
+                  <span className="shrink-0 pt-0.5">
+                    <Tooltip
+                      content={`Jump to ${segment.time} in the recording`}
+                      className="font-mono text-xs tabular-nums text-gray-400 transition-colors
+                                 hover:text-gray-900 dark:hover:text-gray-100"
+                    >
+                      <span onClick={() => seek(segment.start)}>{segment.time}</span>
+                    </Tooltip>
+                  </span>
                 ) : (
                   <span className="shrink-0 pt-0.5 font-mono text-xs tabular-nums text-gray-400">
                     {segment.time}

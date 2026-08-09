@@ -18,12 +18,31 @@ export interface Fabrication {
   why: string;
 }
 
+/**
+ * One thing the draft did to the note: an assumption worth confirming, or a
+ * change made deliberately.
+ *
+ * `needsLook` is the distinction that matters. Tightening filler is a decision
+ * the sender can skim; leaving a link blank because it was referenced but never
+ * spoken is something they have to act on before sending.
+ */
+export interface DraftChange {
+  text: string;
+  needsLook: boolean;
+}
+
 export interface Verdict {
   faithful: boolean;
   /** 0..1, how accurately the draft reflects what was actually said. */
   accuracy: number;
   fabrications: Fabrication[];
   omissions: string[];
+  /** What was changed or assumed, for the review panel. */
+  changes: DraftChange[];
+  /** 0..1, how well the draft matches the sender's voice. */
+  styleScore: number;
+  /** One line on where the voice matched and where it did not. */
+  styleNotes: string;
   auditorProvider: string | null;
   /** 1 = clean first pass; 2 = one repair ran. */
   attempts: number;

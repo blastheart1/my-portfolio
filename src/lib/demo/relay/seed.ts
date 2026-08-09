@@ -95,6 +95,12 @@ export function degradedResult(note: DemoNote): DraftResult {
       accuracy: 1,
       fabrications: [],
       omissions: [],
+      changes: [
+        { text: 'Left the recipient email blank because it was not dictated.', needsLook: true },
+        { text: 'Removed filler and tightened repeated phrasing from the voice note.', needsLook: false },
+      ],
+      styleScore: 0.88,
+      styleNotes: 'Illustrative only — no auditor ran for this stored example.',
       auditorProvider: null,
       attempts: 1,
     },

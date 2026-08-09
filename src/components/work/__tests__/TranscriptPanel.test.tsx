@@ -10,6 +10,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import TranscriptPanel from '../TranscriptPanel';
 import type { TranscriptSegment } from '@/lib/demo/relay/types';
@@ -87,12 +88,23 @@ describe('content', () => {
   it('only makes timestamps clickable when there is audio to seek', () => {
     render(<TranscriptPanel transcript="x" segments={segments(3)} />);
 
-    expect(screen.queryByRole('button', { name: /play from/i })).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
   });
 
   it('makes them buttons once a recording exists', () => {
     render(<TranscriptPanel transcript="x" segments={segments(3)} audioURL="blob:x" />);
 
-    expect(screen.getAllByRole('button', { name: /play from/i })).toHaveLength(3);
+    expect(screen.getAllByRole('button')).toHaveLength(3);
+  });
+
+  it('says what a timestamp will do, on hover and on focus', async () => {
+    const user = userEvent.setup();
+    render(<TranscriptPanel transcript="x" segments={segments(3)} audioURL="blob:x" />);
+
+    await user.hover(screen.getAllByRole('button')[1]);
+
+    // Without this the timestamps look like decoration; nothing else suggests
+    // they are interactive.
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Jump to 0:15 in the recording');
   });
 });

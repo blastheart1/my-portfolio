@@ -190,6 +190,11 @@ async function auditDraft(note: DemoNote, draft: Draft): Promise<Verdict> {
     accuracy: 1,
     fabrications: [],
     omissions: [],
+    // Empty rather than invented: with no auditor there is nothing to report,
+    // and a plausible-looking list nobody produced is worse than none.
+    changes: [],
+    styleScore: 0,
+    styleNotes: '',
     auditorProvider: null,
     attempts: 1,
   };
@@ -207,19 +212,40 @@ async function auditDraft(note: DemoNote, draft: Draft): Promise<Verdict> {
       '[[brackets]] is flagged as inferred and is not a fabrication.',
       'Be strict but not pedantic — ordinary connective phrasing is not a claim.',
       '',
+      'Also report what the draft did to the note, so the sender can review it:',
+      'assumptions they must confirm before sending (a blank link, a guessed',
+      'date, a missing recipient) and changes made deliberately (tightened',
+      'filler, applied a structure). Mark the first kind needsLook: true.',
+      '',
       'Reply as JSON: {"faithful": boolean, "accuracy": number between 0 and 1,',
       '"fabrications": [{"text": string, "severity": "high"|"medium"|"low", "why": string}],',
-      '"omissions": [string]}',
+      '"omissions": [string],',
+      '"changes": [{"text": string, "needsLook": boolean}],',
+      '"styleScore": number between 0 and 1, "styleNotes": string}',
     ].join('\n'),
     `Transcript:\n${note.transcript}\n\nDraft:\nSubject: ${draft.subject}\n\n${draftText}`
   );
 
   const parsed = parseJson<Partial<Verdict>>(raw, {});
+  const fabrications = Array.isArray(parsed.fabrications) ? parsed.fabrications : [];
+  const changes = Array.isArray(parsed.changes) ? parsed.changes : [];
+
   return {
     faithful: parsed.faithful ?? true,
     accuracy: typeof parsed.accuracy === 'number' ? parsed.accuracy : 1,
-    fabrications: Array.isArray(parsed.fabrications) ? parsed.fabrications : [],
+    fabrications,
     omissions: Array.isArray(parsed.omissions) ? parsed.omissions : [],
+    // Every fabrication is by definition something to confirm, so it appears
+    // in the review list too. Deduplicated by text, since the auditor often
+    // reports the same span in both places.
+    changes: [
+      ...fabrications
+        .filter(f => !changes.some(c => c.text.includes(f.text)))
+        .map(f => ({ text: `${f.why} ("${f.text}")`, needsLook: true })),
+      ...changes,
+    ],
+    styleScore: typeof parsed.styleScore === 'number' ? parsed.styleScore : 0,
+    styleNotes: typeof parsed.styleNotes === 'string' ? parsed.styleNotes : '',
     auditorProvider: 'anthropic',
     attempts: 1,
   };
@@ -238,6 +264,9 @@ export async function runDraftPipeline(note: DemoNote): Promise<DraftResult> {
         accuracy: 0,
         fabrications: [],
         omissions: [],
+        changes: [],
+        styleScore: 0,
+        styleNotes: '',
         auditorProvider: null,
         attempts: 0,
         reviewNote: 'That input was blocked before reaching a model.',
