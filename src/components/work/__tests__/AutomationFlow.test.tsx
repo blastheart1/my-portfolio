@@ -50,9 +50,29 @@ function allProse(): string {
     flow.title,
     flow.problem,
     flow.outcome,
-    ...flow.nodes.flatMap(n => [n.label, n.input, n.output, n.detail]),
+    flow.sampleRecord,
+    ...flow.nodes.flatMap(n => [
+      n.label,
+      n.input,
+      n.output,
+      n.detail,
+      n.sample?.in ?? '',
+      n.sample?.out ?? '',
+      n.onFailure?.detail ?? '',
+    ]),
   ]).join(' ');
 }
+
+/**
+ * First names lifted from the client's zap titles. The per-partner and
+ * per-salesperson automations are named after real people, and those titles
+ * are the most likely thing to leak while writing about "one design, eleven
+ * instances".
+ */
+const REAL_PEOPLE = [
+  'Aaron', 'Allison', 'Brad', 'Brian', 'Kraig', 'Madison', 'Terry', 'Tieg',
+  'Andrew', 'Byanka', 'Sevan', 'Rigo', 'Szewczyk', 'Podergois', 'Nastazio',
+];
 
 describe('sanitization', () => {
   it.each(MUST_NOT_APPEAR)('never mentions %s', name => {
@@ -67,8 +87,19 @@ describe('sanitization', () => {
     expect(figures ?? []).toEqual([]);
   });
 
-  it('names no currency amounts', () => {
-    expect(allProse()).not.toMatch(/[$£€]\s?\d/);
+  it('names no currency amounts in the descriptive copy', () => {
+    // Scoped to prose rather than everything. The point is that the client's
+    // real figures stay private; the invented amounts in sample payloads are
+    // what make the inspector legible, and a rule that forbade those would be
+    // protecting nothing.
+    const prose = AUTOMATION_FLOWS.flatMap(flow => [
+      flow.title,
+      flow.problem,
+      flow.outcome,
+      ...flow.nodes.map(n => n.detail),
+    ]).join(' ');
+
+    expect(prose).not.toMatch(/[$£€]\s?\d/);
   });
 });
 
@@ -131,14 +162,30 @@ describe('rule and model steps are distinguishable', () => {
 
 describe('the claim the flows are meant to demonstrate', () => {
   it('keeps every money-touching step out of a model’s hands', () => {
-    const billing = AUTOMATION_FLOWS.find(f => f.id === 'progress-billing')!;
-    const submit = billing.nodes.find(n => n.id === 'submit')!;
-    const approve = billing.nodes.find(n => n.id === 'review')!;
+    // Was written against progress-billing, which described an automation that
+    // was only ever proposed and has been removed. The claim is unchanged, so
+    // it is asserted across the whole catalogue instead of one flow.
+    const writes = /invoice|credit|payment|bill|paid|refund/i;
 
-    expect(submit.kind).not.toBe('model');
-    expect(approve.kind).toBe('human');
-    // Approval must come before submission, or the human step is decorative.
-    expect(billing.nodes.indexOf(approve)).toBeLessThan(billing.nodes.indexOf(submit));
+    for (const flow of AUTOMATION_FLOWS) {
+      for (const node of flow.nodes) {
+        if (writes.test(node.label)) {
+          expect(node.kind, `${flow.id}:${node.label}`).not.toBe('model');
+        }
+      }
+    }
+  });
+
+  it('puts a human before anything irreversible', () => {
+    // Where a flow can pay, refund or undo a person's own action, a human step
+    // has to come first or the safeguard is decorative.
+    const guarded = ['credit-sync', 'folder-repair'];
+
+    for (const id of guarded) {
+      const flow = AUTOMATION_FLOWS.find(f => f.id === id)!;
+      const holds = flow.nodes.filter(n => n.kind === 'human' || n.onFailure?.behaviour === 'hold');
+      expect(holds.length, id).toBeGreaterThan(0);
+    }
   });
 
   it('keeps the discard decision deterministic', () => {
@@ -256,6 +303,53 @@ describe('nodes carry no colour-only meaning', () => {
     for (const node of AUTOMATION_FLOWS[0].nodes) {
       const row = screen.getByRole('button', { name: new RegExp(node.label) });
       expect(within(row).getByText(NODE_KIND_LABEL[node.kind])).toBeInTheDocument();
+    }
+  });
+});
+
+
+describe('only real, built automations', () => {
+  it('describes nothing that was never built', () => {
+    // Both were listed in the vault under "Target" and "Automation target" —
+    // intentions, not implementations — and were removed. Unbuilt work beside
+    // real work is indefensible the moment someone asks a follow-up question.
+    const ids = AUTOMATION_FLOWS.map(f => f.id);
+
+    expect(ids).not.toContain('missed-call');
+    expect(ids).not.toContain('progress-billing');
+  });
+
+  it('names no real person from a zap title', () => {
+    const prose = allProse();
+
+    for (const name of REAL_PEOPLE) {
+      expect(prose, name).not.toContain(name);
+    }
+  });
+
+  it('keeps sample payloads synthetic', () => {
+    const samples = AUTOMATION_FLOWS.flatMap(f =>
+      f.nodes.flatMap(n => [n.sample?.in ?? '', n.sample?.out ?? ''])
+    ).join(' ');
+
+    // Invented customers and job numbers only — never anything lifted from the
+    // client's own data.
+    for (const name of [...MUST_NOT_APPEAR, ...REAL_PEOPLE]) {
+      expect(samples.toLowerCase(), name).not.toContain(name.toLowerCase());
+    }
+  });
+
+  it('gives every flow a sample record to run', () => {
+    for (const flow of AUTOMATION_FLOWS) {
+      expect(flow.sampleRecord?.length, flow.id).toBeGreaterThan(30);
+    }
+  });
+
+  it('says what every step does when it breaks', () => {
+    for (const flow of AUTOMATION_FLOWS) {
+      for (const node of flow.nodes) {
+        expect(node.onFailure, `${flow.id}:${node.id}`).toBeDefined();
+      }
     }
   });
 });

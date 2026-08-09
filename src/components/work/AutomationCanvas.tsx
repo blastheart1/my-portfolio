@@ -14,9 +14,9 @@ import '@xyflow/react/dist/style.css';
 
 import {
   NODE_KIND_LABEL,
+  FAILURE_LABEL,
   type AutomationFlow,
   type FlowNode,
-  type NodeKind,
 } from '@/lib/automation-flows';
 import { toGraph } from '@/lib/automation-graph';
 
@@ -36,18 +36,35 @@ import { toGraph } from '@/lib/automation-graph';
 /** One neutral treatment; the words carry the meaning. */
 const KIND_BADGE = 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
 
-type StepData = { step: FlowNode; index: number };
+type StepData = {
+  step: FlowNode;
+  index: number;
+  /** Currently executing in run mode. */
+  isActive: boolean;
+  /** Not on the path the sample record takes — dimmed rather than hidden, so
+   *  the shape of the decision stays visible. */
+  isUntaken: boolean;
+  showFailures: boolean;
+};
 
 function StepNode({ data }: NodeProps) {
-  const { step, index } = data as unknown as StepData;
+  const { step, index, isActive, isUntaken, showFailures } = data as unknown as StepData;
 
   return (
     <div
       // Uniform. The kind is carried by the badge below, in words — colour was
       // never the accessible signal, so removing it loses nothing and the
-      // canvas reads far calmer with twelve flows in it.
-      className="w-56 rounded-lg border border-gray-200 bg-white p-3 text-left shadow-sm
-                 dark:border-gray-700 dark:bg-gray-900"
+      // canvas reads far calmer with a dozen flows in it.
+      //
+      // Run state is the one thing that does change the frame: the active step
+      // gets a ring, and steps the sample record never reaches fade. Both also
+      // read out in text, so neither is carried by appearance alone.
+      className={`w-56 rounded-lg border bg-white p-3 text-left shadow-sm transition-opacity
+                  dark:bg-gray-900 ${
+                    isActive
+                      ? 'border-gray-900 ring-2 ring-gray-900/20 dark:border-gray-100 dark:ring-gray-100/20'
+                      : 'border-gray-200 dark:border-gray-700'
+                  } ${isUntaken ? 'opacity-35' : ''}`}
     >
       <Handle type="target" position={Position.Left} className="!bg-gray-300 dark:!bg-gray-600" />
 
@@ -65,8 +82,16 @@ function StepNode({ data }: NodeProps) {
       </span>
 
       <p className="mt-2 text-[11px] leading-snug text-gray-500 dark:text-gray-400">
-        {step.input} → {step.output}
+        {showFailures && step.onFailure
+          ? `${FAILURE_LABEL[step.onFailure.behaviour]} — ${step.onFailure.detail}`
+          : `${step.input} → ${step.output}`}
       </p>
+
+      {(isActive || isUntaken) && (
+        <span className="sr-only">
+          {isActive ? 'Currently running' : 'Not taken by this record'}
+        </span>
+      )}
 
       <Handle type="source" position={Position.Right} className="!bg-gray-300 dark:!bg-gray-600" />
     </div>
@@ -78,11 +103,34 @@ const nodeTypes = { step: StepNode };
 export default function AutomationCanvas({
   flow,
   onSelect,
+  activeNodeId,
+  untaken,
+  showFailures = false,
 }: {
   flow: AutomationFlow;
   onSelect: (step: FlowNode) => void;
+  activeNodeId?: string | null;
+  untaken?: Set<string>;
+  showFailures?: boolean;
 }) {
-  const { nodes, edges } = React.useMemo(() => toGraph(flow), [flow]);
+  const base = React.useMemo(() => toGraph(flow), [flow]);
+
+  // Run state is merged into node data rather than held inside React Flow, so
+  // the graph itself stays a pure function of the flow.
+  const nodes = React.useMemo(
+    () =>
+      base.nodes.map(node => ({
+        ...node,
+        data: {
+          ...node.data,
+          isActive: node.id === activeNodeId,
+          isUntaken: untaken?.has(node.id) ?? false,
+          showFailures,
+        },
+      })),
+    [base.nodes, activeNodeId, untaken, showFailures]
+  );
+  const edges = base.edges;
 
   return (
     <div className="h-[520px] w-full" data-testid="automation-canvas">
