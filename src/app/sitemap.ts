@@ -39,11 +39,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
 
   // Gated by the same constant as the routes' robots directive, so the sitemap
-  // can never advertise URLs that carry noindex. getPublishedBlogSlugs
-  // swallows its own errors — including the slug column not existing yet,
-  // since that migration is applied by hand — and returns [], which degrades
-  // to a sitemap without blog URLs rather than a failed build.
-  const blog = BLOG_INDEXABLE ? await getPublishedBlogSlugs() : [];
+  // can never advertise URLs that carry noindex.
+  //
+  // Wrapped even though getPublishedBlogSlugs catches its own errors. The
+  // sitemap is the one page whose failure is silent and expensive — a build
+  // that throws here ships no sitemap at all — and it should not depend on a
+  // promise another module makes about its error handling. Guard rail N19
+  // caught this the moment BLOG_INDEXABLE flipped and the branch became
+  // reachable for the first time.
+  const blog = BLOG_INDEXABLE
+    ? await getPublishedBlogSlugs().catch(error => {
+        console.error('[sitemap] blog URLs unavailable:', error);
+        return [];
+      })
+    : [];
 
   return [
     {

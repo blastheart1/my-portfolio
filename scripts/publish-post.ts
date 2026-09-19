@@ -4,6 +4,14 @@
  *
  *   node scripts/publish-post.ts content/posts/example.md            # dry run
  *   node scripts/publish-post.ts content/posts/example.md --apply
+ *   node scripts/publish-post.ts content/posts/example.md --update --apply
+ *
+ * --update revises a post that is already live, matched on its slug. Every
+ * field is replaceable except the slug itself, which is the URL and is
+ * immutable once assigned — see guard rail N16. Revising re-runs the whole
+ * gate: an edit can introduce a broken citation or an overstated claim exactly
+ * as easily as a first draft can, and the version people actually read is the
+ * one that gets published last.
  *
  * The blog pipeline assumed every post came from the content cron: the word
  * ceiling was 1,200, first person was a rejection reason, the citation
@@ -313,9 +321,10 @@ async function main(): Promise<void> {
 
   const file = process.argv[2];
   const apply = process.argv.includes('--apply');
+  const update = process.argv.includes('--update');
 
   if (!file) {
-    console.error('Usage: node scripts/publish-post.ts <file.md> [--apply]');
+    console.error('Usage: node scripts/publish-post.ts <file.md> [--update] [--apply]');
     process.exit(1);
   }
 
@@ -338,8 +347,35 @@ async function main(): Promise<void> {
   const existing = sql
     ? ((await sql`SELECT title, slug FROM blog_posts`) as unknown as Record<string, unknown>[])
     : null;
-  const recentTitles = (existing ?? []).map(row => row.title as string);
-  const takenSlugs = new Set<string>((existing ?? []).map(row => row.slug).filter(isValidSlug));
+  const slug = uniqueSlug(
+    buildSlug(meta.title, meta.title),
+    // On an update the post's own slug is not "taken" by anything else, and
+    // treating it as taken would rename the URL to -2 on every revision.
+    new Set<string>(
+      (existing ?? [])
+        .map(row => row.slug)
+        .filter(isValidSlug)
+        .filter(existingSlug => !update || existingSlug !== buildSlug(meta.title, meta.title))
+    )
+  );
+
+  const target = (existing ?? []).find(row => row.slug === slug);
+
+  if (update && !target) {
+    console.error(`No post with slug "${slug}" to update.`);
+    console.error('Publish it first, or check the title still matches.');
+    process.exit(1);
+  }
+  if (!update && target) {
+    console.error(`A post already exists at /blog/${slug}.`);
+    console.error('Re-run with --update to revise it in place.');
+    process.exit(1);
+  }
+
+  // A post is never a duplicate of itself.
+  const recentTitles = (existing ?? [])
+    .filter(row => row.slug !== slug)
+    .map(row => row.title as string);
 
   if (!sql) {
     console.log('NOTE     No DATABASE_URL. Screen and citations will run;');
@@ -408,11 +444,33 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const slug = uniqueSlug(buildSlug(meta.title, meta.title), takenSlugs);
-  console.log(`\nSlug:    ${slug}`);
+  console.log(`\nSlug:    ${slug}${update ? ' (updating in place)' : ''}`);
 
   if (!apply) {
-    console.log('\nDry run. Nothing was written. Re-run with --apply to publish.');
+    console.log(
+      `\nDry run. Nothing was written. Re-run with --apply to ${update ? 'update' : 'publish'}.`
+    );
+    return;
+  }
+
+  if (update) {
+    // Deliberately not touching slug. The URL is permanent; everything else
+    // is editorial. updated_at is maintained by the table's trigger, so
+    // dateModified in the JSON-LD and lastModified in the sitemap both move
+    // on their own.
+    const revised = (await sql!`
+      UPDATE blog_posts SET
+        title = ${meta.title},
+        content = ${body},
+        excerpt = ${meta.excerpt},
+        type = ${meta.type ?? 'blog'},
+        topic = ${meta.topic}
+      WHERE slug = ${slug}
+      RETURNING id, slug
+    `) as unknown as Record<string, unknown>[];
+
+    console.log(`\nUpdated. id ${revised[0].id}, /blog/${revised[0].slug}`);
+    console.log('The page picks it up within its revalidate floor (1 hour).');
     return;
   }
 
