@@ -88,4 +88,4 @@ There is a harder question underneath this one, and it is the one I actually fin
 
 ---
 
-*This is the short version of the argument. The full threat model — survivability levels, the capability stack, air gaps and side channels, the defensive architecture, and the complete evidence boundary with citations — is at [AI Survivability: a conceptual threat model](/research/ai-survivability).*
+*This is one half of a longer argument. The other half — whether a system like that can hold itself together without a single place an opponent can reach — is in [You Can't Have All Four](/blog/you-cant-have-all-four), and the full version, with all eight attempts to escape the constraint, is [Coherence Has a Location](/research/coherence-has-a-location).*

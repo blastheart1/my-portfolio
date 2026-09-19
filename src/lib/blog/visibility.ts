@@ -7,25 +7,21 @@
  * Both read this constant, so the two can never disagree — a sitemap listing
  * URLs that carry noindex is a contradiction search engines notice.
  *
- * It starts false on purpose.
+ * Now true. It started false because the blog was a Supabase table holding
+ * roughly fifteen unreviewed machine-written posts, and pointing crawlers at
+ * that archive before it had been swept would have put / and /work/* at risk —
+ * scaled-content signals are assessed across a whole site, not per URL.
  *
- * The publish gate (src/lib/blog/pipeline.ts) is new and unproven, and the
- * existing back catalogue was written with no validation whatsoever by a model
- * two generations old. Scaled-content signals are assessed across a whole
- * site rather than per URL, so pointing crawlers at that archive before it has
- * been swept would put / and /work/* at risk, and those are the pages that
- * carry the actual value.
+ * The Neon migration settled it without the sweep ever running: none of those
+ * rows came across. Every post in the table now is hand-written and has passed
+ * the publish gate in scripts/publish-post.ts — the deterministic screen, live
+ * verification of every citation, and a cross-vendor audit. That is a higher
+ * bar than the quarantine script was ever going to apply.
  *
- * ── To turn it on ────────────────────────────────────────────────────────────
- *   1. node scripts/quarantine-blog.ts            (read every verdict)
- *   2. node scripts/quarantine-blog.ts --apply
- *   3. Read the surviving posts. The screen is deterministic: it proves a post
- *      is not obviously broken, not that it is worth someone's time.
- *   4. Flip this to true.
- *   5. Resubmit the sitemap in Search Console.
- * ─────────────────────────────────────────────────────────────────────────────
+ * Turning it back off is one line, and the reason to would be the same as the
+ * reason it was off: a body of published content nobody has read.
  */
-export const BLOG_INDEXABLE = false;
+export const BLOG_INDEXABLE = true;
 
 /**
  * The robots directive for the blog routes.
