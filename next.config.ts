@@ -13,6 +13,17 @@ const nextConfig: NextConfig = {
   // it. Removing that package surfaced the real requirement.)
   serverExternalPackages: ['resend'],
 
+  /**
+   * /research reads its markdown from content/research at request time, and
+   * the path is built from a slug. Next's output file tracing is static
+   * analysis, so it cannot see through that and would ship a build with no
+   * content in it — a failure that appears only in production, and only as an
+   * empty page.
+   */
+  outputFileTracingIncludes: {
+    '/research/[slug]': ['./content/research/**/*'],
+  },
+
   images: {
     remotePatterns: [
       {

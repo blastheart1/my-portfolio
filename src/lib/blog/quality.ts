@@ -20,9 +20,42 @@ import { z } from 'zod';
  * week.
  */
 
-/** Content length bounds, in words. */
-export const MIN_CONTENT_WORDS = 250;
-export const MAX_CONTENT_WORDS = 1200;
+/**
+ * Content profiles.
+ *
+ * The gate was written when every post came from the content cron, so it
+ * encoded assumptions about machine-written marketing copy: a tight word
+ * ceiling, and first person forbidden outright. A hand-written essay fails
+ * both, which said more about the gate than about the essay.
+ *
+ * `generated` keeps today's rules exactly. `essay` relaxes only the two that
+ * were about authorship rather than quality — nothing else moves, and every
+ * banned pattern, the injected-markup checks and the duplicate-title check
+ * apply identically to both.
+ *
+ * First person is the substantive difference. A model writing as Luis is
+ * impersonation, which is why `generated` rejects it. Luis writing as himself
+ * is the point of an essay.
+ */
+export type ContentProfile = 'generated' | 'essay';
+
+export interface ProfileBounds {
+  minWords: number;
+  maxWords: number;
+  /** Whether "I" and "we" are a rejection reason. */
+  forbidFirstPerson: boolean;
+}
+
+export const PROFILES: Record<ContentProfile, ProfileBounds> = {
+  generated: { minWords: 250, maxWords: 1200, forbidFirstPerson: true },
+  // The ceiling is a sanity bound, not a target: past roughly this length a
+  // single page stops being readable and should have been split.
+  essay: { minWords: 800, maxWords: 15000, forbidFirstPerson: false },
+};
+
+/** Content length bounds for generated posts. Kept for existing callers. */
+export const MIN_CONTENT_WORDS = PROFILES.generated.minWords;
+export const MAX_CONTENT_WORDS = PROFILES.generated.maxWords;
 
 /**
  * Token-overlap ratio above which two titles are treated as the same post.
@@ -156,7 +189,13 @@ export function titleSimilarity(a: string, b: string): number {
  * first, so one cron run surfaces the whole picture rather than one symptom
  * at a time.
  */
-export function screenDraft(draft: unknown, recentTitles: readonly string[] = []): ScreenResult {
+export function screenDraft(
+  draft: unknown,
+  recentTitles: readonly string[] = [],
+  profile: ContentProfile = 'generated'
+): ScreenResult {
+  const bounds = PROFILES[profile];
+
   const parsed = BlogDraftSchema.safeParse(draft);
   if (!parsed.success) {
     return {
@@ -175,17 +214,19 @@ export function screenDraft(draft: unknown, recentTitles: readonly string[] = []
     if (pattern.test(haystack)) reasons.push(`contains ${label}`);
   }
 
-  const prose = withoutQuotations(haystack);
-  if (FIRST_PERSON_PATTERNS.some(pattern => pattern.test(prose))) {
-    reasons.push('written in the first person');
+  if (bounds.forbidFirstPerson) {
+    const prose = withoutQuotations(haystack);
+    if (FIRST_PERSON_PATTERNS.some(pattern => pattern.test(prose))) {
+      reasons.push('written in the first person');
+    }
   }
 
   const words = countWords(post.content);
-  if (words < MIN_CONTENT_WORDS) {
-    reasons.push(`too short: ${words} words, minimum ${MIN_CONTENT_WORDS}`);
+  if (words < bounds.minWords) {
+    reasons.push(`too short: ${words} words, minimum ${bounds.minWords}`);
   }
-  if (words > MAX_CONTENT_WORDS) {
-    reasons.push(`too long: ${words} words, maximum ${MAX_CONTENT_WORDS}`);
+  if (words > bounds.maxWords) {
+    reasons.push(`too long: ${words} words, maximum ${bounds.maxWords}`);
   }
 
   // A case study with nothing to cite is just a blog post making claims about

@@ -68,9 +68,12 @@ test.describe('P4 — the crawler-facing files are served', () => {
 
     expect(urls.length).toBeGreaterThan(0);
 
-    for (const url of urls) {
-      const response = await request.get(url, { maxRedirects: 5 });
-      expect(response.status(), url).toBe(200);
+    for (const loc of urls) {
+      // Same reason as the card check: the sitemap names the production
+      // origin, and the server under test may be anywhere.
+      const { pathname, search } = new URL(loc);
+      const response = await request.get(`${pathname}${search}`, { maxRedirects: 5 });
+      expect(response.status(), loc).toBe(200);
     }
   });
 
@@ -130,6 +133,31 @@ test.describe('P5 — content is in the HTML, not injected by JavaScript', () =>
 
     expect(response.status()).toBe(404);
   });
+});
+
+test.describe('every advertised link-preview card resolves', () => {
+  for (const path of ['/', '/work', '/work/relay', '/blog']) {
+    test(`${path} advertises a card that actually loads`, async ({ request }) => {
+      // A broken card fails in somebody else's chat window, where nobody on
+      // this side ever sees it. Asserting the tag exists is not enough; the
+      // URL has to answer with an image.
+      const html = await (await request.get(path)).text();
+      const raw = html.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
+
+      expect(raw, `${path} advertises no og:image`).toBeTruthy();
+
+      // The tag carries the production origin; fetch the same path from
+      // whatever server is under test so this works against localhost and a
+      // preview deployment alike.
+      const advertised = new URL(raw!.replace(/&amp;/g, '&'));
+      const url = `${advertised.pathname}${advertised.search}`;
+
+      const response = await request.get(url, { maxRedirects: 5 });
+
+      expect(response.status(), url).toBe(200);
+      expect(response.headers()['content-type'] ?? '', url).toMatch(/^image\//);
+    });
+  }
 });
 
 test.describe('canonicals point at the page you are on', () => {

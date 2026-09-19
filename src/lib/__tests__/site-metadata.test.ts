@@ -15,7 +15,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
-import { SITE_URL, SITE_DOMAIN, absoluteUrl } from '../site';
+import { ROLE_TITLE, SITE_URL, SITE_DOMAIN, absoluteUrl } from '../site';
 import { readCode } from './support/source';
 
 const ROOT = path.resolve(__dirname, '../../..');
@@ -308,16 +308,19 @@ describe('N20 — the generator and the manifest cannot drift', () => {
     const manifest = JSON.parse(readFileSync(path.join(ROOT, 'public/site.webmanifest'), 'utf8'));
     const layout = readFileSync(path.join(SRC, 'app/layout.tsx'), 'utf8');
 
+    // Both sides are checked against the one constant rather than against
+    // each other's literals, so repositioning means editing ROLE_TITLE and
+    // nothing can be left behind. The manifest has drifted twice already.
     expect(manifest.name).toContain('Antonio Luis Santos');
-    expect(manifest.name).toMatch(/AI Full-Stack Software Engineer/i);
-    expect(layout).toContain('AI Full-Stack Software Engineer');
+    expect(manifest.name).toContain(ROLE_TITLE);
+    expect(layout, 'layout must build its title from ROLE_TITLE').toContain('ROLE_TITLE');
 
-    // The description is prose and the site writes the role in lower case
-    // there, so this pins what must NOT be said rather than the exact wording.
-    expect(manifest.description).toMatch(/AI full-stack engineer/i);
+    // The description is prose and writes the role in lower case, so this
+    // pins what must NOT be said rather than the exact wording.
+    expect(manifest.description).toMatch(/AI automation and integration engineer/i);
     expect(
       manifest.description,
-      'the pre-repositioning description'
+      'a pre-repositioning description'
     ).not.toMatch(/Full-Stack Developer & QA Specialist/i);
 
     // The old brand, which survived every other rename.

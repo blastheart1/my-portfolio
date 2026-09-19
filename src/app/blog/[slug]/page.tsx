@@ -5,6 +5,7 @@ import Breadcrumbs from '@/components/work/Breadcrumbs';
 import MarkdownBody from '@/components/ui/MarkdownBody';
 import { normalizeContent } from '@/lib/blog/normalize-content';
 import { getBlogPostBySlug } from '@/lib/database';
+import { ogImageUrl } from '@/lib/og-url';
 import { SITE_URL } from '@/lib/site';
 import StructuredData from '@/components/StructuredData';
 import { blogPostingNode } from '@/lib/structured-data';
@@ -15,7 +16,7 @@ import { BLOG_ROBOTS } from '@/lib/blog/visibility';
  *
  * No generateStaticParams, deliberately. Copying the pattern from
  * src/app/work/[slug]/page.tsx would look right and be wrong: work's params
- * come from a constant in the repo, these come from Supabase. At build time
+ * come from a constant in the repo, these come from the database. At build time
  * with no credentials the list would be empty, and pairing that with
  * `dynamicParams = false` would 404 every cron-written post until someone
  * happened to deploy — baking a cached 404 in on the way. A revalidate floor
@@ -52,6 +53,19 @@ export async function generateMetadata({
       publishedTime: post.createdAt.toISOString(),
       modifiedTime: post.updatedAt.toISOString(),
       authors: [SITE_URL],
+      images: [
+        {
+          url: ogImageUrl({
+            title: post.title,
+            subtitle: post.excerpt,
+            eyebrow: '~/writing $ cat',
+            chips: post.topic ? [post.topic] : undefined,
+          }),
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
     },
   };
 }

@@ -34,17 +34,26 @@ function loadEnv() {
 /**
  * Splits a file into statements.
  *
- * Naive `split(';')` is wrong twice over: a `;` inside a trailing `-- comment`
- * ends a statement early, and a `;` inside a quoted literal does the same. Both
- * produce fragments that fail with a confusing syntax error halfway through a
- * migration. This walks the text tracking quote state and drops comments as it
- * goes, which is the smallest thing that is actually correct.
+ * Naive `split(';')` is wrong three times over: a `;` inside a trailing
+ * `-- comment` ends a statement early, a `;` inside a quoted literal does the
+ * same, and so does one inside a dollar-quoted body. All three produce
+ * fragments that fail with a confusing syntax error halfway through a
+ * migration. This walks the text tracking that state, which is the smallest
+ * thing that is actually correct.
+ *
+ * Dollar quoting was added when the first migration containing a PL/pgSQL
+ * function arrived and was silently chopped into five pieces at every `;` in
+ * its body. Postgres allows a tag between the dollars ($fn$ ... $fn$), so the
+ * opening tag is captured and only the matching one closes it — otherwise a
+ * body that itself contains `$$` would terminate early.
  */
 function statements(sql) {
   const out = [];
   let current = '';
   let inString = false;
   let inComment = false;
+  /** The opening tag of the dollar-quoted body we are inside, or null. */
+  let dollarTag = null;
 
   for (let i = 0; i < sql.length; i++) {
     const ch = sql[i];
@@ -52,6 +61,19 @@ function statements(sql) {
     if (inComment) {
       if (ch === '\n') {
         inComment = false;
+        current += ch;
+      }
+      continue;
+    }
+
+    // Inside $$...$$ everything is literal, including semicolons, comment
+    // markers and single quotes. Only the matching closing tag ends it.
+    if (dollarTag) {
+      if (ch === '$' && sql.startsWith(dollarTag, i)) {
+        current += dollarTag;
+        i += dollarTag.length - 1;
+        dollarTag = null;
+      } else {
         current += ch;
       }
       continue;
@@ -65,6 +87,18 @@ function statements(sql) {
         else inString = false;
       }
       continue;
+    }
+
+    if (ch === '$') {
+      // $$ or $tag$ opens a dollar-quoted body. Anything else starting with a
+      // dollar is an ordinary character.
+      const opening = /^\$[A-Za-z_][A-Za-z0-9_]*\$|^\$\$/.exec(sql.slice(i));
+      if (opening) {
+        dollarTag = opening[0];
+        current += dollarTag;
+        i += dollarTag.length - 1;
+        continue;
+      }
     }
 
     if (ch === '-' && sql[i + 1] === '-') { inComment = true; i++; continue; }

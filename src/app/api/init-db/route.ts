@@ -3,7 +3,7 @@ import { createBlogPostTable } from '@/lib/database';
 import { timingSafeCompare } from '@/lib/admin-auth';
 
 // Bootstrap endpoint. Kept (rather than deleted) because scripts/setup-blog.js,
-// scripts/setup-database.js and scripts/setup-supabase.js drive schema creation
+// scripts/setup-database.js drives schema creation
 // through it. It is idempotent DDL, but it stays CRON_SECRET-gated and fails
 // closed when that secret is unset.
 export async function GET(request: NextRequest) {

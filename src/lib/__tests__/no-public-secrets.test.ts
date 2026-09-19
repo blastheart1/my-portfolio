@@ -24,8 +24,10 @@ const SRC = path.resolve(__dirname, '../..');
  * deliberate act and should be justified in review.
  */
 const ALLOWED_PUBLIC_VARS = new Set([
-  'NEXT_PUBLIC_SUPABASE_URL',       // a URL, not a credential
-  'NEXT_PUBLIC_SUPABASE_ANON_KEY',  // publishable by design; RLS is the control
+  // The two NEXT_PUBLIC_SUPABASE_* vars were here, the anon key allowed on the
+  // grounds that "RLS is the control" — a claim nothing in this repo verified.
+  // The blog moved to Neon, which is reached through a server-only
+  // DATABASE_URL, so the exemption is gone rather than re-justified.
   'NEXT_PUBLIC_TO_EMAIL',           // a contact address shown on the site
   'NEXT_PUBLIC_FROM_EMAIL',         // ditto
 ]);

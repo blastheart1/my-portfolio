@@ -160,7 +160,7 @@ export async function buildLlmsTxt({ full = false }: BuildOptions = {}): Promise
     safely(() => getServiceTiers(), [] as ServiceTier[], 'service tiers'),
     safely(() => getProjects(), [] as ProjectRow[], 'projects'),
     // Skipped entirely when the blog is not advertised, so an unreachable
-    // Supabase cannot even slow this response down.
+    // the database cannot even slow this response down.
     BLOG_INDEXABLE
       ? safely(() => getBlogPosts(10), [] as BlogPost[], 'blog posts')
       : Promise.resolve([] as BlogPost[]),

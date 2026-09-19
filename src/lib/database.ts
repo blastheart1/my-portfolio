@@ -1,104 +1,59 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { getSql } from '@/lib/neon';
 import { BlogPost } from '@/types/blog';
 import { isValidSlug } from '@/lib/blog/slug';
 
-// Lazy initialization of Supabase client
-let supabase: SupabaseClient | null = null;
-let writeClient: SupabaseClient | null = null;
-
 /**
- * NOTE: the blog is the last thing still on Supabase — everything else in this
- * app uses Neon (src/lib/neon.ts). Consolidating onto Neon is worth doing; it
- * needs a schema + data migration, so it is deliberately not bundled here.
+ * Blog storage.
  *
- * This previously returned a client pointed at https://mock.supabase.co when
- * the env vars were missing, which meant every blog read and write failed
- * silently and looked like "no posts yet". Misconfiguration now throws, and
- * callers (which all wrap this in try/catch) surface it in logs instead of
- * pretending the database is simply empty.
+ * The blog was the last thing on Supabase while everything else in this app
+ * ran on Neon. This file used to open with a note saying consolidating was
+ * worth doing and deliberately out of scope;
+ * scripts/migrations/005_blog_on_neon.sql is that work, and this is the other
+ * half of it.
+ *
+ * It removed four problems rather than one:
+ *
+ *   - Every read AND write ran with NEXT_PUBLIC_SUPABASE_ANON_KEY, which is
+ *     inlined into the browser bundle, with an unverified row-level policy as
+ *     the only thing standing behind it. Neon is reached through DATABASE_URL,
+ *     which is server-only and never sent to a client, so the question stops
+ *     existing rather than getting answered.
+ *   - The Supabase schema was created by hand in a console and existed nowhere
+ *     in version control.
+ *   - Supabase was not configured locally, so the blog was simply absent in
+ *     development and every check against it was theatre.
+ *   - Two clients and two failure modes for one small application.
+ *
+ * Every read still swallows its own errors and degrades to empty. That was
+ * true before and matters more now these rows have public URLs: a database
+ * blip should render an empty list or a 404, never a 500 on a page a crawler
+ * is reading.
  */
-function getSupabaseClient(): SupabaseClient {
-  if (!supabase) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error(
-        'Supabase is not configured: NEXT_PUBLIC_SUPABASE_URL and ' +
-          'NEXT_PUBLIC_SUPABASE_ANON_KEY must both be set for blog features. ' +
-          '(These two are publishable by design — the anon key is protected by RLS.)'
-      );
-    }
-
-    supabase = createClient(supabaseUrl, supabaseKey);
-  }
-  return supabase;
-}
-
-/**
- * Client for writes.
- *
- * Every write above ran with the anon key, which is inlined into the client
- * bundle. That is only safe if RLS forbids anonymous INSERT and UPDATE on
- * blog_posts — a claim this codebase asserts (see the allow-list note in
- * src/lib/__tests__/no-public-secrets.test.ts) and has never verified. Once
- * these rows have public URLs, an unrestricted write is a way to publish
- * arbitrary indexed content on the domain.
- *
- * So writes prefer a server-only service-role key. It falls back to the anon
- * client rather than throwing, because hard-failing here would stop the
- * content cron the moment this shipped and before the env var was set — but
- * the fallback is loud, because a silent one would leave the situation exactly
- * as it was while looking fixed.
- */
-function getSupabaseWriteClient(): SupabaseClient {
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-  if (!serviceKey || !supabaseUrl) {
-    console.warn(
-      '[database] SUPABASE_SERVICE_ROLE_KEY is not set — blog writes are ' +
-        'running with the publishable anon key. If RLS permits anonymous ' +
-        'INSERT or UPDATE on blog_posts, anyone holding that key can publish ' +
-        'to the site. Set the service-role key and lock the anon policies to ' +
-        'SELECT WHERE published = true.'
-    );
-    return getSupabaseClient();
-  }
-
-  if (!writeClient) {
-    writeClient = createClient(supabaseUrl, serviceKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-  }
-  return writeClient;
-}
+/** A row as Postgres returns it. */
+type Row = Record<string, unknown>;
 
 /**
  * The single row-to-post mapper.
  *
- * Previously each read function wrote its own object literal, and two of them
- * (getBlogPostById, getLatestBlogPost) quietly omitted `sources` — so the
- * Sources block vanished on any by-id fetch while working fine in the list.
- * One mapper makes that class of bug impossible rather than merely fixed.
- *
- * `slug` is read defensively. The column is added by hand in the Supabase
- * console, so a deploy can precede the migration; a row without one yields a
- * post with no page instead of an exception.
+ * Each read function used to write its own object literal, and two of them
+ * quietly omitted `sources` — so the Sources block vanished on any by-id fetch
+ * while working fine in the list. One mapper makes that class of bug
+ * impossible rather than merely fixed.
  */
-function rowToPost(row: Record<string, unknown>): BlogPost {
+function rowToPost(row: Row): BlogPost {
   const slug = row.slug;
 
   return {
-    id: row.id as string,
+    id: String(row.id),
     ...(isValidSlug(slug) ? { slug } : {}),
     title: row.title as string,
     content: row.content as string,
     excerpt: row.excerpt as string,
     type: row.type as BlogPost['type'],
     topic: row.topic as string,
-    metrics: row.metrics as BlogPost['metrics'],
-    sources: row.sources as BlogPost['sources'],
+    metrics: (row.metrics ?? undefined) as BlogPost['metrics'],
+    sources: (row.sources ?? undefined) as BlogPost['sources'],
     caseStudyLink: (row.case_study_link ?? undefined) as string | undefined,
     createdAt: new Date(row.created_at as string),
     updatedAt: new Date(row.updated_at as string),
@@ -106,23 +61,19 @@ function rowToPost(row: Record<string, unknown>): BlogPost {
   };
 }
 
+/**
+ * Verifies the table exists.
+ *
+ * Kept because /api/init-db and the setup scripts call it. It has never
+ * created anything — the schema is a migration, which is where schema belongs.
+ */
 export async function createBlogPostTable() {
   try {
-    const client = getSupabaseClient();
-    // Table is already created via SQL editor, just verify it exists
-    const { error } = await client
-      .from('blog_posts')
-      .select('id')
-      .limit(1);
-    
-    if (error && error.code !== 'PGRST116') { // PGRST116 = table doesn't exist
-      throw error;
-    }
-    
+    const sql = getSql();
+    await sql`SELECT 1 FROM blog_posts LIMIT 1`;
     return { success: true };
   } catch (error) {
     console.error('Error verifying blog posts table:', error);
-    // During build time or when using mock client, return success
     return { success: true };
   }
 }
@@ -145,32 +96,38 @@ export async function insertBlogPost(post: {
   published: boolean;
   /**
    * Assigned once, here, and never rewritten. See src/lib/blog/slug.ts and
-   * guard rail N16 — changing a slug breaks every URL already pointing at it.
+   * guard rail N16 — changing a slug breaks every URL pointing at it.
    */
   slug: string;
 }) {
   try {
-    const client = getSupabaseWriteClient();
-        const { data, error } = await client
-          .from('blog_posts')
-          .insert([{
-            title: post.title,
-            content: post.content,
-            excerpt: post.excerpt,
-            type: post.type,
-            topic: post.topic,
-            metrics: post.metrics,
-            sources: post.sources || [],
-            case_study_link: post.caseStudyLink,
-            published: post.published,
-            slug: post.slug
-          }])
-      .select('id, slug, created_at, updated_at')
-      .single();
-    
-    if (error) throw error;
-    return data;
+    const sql = getSql();
+
+    const rows = (await sql`
+      INSERT INTO blog_posts (
+        slug, title, content, excerpt, type, topic,
+        metrics, sources, case_study_link, published
+      )
+      VALUES (
+        ${post.slug},
+        ${post.title},
+        ${post.content},
+        ${post.excerpt},
+        ${post.type},
+        ${post.topic},
+        ${post.metrics ? JSON.stringify(post.metrics) : null},
+        ${JSON.stringify(post.sources ?? [])},
+        ${post.caseStudyLink ?? null},
+        ${post.published}
+      )
+      RETURNING id, slug, created_at, updated_at
+    `) as unknown as Row[];
+
+    return rows[0];
   } catch (error) {
+    // Rethrown rather than swallowed: a failed write must reach the caller. A
+    // unique violation on slug lands here, which is the correct outcome — a
+    // failed insert is recoverable, a duplicated URL is not.
     console.error('Error inserting blog post:', error);
     throw error;
   }
@@ -178,40 +135,29 @@ export async function insertBlogPost(post: {
 
 export async function getBlogPosts(limit: number = 10, offset: number = 0): Promise<BlogPost[]> {
   try {
-    const client = getSupabaseClient();
-    const { data, error } = await client
-      .from('blog_posts')
-      .select('*')
-      .eq('published', true)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-    
-    if (error) throw error;
-    
-    return data.map(rowToPost);
+    const sql = getSql();
+    const rows = (await sql`
+      SELECT * FROM blog_posts
+      WHERE published = true
+      ORDER BY created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `) as unknown as Row[];
+
+    return rows.map(rowToPost);
   } catch (error) {
     console.error('Error fetching blog posts:', error);
-    // During build time or when using mock client, return empty array
     return [];
   }
 }
 
 export async function getBlogPostById(id: string): Promise<BlogPost | null> {
   try {
-    const client = getSupabaseClient();
-    const { data, error } = await client
-      .from('blog_posts')
-      .select('*')
-      .eq('id', id)
-      .eq('published', true)
-      .single();
-    
-    if (error) {
-      if (error.code === 'PGRST116') return null; // No rows returned
-      throw error;
-    }
-    
-    return rowToPost(data);
+    const sql = getSql();
+    const rows = (await sql`
+      SELECT * FROM blog_posts WHERE id = ${id} AND published = true
+    `) as unknown as Row[];
+
+    return rows[0] ? rowToPost(rows[0]) : null;
   } catch (error) {
     console.error('Error fetching blog post by ID:', error);
     return null;
@@ -220,52 +166,39 @@ export async function getBlogPostById(id: string): Promise<BlogPost | null> {
 
 export async function getLatestBlogPost(): Promise<BlogPost | null> {
   try {
-    const client = getSupabaseClient();
-    const { data, error } = await client
-      .from('blog_posts')
-      .select('*')
-      .eq('published', true)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-    
-    if (error) {
-      if (error.code === 'PGRST116') return null; // No rows returned
-      throw error;
-    }
-    
-    return rowToPost(data);
+    const sql = getSql();
+    const rows = (await sql`
+      SELECT * FROM blog_posts
+      WHERE published = true
+      ORDER BY created_at DESC
+      LIMIT 1
+    `) as unknown as Row[];
+
+    return rows[0] ? rowToPost(rows[0]) : null;
   } catch (error) {
     console.error('Error fetching latest blog post:', error);
     return null;
   }
 }
+
 /**
  * One published post by its slug.
  *
- * Returns null for an unknown slug, an unpublished one, or an unreachable
- * database. The route turns that into a 404, which is the right answer for a
- * crawler in every one of those cases — a 500 on a crawled URL is read as a
- * site problem and retried, a 404 is read as "not here" and dropped.
+ * Returns null for an unknown slug, an unpublished one, and an unreachable
+ * database alike. The route turns all three into a 404, which is the right
+ * answer for a crawler in every case — a 500 is read as a site fault and
+ * retried, a 404 is read as "not here" and dropped.
  */
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
   if (!isValidSlug(slug)) return null;
 
   try {
-    const client = getSupabaseClient();
-    const { data, error } = await client
-      .from('blog_posts')
-      .select('*')
-      .eq('slug', slug)
-      .eq('published', true)
-      .single();
+    const sql = getSql();
+    const rows = (await sql`
+      SELECT * FROM blog_posts WHERE slug = ${slug} AND published = true
+    `) as unknown as Row[];
 
-    if (error) {
-      if (error.code === 'PGRST116') return null; // No rows returned
-      throw error;
-    }
-
-    return rowToPost(data);
+    return rows[0] ? rowToPost(rows[0]) : null;
   } catch (error) {
     console.error('Error fetching blog post by slug:', error);
     return null;
@@ -275,31 +208,26 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
 /**
  * Slugs and modification times for every published post, for the sitemap.
  *
- * Rows with no slug are skipped rather than guessed at: they have no page, so
- * advertising a URL for them would put a 404 in the sitemap.
+ * A row without a usable slug is skipped rather than guessed at: it has no
+ * page, so advertising a URL for it would put a 404 in the sitemap.
  */
 export async function getPublishedBlogSlugs(): Promise<
   { slug: string; updatedAt: Date }[]
 > {
   try {
-    const client = getSupabaseClient();
-    const { data, error } = await client
-      .from('blog_posts')
-      .select('slug, updated_at')
-      .eq('published', true)
-      .order('updated_at', { ascending: false });
+    const sql = getSql();
+    const rows = (await sql`
+      SELECT slug, updated_at FROM blog_posts
+      WHERE published = true
+      ORDER BY updated_at DESC
+    `) as unknown as Row[];
 
-    if (error) throw error;
-
-    return (data ?? []).flatMap(row =>
+    return rows.flatMap(row =>
       isValidSlug(row.slug)
         ? [{ slug: row.slug, updatedAt: new Date(row.updated_at as string) }]
         : []
     );
   } catch (error) {
-    // Includes the case where the slug column does not exist yet, because the
-    // migration is applied by hand and may lag the deploy. The sitemap then
-    // carries its static entries and no blog URLs, which is correct.
     console.error('Error fetching published blog slugs:', error);
     return [];
   }
@@ -308,17 +236,15 @@ export async function getPublishedBlogSlugs(): Promise<
 /**
  * Every slug already assigned, published or not.
  *
- * Feeds uniqueSlug at insert time. Unpublished rows count: a slug they hold is
- * still taken by the unique index, and a post can be republished later.
+ * Feeds uniqueSlug at insert time. Unpublished rows count: their slug is still
+ * held by the unique index, and a post can be republished later.
  */
 export async function getAssignedSlugs(): Promise<Set<string>> {
   try {
-    const client = getSupabaseClient();
-    const { data, error } = await client.from('blog_posts').select('slug');
+    const sql = getSql();
+    const rows = (await sql`SELECT slug FROM blog_posts`) as unknown as Row[];
 
-    if (error) throw error;
-
-    return new Set((data ?? []).map(row => row.slug).filter(isValidSlug));
+    return new Set(rows.map(row => row.slug).filter(isValidSlug));
   } catch (error) {
     console.error('Error fetching assigned slugs:', error);
     // An empty set means uniqueSlug cannot disambiguate, so the unique index
@@ -331,14 +257,12 @@ export async function getAssignedSlugs(): Promise<Set<string>> {
 /** How many published posts exist, for paginating the index. */
 export async function getPublishedBlogPostCount(): Promise<number> {
   try {
-    const client = getSupabaseClient();
-    const { count, error } = await client
-      .from('blog_posts')
-      .select('id', { count: 'exact', head: true })
-      .eq('published', true);
+    const sql = getSql();
+    const rows = (await sql`
+      SELECT count(*)::int AS count FROM blog_posts WHERE published = true
+    `) as unknown as Row[];
 
-    if (error) throw error;
-    return count ?? 0;
+    return (rows[0]?.count as number) ?? 0;
   } catch (error) {
     console.error('Error counting blog posts:', error);
     return 0;
@@ -348,15 +272,15 @@ export async function getPublishedBlogPostCount(): Promise<number> {
 /**
  * Deletes a post.
  *
- * Added for the end-to-end revalidation spec, which creates a real post
- * through the real API and would otherwise leave it in the production table
- * on every run. Uses the write client for the same reason the insert does.
+ * Generation was once the only write path, so a row could not be taken back.
+ * That was tolerable when posts had no URLs; now each one is a page, and
+ * "publish" needs an inverse. Used by the admin route and by the end-to-end
+ * spec, which creates a real post and would otherwise leave it behind.
  */
 export async function deleteBlogPost(id: string): Promise<boolean> {
   try {
-    const client = getSupabaseWriteClient();
-    const { error } = await client.from('blog_posts').delete().eq('id', id);
-    if (error) throw error;
+    const sql = getSql();
+    await sql`DELETE FROM blog_posts WHERE id = ${id}`;
     return true;
   } catch (error) {
     console.error('Error deleting blog post:', error);

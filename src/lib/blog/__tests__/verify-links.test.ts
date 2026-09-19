@@ -14,7 +14,13 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { isAllowedSource, SOURCE_ALLOWLIST, verifyAll, verifyUrl } from '../verify-links';
+import {
+  isAllowedSource,
+  RESEARCH_ALLOWLIST,
+  SOURCE_ALLOWLIST,
+  verifyAll,
+  verifyUrl,
+} from '../verify-links';
 
 const AWS = 'https://aws.amazon.com/solutions/case-studies/example';
 const fetchMock = vi.fn();
@@ -212,5 +218,68 @@ describe('verifyAll', () => {
 
     expect(results.get('https://ibm.com/case-studies/live')).toBe('ok');
     expect(results.get('https://ibm.com/case-studies/gone')).toBe('dead');
+  });
+});
+
+
+/**
+ * The research allowlist.
+ *
+ * The consultancy list exists for generated case studies. The first
+ * hand-written post cited arXiv, OpenAI and Anthropic — every one of which
+ * that list marks `dead`, which would have rejected a post whose sourcing was
+ * its strongest feature.
+ */
+describe('research citations', () => {
+  const ARXIV = 'https://arxiv.org/abs/2504.18565';
+
+  it('accepts every domain on the research list', () => {
+    for (const domain of RESEARCH_ALLOWLIST) {
+      expect(isAllowedSource(`https://${domain}/a-paper`, RESEARCH_ALLOWLIST), domain).toBe(true);
+    }
+  });
+
+  it('rejects a research citation under the consultancy list, and vice versa', () => {
+    // The two lists are for different kinds of post and must not be merged.
+    expect(isAllowedSource(ARXIV, SOURCE_ALLOWLIST)).toBe(false);
+    expect(isAllowedSource(ARXIV, RESEARCH_ALLOWLIST)).toBe(true);
+
+    const aws = 'https://aws.amazon.com/solutions/case-studies/x';
+    expect(isAllowedSource(aws, RESEARCH_ALLOWLIST)).toBe(false);
+    expect(isAllowedSource(aws, SOURCE_ALLOWLIST)).toBe(true);
+  });
+
+  it('still rejects a lookalike host on the research list', () => {
+    expect(isAllowedSource('https://arxiv.org.attacker.test/x', RESEARCH_ALLOWLIST)).toBe(false);
+  });
+
+  it('downgrades a 403 from a publisher rather than calling it fabricated', async () => {
+    // openai.com answers 403 to automated requests. Treating that as a dead
+    // link would reject a citation that is perfectly real — this was hit for
+    // real while verifying the first essay.
+    fetchMock.mockResolvedValue(status(403));
+
+    await expect(
+      verifyUrl('https://openai.com/index/safety-alignment-long-horizon-models/', RESEARCH_ALLOWLIST)
+    ).resolves.toBe('unverified');
+  });
+
+  it('verifies a live research citation as ok', async () => {
+    fetchMock.mockResolvedValue(status(200));
+    await expect(verifyUrl(ARXIV, RESEARCH_ALLOWLIST)).resolves.toBe('ok');
+  });
+
+  it('passes the list through verifyAll', async () => {
+    fetchMock.mockResolvedValue(status(200));
+
+    const results = await verifyAll([ARXIV], 4, RESEARCH_ALLOWLIST);
+
+    expect(results.get(ARXIV)).toBe('ok');
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
+  it('defaults to the consultancy list, so existing callers are unchanged', async () => {
+    await expect(verifyUrl(ARXIV)).resolves.toBe('dead');
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
