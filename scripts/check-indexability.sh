@@ -43,7 +43,7 @@ else
 fi
 
 # 4. The files crawlers look for first.
-for path in robots.txt sitemap.xml llms.txt; do
+for path in robots.txt sitemap.xml llms.txt llms-full.txt; do
   C=$(curl -sL -o /dev/null -w '%{http_code}' --max-time 10 "$ORIGIN/$path")
   [ "$C" = "200" ] && say "/$path" "200" || bad "/$path" "$C"
 done
@@ -85,13 +85,29 @@ done
 
 # 7. AI crawlers do not execute JavaScript. Whatever is not in this HTML does
 #    not exist to them, so the word count is the real ceiling on citability.
+#
+#    This is the check that would have caught the blog: every post lived inside
+#    a client component that fetched on mount and opened a modal, so the
+#    crawlable count for that content was zero for as long as it existed. The
+#    blog paths are listed here now so it cannot silently go back to zero.
+#
+#    /blog resolves the newest post's URL from the sitemap when the blog is
+#    advertised; before that it is expected to be absent, and the index alone
+#    is checked.
 echo
-for path in "" "work/automation" "work/relay"; do
+NEWEST_POST=$(curl -sL --max-time 20 "$ORIGIN/sitemap.xml" \
+  | grep -o "$ORIGIN/blog/[^<]*" | head -1 | sed "s|$ORIGIN/||")
+
+for path in "" "work/automation" "work/relay" "blog" ${NEWEST_POST:+"$NEWEST_POST"}; do
   WORDS=$(curl -sL --max-time 20 "$ORIGIN/$path" \
     | perl -0777 -pe 's/<script.*?<\/script>//gs; s/<[^>]+>/ /g' \
     | tr -s '[:space:]' ' ' | wc -w | tr -d ' ')
   say "crawlable words /${path}" "$WORDS"
 done
+
+if [ -z "$NEWEST_POST" ]; then
+  say "blog posts in sitemap" "none (expected while BLOG_INDEXABLE is false)"
+fi
 
 echo
 [ "$FAIL" = "0" ] && echo "  All checks passed." || echo "  Some checks FAILED — see above."
