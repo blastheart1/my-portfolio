@@ -15,7 +15,7 @@ import { requireAdmin } from '@/lib/require-admin';
  *   - tests/e2e/blog-revalidation.spec.ts creates a real post through the real
  *     API and would otherwise leave it in the live table on every run;
  *   - a post that should never have gone out needs removing without opening
- *     the Supabase console.
+ *     the database console.
  *
  * Deletion rather than unpublishing is correct here: an unpublished row still
  * holds its slug in the unique index, so the URL stays permanently reserved by

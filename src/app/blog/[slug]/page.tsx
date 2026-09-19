@@ -16,7 +16,7 @@ import { BLOG_ROBOTS } from '@/lib/blog/visibility';
  *
  * No generateStaticParams, deliberately. Copying the pattern from
  * src/app/work/[slug]/page.tsx would look right and be wrong: work's params
- * come from a constant in the repo, these come from Supabase. At build time
+ * come from a constant in the repo, these come from the database. At build time
  * with no credentials the list would be empty, and pairing that with
  * `dynamicParams = false` would 404 every cron-written post until someone
  * happened to deploy — baking a cached 404 in on the way. A revalidate floor

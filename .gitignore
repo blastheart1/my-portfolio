@@ -44,8 +44,14 @@ next-env.d.ts
 # Local documentation (setup guides, plans, notes — not committed)
 /docs/
 
-# sql scripts
+# sql dumps and one-off scratch queries
 *.sql
+# ...but NOT the migrations. This rule used to swallow them, which meant the
+# entire schema history — including the files run-migration.mjs applies and
+# records in schema_migrations — existed only on whichever laptop wrote them.
+# A fresh clone had the runner and nothing to run.
+!scripts/migrations/**/*.sql
+!scripts/migrate-neon.sql
 
 # Frame sequence source PNGs. The committed sequence is WebP (~8 MB vs 107 MB
 # for the same frames as PNG). If you regenerate frames, convert before

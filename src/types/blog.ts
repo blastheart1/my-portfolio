@@ -3,11 +3,11 @@ export interface BlogPost {
   /**
    * The post's permanent URL segment.
    *
-   * Optional because rows written before the slug column existed have none,
-   * and because the reads tolerate the column being absent entirely — the SQL
-   * is applied by hand in the Supabase console, so code that selects it can
-   * reach production before the migration does. A post without a slug simply
-   * has no page; it does not take the whole blog down.
+   * Optional rather than required because the reads tolerate a row without
+   * one: it simply has no page, instead of taking the whole blog down. On
+   * Neon the column is NOT NULL from the first migration, so this should not
+   * occur — but a read path that assumes its own schema is the one that fails
+   * hardest when it is wrong.
    */
   slug?: string;
   title: string;

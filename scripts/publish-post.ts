@@ -33,13 +33,15 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
+import { Buffer } from 'node:buffer';
 
-import { createClient } from '@supabase/supabase-js';
+import { neon } from '@neondatabase/serverless';
 
 import { buildSlug, isValidSlug, uniqueSlug } from '../src/lib/blog/slug.ts';
+import { decryptSecret } from '../src/lib/credentials-crypto.ts';
 import { screenDraft, type ContentProfile } from '../src/lib/blog/quality.ts';
 import { RESEARCH_ALLOWLIST, verifyAll } from '../src/lib/blog/verify-links.ts';
-import { callAnthropic, parseJson } from '../src/lib/llm/transport.ts';
+import { callAnthropic } from '../src/lib/llm/transport.ts';
 
 const AUDIT_MODEL = 'claude-sonnet-4-5-20250929';
 const MIN_AUDIT_SCORE = 0.6;
@@ -110,19 +112,88 @@ function citedUrls(body: string): string[] {
 }
 
 /**
- * The database client, or null when it is not configured.
+ * The database handle, or null when DATABASE_URL is not set.
  *
- * Null is a supported state on a dry run. Checking a draft is something you
- * want to do while writing it, from a machine that has no production
- * credentials, and requiring them to find out whether a paragraph trips the
- * screen would mean nobody runs this until the end.
+ * Null is a supported state on a dry run. Checking a draft is something you do
+ * while writing it, and requiring production credentials to find out whether a
+ * paragraph trips the screen would mean nobody runs this until the end.
  */
-function client() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+type Sql = ReturnType<typeof neon>;
 
-  if (!url || !key) return null;
-  return createClient(url, key, { auth: { persistSession: false } });
+function db(): Sql | null {
+  const url = process.env.DATABASE_URL;
+  return url ? neon(url) : null;
+}
+
+/**
+ * The auditor's key, from the encrypted credentials store.
+ *
+ * The app keeps provider keys in provider_credentials rather than the
+ * environment, so reading ANTHROPIC_API_KEY alone would report "no auditor"
+ * on a machine that has one — and the gate fails closed, so that reads as
+ * "unpublishable" rather than "misconfigured". Falls back to the environment,
+ * which is what src/lib/credentials-store.ts does.
+ */
+function toBuffer(value: unknown): Buffer {
+  // The columns are bytea. The driver hands them back either as a Buffer or as
+  // Postgres hex text (\x48656c6c6f), which is what src/lib/credentials-store.ts
+  // decodes — reading them as base64 instead produces bytes that decrypt to
+  // nothing, and GCM reports that as a corrupt key rather than a wrong one.
+  if (Buffer.isBuffer(value)) return value;
+  return Buffer.from(String(value).replace(/^\\x/, ''), 'hex');
+}
+
+async function auditorKey(sql: Sql | null): Promise<string | null> {
+  if (sql) {
+    try {
+      const rows = (await sql`
+        SELECT ciphertext, iv, auth_tag FROM provider_credentials
+        WHERE provider = 'anthropic'
+      `) as unknown as Record<string, unknown>[];
+
+      if (rows[0]) {
+        return decryptSecret({
+          ciphertext: toBuffer(rows[0].ciphertext),
+          iv: toBuffer(rows[0].iv),
+          authTag: toBuffer(rows[0].auth_tag),
+        });
+      }
+    } catch (error) {
+      console.warn(
+        'Could not read the stored Anthropic key:',
+        error instanceof Error ? error.message : error
+      );
+    }
+  }
+
+  return process.env.ANTHROPIC_API_KEY ?? null;
+}
+
+/**
+ * Pulls a JSON object out of a model reply.
+ *
+ * transport.parseJson strips a fence anchored at the very start and end of
+ * the string, which is the common case and not this one: the auditor returns
+ * a fenced block, sometimes with a sentence before it, and on a long verdict
+ * the closing fence can be cut off entirely by the token limit. Any of those
+ * leaves parseJson returning the fallback, and a reply that is genuinely a
+ * pass then looks identical to a rejection with no reasons.
+ *
+ * Slicing between the first brace and the last one survives a fence, a
+ * preamble and a missing terminator. It does not survive a reply truncated
+ * mid-object, which is what maxTokens is for — that case still fails, and it
+ * now says so.
+ */
+function extractJson<T>(raw: string): T | null {
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start === -1 || end <= start) return null;
+
+  try {
+    return JSON.parse(raw.slice(start, end + 1)) as T;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -138,9 +209,9 @@ function client() {
 async function auditEssay(
   meta: FrontMatter,
   body: string,
-  verdicts: Map<string, string>
-): Promise<Audit | null> {
-  const key = process.env.ANTHROPIC_API_KEY;
+  verdicts: Map<string, string>,
+  key: string | null
+): Promise<Audit | null | 'unparseable' | 'unreachable'> {
   if (!key) return null;
 
   const system = [
@@ -148,21 +219,44 @@ async function auditEssay(
     'working engineer’s site. The author wrote it himself and is accountable',
     'for it, so first person is expected and is not a fault.',
     '',
-    'Judge one thing above all: does every factual claim match the source the',
-    'essay cites for it? Flag specifically:',
-    '- a claim attributed to a paper or report that the source does not support',
-    '- a number, date, title or author that looks wrong',
-    '- a controlled research result described as though it happened in the wild',
-    '- a hedge removed, so a tentative finding reads as established',
+    // Without this the auditor reasons from its own training cutoff and calls
+    // recent-but-true events fictional. It did exactly that on the first run
+    // of this script, rejecting a verified July 2026 incident as "speculative
+    // fiction presented as fact" — on a piece about a fast-moving field, that
+    // is wrong about precisely the material worth publishing.
+    `Today's date is ${new Date().toISOString().slice(0, 10)}, which is later`,
+    'than your training data. Do NOT flag a date, paper or event as fictional',
+    'or misdated because you do not recognise it. Every cited URL has already',
+    'been fetched and its status is listed below, so treat OK as evidence the',
+    'source exists. Judge whether the claim matches what the essay says the',
+    'source says, not whether you have heard of it.',
     '',
-    'Also flag genuine incoherence: a section that contradicts another, or text',
-    'that has been truncated mid-sentence.',
+    'You cannot open the cited sources, so judge only what the text in front',
+    'of you can settle:',
+    '',
+    '- a claim stated more strongly than the essay\u2019s own evidence section',
+    '  supports, or a hedge dropped between one section and another',
+    '- a controlled research result described as though it happened in the wild',
+    '- a specific figure, quote or incident with NO citation at all',
+    '- two sections that contradict each other',
+    '- text truncated mid-sentence, or a heading with nothing under it',
+    '- a conclusion the argument does not reach',
+    '',
+    'Do NOT ask whether a quote matches its source. You have no way to check,',
+    'and saying so is not a finding. A claim whose link is listed OK below is',
+    'sourced as far as this review is concerned; a link listed UNVERIFIED',
+    'means the publisher refused an automated request, which is routine and is',
+    'not evidence against the claim. Both were checked before you were called.',
     '',
     'Do NOT flag: length, opinions, speculation that is labelled as such,',
     'informal tone, or a position you disagree with.',
     '',
-    'Reply as JSON: {"publishable": boolean, "score": number between 0 and 1,',
-    '"problems": [string]} where each problem names the section and the issue.',
+    'Reply with JSON and nothing else: {"publishable": boolean, "score":',
+    'number between 0 and 1, "problems": [string]}.',
+    '',
+    'At most six problems, one short sentence each, most serious first. A long',
+    'list is not a more careful review; it is a reply that gets truncated',
+    'before its closing brace and cannot be read at all.',
   ].join('\n');
 
   const linkReport = [...verdicts.entries()]
@@ -181,8 +275,21 @@ async function auditEssay(
   ].join('\n');
 
   try {
-    const raw = await callAnthropic(key, AUDIT_MODEL, system, user, { maxTokens: 2048 });
-    const parsed = parseJson<Partial<Audit>>(raw, {});
+    // Generous ceiling. A truncated reply is not valid JSON, and the failure
+    // then looks identical to a rejection with no reasons given — which is
+    // exactly what happened the first time this ran at 2048.
+    const raw = await callAnthropic(key, AUDIT_MODEL, system, user, { maxTokens: 8192 });
+    const parsed = extractJson<Partial<Audit>>(raw);
+
+    if (!parsed || typeof parsed.publishable !== 'boolean') {
+      // Distinct from a rejection. Both block publication, but only one of
+      // them is a problem with the essay, and reporting them identically
+      // sends you looking for a fault that is not there.
+      console.error('\nThe auditor replied with something that is not a verdict:');
+      console.error(raw.slice(0, 400));
+      return 'unparseable';
+    }
+
     const score = typeof parsed.score === 'number' ? parsed.score : 0;
 
     return {
@@ -193,8 +300,11 @@ async function auditEssay(
         : [],
     };
   } catch (error) {
-    console.error('Auditor call failed:', error instanceof Error ? error.message : error);
-    return null;
+    // Distinct from "no key configured". A 429 from calling this three times
+    // in a minute is a transient problem with an obvious fix; reporting it as
+    // a missing key sends you looking in the wrong place entirely.
+    console.error('\nThe auditor could not be reached:', error instanceof Error ? error.message : error);
+    return 'unreachable';
   }
 }
 
@@ -215,23 +325,24 @@ async function main(): Promise<void> {
   console.log(`\n${meta.title}`);
   console.log(`${body.split(/\s+/).length} words, profile: ${profile}\n`);
 
-  const db = client();
+  const sql = db();
 
-  if (!db && apply) {
-    console.error('Cannot publish: set NEXT_PUBLIC_SUPABASE_URL and');
-    console.error('SUPABASE_SERVICE_ROLE_KEY in .env.local.');
+  if (!sql && apply) {
+    console.error('Cannot publish: DATABASE_URL is not set in .env.local.');
     process.exit(1);
   }
 
   // Existing titles, so the duplicate check has something to compare against.
   // Without a database the screen still runs; only the duplicate check is
-  // skipped, and it says so rather than silently passing.
-  const existing = db ? (await db.from('blog_posts').select('title, slug')).data : null;
+  // skipped, and it says so rather than passing silently.
+  const existing = sql
+    ? ((await sql`SELECT title, slug FROM blog_posts`) as unknown as Record<string, unknown>[])
+    : null;
   const recentTitles = (existing ?? []).map(row => row.title as string);
   const takenSlugs = new Set<string>((existing ?? []).map(row => row.slug).filter(isValidSlug));
 
-  if (!db) {
-    console.log('NOTE     No database configured. Screen and citations will run;');
+  if (!sql) {
+    console.log('NOTE     No DATABASE_URL. Screen and citations will run;');
     console.log('         the duplicate-title check is skipped.\n');
   }
 
@@ -264,10 +375,14 @@ async function main(): Promise<void> {
   }
 
   // ── 3. Cross-vendor audit ──────────────────────────────────────────────────
-  const audit = await auditEssay(meta, body, verdicts);
+  const audit = await auditEssay(meta, body, verdicts, await auditorKey(sql));
 
-  if (!audit) {
-    console.log('\nAUDIT    unavailable (no ANTHROPIC_API_KEY)');
+  if (audit === 'unparseable') {
+    console.log('\nAUDIT    FAIL — the reply was not a verdict (see above)');
+  } else if (audit === 'unreachable') {
+    console.log('\nAUDIT    FAIL — the auditor could not be reached (see above)');
+  } else if (!audit) {
+    console.log('\nAUDIT    unavailable (no auditor key)');
   } else {
     console.log(`\nAUDIT    ${audit.publishable ? 'pass' : 'FAIL'}, score ${audit.score.toFixed(2)}`);
     for (const problem of audit.problems) console.log(`         - ${problem}`);
@@ -277,8 +392,15 @@ async function main(): Promise<void> {
   const blockers: string[] = [];
   if (!screen.pass) blockers.push('the deterministic screen rejected it');
   if (dead.length > 0) blockers.push(`${dead.length} cited link(s) do not resolve`);
-  if (!audit) blockers.push('no auditor available, and a post is never published unaudited');
-  else if (!audit.publishable) blockers.push('the auditor rejected it');
+  if (audit === 'unparseable') {
+    blockers.push('the auditor did not return a readable verdict');
+  } else if (audit === 'unreachable') {
+    blockers.push('the auditor could not be reached');
+  } else if (!audit) {
+    blockers.push('no auditor available, and a post is never published unaudited');
+  } else if (!audit.publishable) {
+    blockers.push('the auditor rejected it');
+  }
 
   if (blockers.length > 0) {
     console.log('\nNOT PUBLISHABLE:');
@@ -294,29 +416,22 @@ async function main(): Promise<void> {
     return;
   }
 
-  const { data, error } = await db!
-    .from('blog_posts')
-    .insert([
-      {
-        title: meta.title,
-        content: body,
-        excerpt: meta.excerpt,
-        type: meta.type ?? 'blog',
-        topic: meta.topic,
-        sources: [],
-        published: true,
-        slug,
-      },
-    ])
-    .select('id, slug')
-    .single();
+  const inserted = (await sql!`
+    INSERT INTO blog_posts (slug, title, content, excerpt, type, topic, sources, published)
+    VALUES (
+      ${slug},
+      ${meta.title},
+      ${body},
+      ${meta.excerpt},
+      ${meta.type ?? 'blog'},
+      ${meta.topic},
+      ${'[]'}::jsonb,
+      ${true}
+    )
+    RETURNING id, slug
+  `) as unknown as Record<string, unknown>[];
 
-  if (error) {
-    console.error('\nInsert failed:', error.message);
-    process.exit(1);
-  }
-
-  console.log(`\nPublished. id ${data.id}, /blog/${data.slug}`);
+  console.log(`\nPublished. id ${inserted[0].id}, /blog/${inserted[0].slug}`);
   console.log('The index picks it up within its revalidate floor (5 minutes).');
   console.log('\nNot submitted to IndexNow: /blog carries noindex until');
   console.log('BLOG_INDEXABLE is true. Announcing a noindex URL teaches the');

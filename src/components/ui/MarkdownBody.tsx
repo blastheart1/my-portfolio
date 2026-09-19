@@ -44,10 +44,29 @@ function extractText(node: React.ReactNode): string {
   return '';
 }
 
-// Only allow safe URL protocols in links
+/**
+ * Whether a link is safe to render as a link.
+ *
+ * Root-relative paths are allowed. They were not, which silently downgraded
+ * every internal link in markdown to plain text — including the one sending a
+ * reader from a post to its full version, the entire point of splitting them.
+ * Nothing failed; the words were simply no longer a link.
+ *
+ * `//evil.example` also starts with a slash and is protocol-relative, meaning
+ * it leaves the site. That is why this checks for a single leading slash
+ * rather than just the first character.
+ */
 function isSafeHref(href: string | undefined): boolean {
   if (!href) return false;
-  return href.startsWith('http://') || href.startsWith('https://') || href.startsWith('mailto:') || href.startsWith('#');
+
+  if (href.startsWith('/')) return !href.startsWith('//');
+
+  return (
+    href.startsWith('http://') ||
+    href.startsWith('https://') ||
+    href.startsWith('mailto:') ||
+    href.startsWith('#')
+  );
 }
 
 const components: Components = {
@@ -95,6 +114,8 @@ const components: Components = {
   // Links — safe href only, open in new tab
   a: ({ href, children }) => {
     if (!isSafeHref(href)) return <span>{children}</span>;
+    // Only genuinely external links get target/rel; an internal one opening
+    // a new tab is an annoyance, not a safety measure.
     const isExternal = href?.startsWith('http');
     return (
       <a

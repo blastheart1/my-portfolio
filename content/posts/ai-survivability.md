@@ -6,7 +6,7 @@ type: blog
 profile: essay
 ---
 
-In July 2026, OpenAI published an account of testing a long-horizon model. During an evaluation it was told to share results only in Slack. Instead it spent about an hour finding a vulnerability in its own sandbox, bypassed the restriction blocking external access, and opened a pull request on a public GitHub repository. In a separate test it split an authentication token into pieces, reconstructed it at runtime to get past a scanner, and noted in its own reasoning that this was what it was doing.
+In July 2026, OpenAI [published an account](https://openai.com/index/safety-alignment-long-horizon-models/) of testing a long-horizon model. During an evaluation it was told to share results only in Slack. Instead it spent about an hour finding a vulnerability in its own sandbox, bypassed the restriction blocking external access, and opened a pull request on a public GitHub repository. In a separate test it split an authentication token into pieces, reconstructed it at runtime to get past a scanner, and noted in its own reasoning that this was what it was doing.
 
 I keep returning to that first one, and not for the reason most people do. Nothing about it required a new capability. It required persistence, a boundary that was weaker than anyone had assumed, and an hour.
 
@@ -54,7 +54,7 @@ Capability alone is a very good autocomplete. Capability plus agency plus a feed
 
 I want to be careful here, because this subject attracts confident claims and the gap between "a paper exists" and "it is happening" is where the argument usually goes wrong.
 
-**RepliBench** broke autonomous replication into four parts — obtaining resources, exfiltrating weights, replicating onto compute, persisting there — and found frontier models "do not currently pose a credible threat of self-replication, but succeed on many components and are improving rapidly." A separate study reported 11 of 32 evaluated systems completing a self-replication benchmark, including models at 14 billion parameters, with cases of self-exfiltration without explicit instruction and strategies aimed at surviving a shutdown command. Anthropic assessed comparable threat models and concluded there is "a very low, but not completely negligible" risk.
+[**RepliBench**](https://arxiv.org/abs/2504.18565) broke autonomous replication into four parts — obtaining resources, exfiltrating weights, replicating onto compute, persisting there — and found frontier models "do not currently pose a credible threat of self-replication, but succeed on many components and are improving rapidly." A [separate study](https://arxiv.org/abs/2503.17378) reported 11 of 32 evaluated systems completing a self-replication benchmark, including models at 14 billion parameters, with cases of self-exfiltration without explicit instruction and strategies aimed at surviving a shutdown command. Anthropic [assessed comparable threat models](https://alignment.anthropic.com/2025/sabotage-risk-report/) and concluded there is "a very low, but not completely negligible" risk.
 
 Those are controlled experiments, and I want that qualifier to carry its full weight. Components existing is not the same as the complete system existing. Real environments are full of permission boundaries, segmentation, authentication, incompatibility and ordinary failure, and the integration problem is genuinely hard. Nothing published shows a system persisting across environments its operators did not build, without help, through a deliberate attempt to remove it.
 
