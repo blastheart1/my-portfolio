@@ -398,6 +398,43 @@ export function blogCollectionNode(posts: readonly BlogPost[]) {
   };
 }
 
+/**
+ * A long-form research document.
+ *
+ * ScholarlyArticle rather than BlogPosting: it carries an abstract, a
+ * reference list and an argument, and the distinction is one search engines
+ * and assistants both act on when deciding how much weight a page carries.
+ */
+export function researchNodes(doc: {
+  slug: string;
+  title: string;
+  subtitle?: string;
+  abstract: string;
+  date: string;
+  wordCount: number;
+}) {
+  const url = `${SITE_URL}/research/${doc.slug}`;
+
+  return [
+    {
+      '@type': 'ScholarlyArticle',
+      '@id': `${url}#document`,
+      url,
+      mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+      headline: doc.title,
+      ...(doc.subtitle ? { alternativeHeadline: doc.subtitle } : {}),
+      abstract: doc.abstract,
+      description: doc.abstract,
+      wordCount: doc.wordCount,
+      inLanguage: 'en',
+      ...(isoDate(doc.date) ? { datePublished: isoDate(doc.date) } : {}),
+      author: { '@id': PERSON_ID },
+      publisher: { '@id': PERSON_ID },
+      isPartOf: { '@id': WEBSITE_ID },
+    },
+  ];
+}
+
 /** Wraps nodes in the envelope every graph on this site shares. */
 export function graph(nodes: readonly unknown[]) {
   return {

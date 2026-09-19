@@ -4,6 +4,7 @@ import { SITE_URL } from "@/lib/site";
 import { isDemoVisible } from "@/lib/content-queries";
 import { getPublishedBlogSlugs } from "@/lib/database";
 import { BLOG_INDEXABLE } from "@/lib/blog/visibility";
+import { getResearchDocs } from "@/lib/research";
 import { WORK_PROJECTS } from "@/lib/work-projects";
 
 /**
@@ -83,6 +84,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: entry.updatedAt,
       changeFrequency: "monthly" as const,
       priority: 0.6,
+    })),
+    // Research documents are files in the repo, so this cannot fail and needs
+    // no visibility gate. They are indexable regardless of BLOG_INDEXABLE:
+    // each is hand-written and reviewed, which is the bar that flag exists to
+    // enforce for generated posts.
+    ...getResearchDocs().map(doc => ({
+      url: `${SITE_URL}/research/${doc.slug}`,
+      lastModified: doc.date ? new Date(doc.date) : lastModified,
+      changeFrequency: "yearly" as const,
+      priority: 0.7,
     })),
     {
       url: `${SITE_URL}/website-workflow`,

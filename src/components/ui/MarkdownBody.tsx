@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
@@ -8,6 +9,39 @@ interface Props {
   children: string;
   /** Base paragraph style — defaults to match the About section body */
   className?: string;
+}
+
+/**
+ * A heading's anchor id, derived from its text.
+ *
+ * react-markdown does not add ids to headings, so a contents list built from
+ * the same source pointed at nothing — every link scrolled nowhere. This has
+ * to stay in step with headingId() in src/lib/research.ts, which builds the
+ * contents side; a test pins them together.
+ *
+ * Harmless on the pages that have no contents list, and useful anyway: a
+ * heading with an id is a URL someone can send to a colleague, and Google uses
+ * them for the jump links it shows under a result.
+ */
+function headingSlug(children: React.ReactNode): string | undefined {
+  const text = extractText(children);
+  if (!text) return undefined;
+
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
+/** Flattens a heading's children to plain text, ignoring inline markup. */
+function extractText(node: React.ReactNode): string {
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(extractText).join('');
+  if (React.isValidElement(node)) {
+    return extractText((node.props as { children?: React.ReactNode }).children);
+  }
+  return '';
 }
 
 // Only allow safe URL protocols in links
@@ -26,17 +60,26 @@ const components: Components = {
 
   // Headings
   h1: ({ children }) => (
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-6 mb-3 leading-tight">
+    <h1
+      id={headingSlug(children)}
+      className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-6 mb-3 leading-tight scroll-mt-24"
+    >
       {children}
     </h1>
   ),
   h2: ({ children }) => (
-    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-5 mb-2 leading-tight">
+    <h2
+      id={headingSlug(children)}
+      className="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-5 mb-2 leading-tight scroll-mt-24"
+    >
       {children}
     </h2>
   ),
   h3: ({ children }) => (
-    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2">
+    <h3
+      id={headingSlug(children)}
+      className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2 scroll-mt-24"
+    >
       {children}
     </h3>
   ),

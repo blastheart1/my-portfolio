@@ -109,18 +109,19 @@ function citedUrls(body: string): string[] {
   return [...urls];
 }
 
+/**
+ * The database client, or null when it is not configured.
+ *
+ * Null is a supported state on a dry run. Checking a draft is something you
+ * want to do while writing it, from a machine that has no production
+ * credentials, and requiring them to find out whether a paragraph trips the
+ * screen would mean nobody runs this until the end.
+ */
 function client() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!url || !key) {
-    console.error('Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local.');
-    process.exit(1);
-  }
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.warn('SUPABASE_SERVICE_ROLE_KEY is not set — falling back to the anon key.\n');
-  }
-
+  if (!url || !key) return null;
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
@@ -216,10 +217,23 @@ async function main(): Promise<void> {
 
   const db = client();
 
+  if (!db && apply) {
+    console.error('Cannot publish: set NEXT_PUBLIC_SUPABASE_URL and');
+    console.error('SUPABASE_SERVICE_ROLE_KEY in .env.local.');
+    process.exit(1);
+  }
+
   // Existing titles, so the duplicate check has something to compare against.
-  const { data: existing } = await db.from('blog_posts').select('title, slug');
+  // Without a database the screen still runs; only the duplicate check is
+  // skipped, and it says so rather than silently passing.
+  const existing = db ? (await db.from('blog_posts').select('title, slug')).data : null;
   const recentTitles = (existing ?? []).map(row => row.title as string);
   const takenSlugs = new Set<string>((existing ?? []).map(row => row.slug).filter(isValidSlug));
+
+  if (!db) {
+    console.log('NOTE     No database configured. Screen and citations will run;');
+    console.log('         the duplicate-title check is skipped.\n');
+  }
 
   // ── 1. Deterministic screen ────────────────────────────────────────────────
   const screen = screenDraft(
@@ -280,7 +294,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const { data, error } = await db
+  const { data, error } = await db!
     .from('blog_posts')
     .insert([
       {
