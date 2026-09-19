@@ -15,6 +15,11 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    // The scripts under scripts/ run directly on Node 24, which strips types
+    // rather than compiling, and therefore requires relative imports to carry
+    // their real .ts extension. noEmit is already on, which is the condition
+    // this option needs.
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
