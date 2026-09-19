@@ -38,7 +38,14 @@ describe('slugify', () => {
   it('turns punctuation into a gap, not a deletion', () => {
     // "aiml" would be wrong: these are two terms, not one.
     expect(slugify('AI/ML in Production')).toBe('ai-ml-in-production');
-    expect(slugify("What's Next — Really?")).toBe('what-s-next-really');
+  });
+
+  it('drops apostrophes rather than splitting the word around them', () => {
+    // "can-t" and "what-s" were the first real titles to hit this, and both
+    // read as a typo in the URL bar.
+    expect(slugify("You Can't Have All Four")).toBe('you-cant-have-all-four');
+    expect(slugify("What's Next \u2014 Really?")).toBe('whats-next-really');
+    expect(slugify('It\u2019s Not About Intelligence')).toBe('its-not-about-intelligence');
   });
 
   it('collapses runs of separators and trims the ends', () => {

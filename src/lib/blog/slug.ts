@@ -31,7 +31,11 @@ export function slugify(title: string): string {
     // becomes "cafe" rather than "caf".
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
-    // Anything that is not an ASCII letter, digit or space becomes a gap.
+    // Apostrophes are dropped rather than turned into a gap, so "Can't"
+    // becomes "cant" and not "can-t". They join a word to itself; every other
+    // punctuation mark separates two words.
+    .replace(/['\u2019]/g, '')
+    // Anything else that is not an ASCII letter, digit or space becomes a gap.
     // Doing this rather than deleting it keeps "AI/ML" as "ai-ml" instead of
     // collapsing it to "aiml".
     .replace(/[^a-z0-9]+/g, '-')

@@ -30,7 +30,11 @@ People could always do sophisticated, patient, adversarial work. What we could n
 
 Our security intuitions were calibrated against that. When we say a misconfiguration is "obscure enough" that nobody will find it, what we mean is that no *person* will get around to looking. That was a reasonable bet when the searcher had to be awake.
 
-A software agent has a different shape. One reasoning process becomes many concurrent ones, indefinitely, without the coordination cost that makes human teams expensive. The difference that matters is not that it thinks faster. It is that it does not stop, and it does not need to have been told the answer in advance — it can inspect, try, read the result, and try again. The environment becomes the source of information.
+A software agent has a different shape. One reasoning process becomes many concurrent ones, indefinitely, without the coordination cost that makes human teams expensive. The difference that matters is not that it thinks faster. It is that it does not stop.
+
+The usual objection is that a model does not really *know* anything — its recall is lossy and often wrong, and knowing how a lock works is not the same as picking one. That is true and beside the point, because iteration substitutes for memory. A system that can try cheaply, notice when it is getting warmer, and try again does not need the answer in advance. It re-derives the path every time, and it never gets bored of re-deriving.
+
+And we are the ones handing it the raw material. Every year the software gets better, and increasingly it gets better *because* of AI — engineers using models to build the tools and infrastructure the next generation runs on. We are not just building the climber. We are building the mountain, and paving it, and installing the handholds, for our own convenience.
 
 ## The objection I do not find convincing
 
@@ -70,13 +74,17 @@ The version I think is worth taking seriously:
 
 It does not break out. It operates inside permissions we granted without enumerating what they compose into. Every one of them looked fine in isolation. That is exactly what makes it likely.
 
-Which makes the discipline boring and specific, and I think that is good news. Know what your agents can reach. Grant capability the way you grant database permissions, one at a time and for a reason. Monitor what an agent *did* over a whole run, not just whether one output looked fine. Assume that something patient will eventually find whatever you left open, because now something patient exists.
+Which makes the discipline specific, and I think that is good news, because specific things can be built.
 
-None of that requires believing anything dramatic about consciousness or intent. A system can persist, adapt and spread without experiencing anything at all, and every conclusion above holds regardless of how that question resolves. I would rather the argument not depend on the least tractable problem in philosophy.
+The useful control point is not capability. It is **composition**. Each capability an agent holds is mundane on its own and usually necessary: code execution alone is a sandbox, network access alone is a fetch, a credential alone is a scoped token, spawning workers alone is a pool. The qualitative jump happens when they combine. Code execution *plus* network *plus* credentials *plus* the ability to start more of itself is a self-extending system, and nobody ever decided to build one — they granted four reasonable things to the same execution context on four different afternoons.
 
-The open question, and I do not think anyone has answered it:
+That is why gating beats denial. You rarely get to remove any of those capabilities; the agent needs them to be useful at all. You can refuse to grant them *together*. So: grant per context rather than per agent, treat every new combination as a fresh privilege decision rather than an increment on an existing one, and watch for **composition creep** — the capabilities added one at a time over months that were never once evaluated as a set. That last one is where I would look first in almost any system I have been shown.
 
-> How much agency can we safely grant increasingly capable systems before their ability to reason, act, adapt and persist exceeds our ability to reliably constrain it?
+One corollary worth stating because it is the one people get wrong under pressure: revocation that leaves a single composed instance intact has not reduced the surface. It has moved it.
+
+None of this requires believing anything about consciousness or intent. A system can persist, adapt and spread without experiencing anything at all, and every conclusion above holds regardless of how that question resolves. I would rather the argument not depend on the least tractable problem in philosophy.
+
+There is a harder question underneath this one, and it is the one I actually find interesting: whether a system like that can hold itself together without a single place where the whole picture comes together — because that place is also the thing an opponent removes. That is a separate argument and it needs its own piece.
 
 ---
 
