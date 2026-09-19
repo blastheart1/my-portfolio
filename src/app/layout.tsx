@@ -1,3 +1,5 @@
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Inter } from "next/font/google";
 import "./globals.css";
 import CalendlyScript from '@/components/CalendlyScript';
@@ -116,6 +118,16 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         {children}
       </ClientLayoutContent>
       <CalendlyScript />
+      {/*
+        Field data, which this site has never had. The home page loads GSAP,
+        Framer Motion, TensorFlow.js and a scroll-driven hero, so LCP and INP
+        are a real risk and there has been no way to know. Core Web Vitals
+        feed ranking, and lab numbers from a fast laptop do not.
+
+        Both are deferred and send nothing until the page is interactive.
+      */}
+      <Analytics />
+      <SpeedInsights />
     </>
   );
 }

@@ -5,6 +5,7 @@ import Breadcrumbs from '@/components/work/Breadcrumbs';
 import MarkdownBody from '@/components/ui/MarkdownBody';
 import { normalizeContent } from '@/lib/blog/normalize-content';
 import { getBlogPostBySlug } from '@/lib/database';
+import { ogImageUrl } from '@/lib/og-url';
 import { SITE_URL } from '@/lib/site';
 import StructuredData from '@/components/StructuredData';
 import { blogPostingNode } from '@/lib/structured-data';
@@ -52,6 +53,19 @@ export async function generateMetadata({
       publishedTime: post.createdAt.toISOString(),
       modifiedTime: post.updatedAt.toISOString(),
       authors: [SITE_URL],
+      images: [
+        {
+          url: ogImageUrl({
+            title: post.title,
+            subtitle: post.excerpt,
+            eyebrow: '~/writing $ cat',
+            chips: post.topic ? [post.topic] : undefined,
+          }),
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
     },
   };
 }
