@@ -4,6 +4,8 @@ import type { Metadata } from 'next';
 import { isDemoVisible } from '@/lib/content-queries';
 import { findWorkProject, WORK_PROJECTS } from '@/lib/work-projects';
 import { SITE_URL } from '@/lib/site';
+import StructuredData from '@/components/StructuredData';
+import { workProjectNodes } from '@/lib/structured-data';
 import CaseStudyLayout from '@/components/work/CaseStudyLayout';
 import AutomationFlowExplorer from '@/components/work/AutomationFlow';
 import RelayDemo from '@/components/work/RelayDemo';
@@ -55,6 +57,10 @@ export default async function WorkProjectPage({
 
   return (
     <CaseStudyLayout project={project} fillViewport={project.slug === 'automation'}>
+      {/* This work's CreativeWork node, on the page it describes. It used to
+          sit in the home page graph, which described work living here from a
+          URL that is not it. */}
+      <StructuredData nodes={workProjectNodes(project.slug)} />
       {project.slug === 'automation' && <AutomationFlowExplorer />}
       {project.slug === 'relay' && <RelayDemo />}
     </CaseStudyLayout>

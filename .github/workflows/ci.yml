@@ -1,0 +1,54 @@
+# Continuous integration.
+#
+# Until now nothing ran the guard rails in src/**/__tests__ except a developer
+# typing `npm test`, which is how a numbered guard rail quietly stops guarding
+# anything. This workflow is what makes N1-N20 load-bearing.
+#
+# Two deliberate choices worth knowing before editing:
+#
+# 1. `test:coverage`, not `test`. `npm test` is `vitest run` with no coverage
+#    flag, so it does NOT enforce the 80% line threshold in vitest.config.ts.
+#    Running it here would leave the threshold decorative.
+#
+# 2. The build runs with NO database or provider secrets. That is an assertion,
+#    not an oversight: every data path in content-queries.ts and database.ts is
+#    written to catch and degrade, and a build that fails without credentials
+#    means one of them regressed. See guard rail N19 for the specific case.
+#
+# Playwright is deliberately absent. tests/e2e needs a live database and an
+# admin password (see playwright.config.ts), so it stays a local and
+# pre-deploy check rather than something CI can meaningfully run.
+
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Tests with coverage
+        run: npm run test:coverage
+
+      - name: Build
+        run: npm run build

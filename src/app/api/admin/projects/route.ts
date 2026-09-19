@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/neon';
 import { revalidatePath } from 'next/cache';
+import { submitToIndexNow } from '@/lib/indexnow';
 import { requireAdmin } from '@/lib/require-admin';
 import { ProjectSchema } from '@/lib/schemas/projects';
 
@@ -50,6 +51,10 @@ export async function POST(request: NextRequest) {
       RETURNING *
     `) as unknown as Record<string, unknown>[];
     revalidatePath('/');
+    // Tell Bing, Yandex and Seznam directly rather than waiting to be
+    // crawled. Deliberately not awaited: a search-engine ping must never
+    // turn a successful save into an error the editor sees.
+    void submitToIndexNow(['/']);
     return NextResponse.json(rows[0], { status: 201 });
   } catch (err) {
     console.error('POST /api/admin/projects error:', err);

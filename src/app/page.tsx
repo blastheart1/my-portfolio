@@ -9,6 +9,8 @@ import SplashWrapper from "@/components/SplashWrapper";
 import LabSection from "@/components/LabSection";
 import FeaturedWork from "@/components/work/FeaturedWork";
 import FAQSection from "@/components/FAQSection";
+import StructuredData from "@/components/StructuredData";
+import { homePageNodes } from "@/lib/structured-data";
 import {
   getExperienceEntries,
   getServiceTiers,
@@ -63,6 +65,8 @@ export default async function Home() {
   return (
     <SplashWrapper splashEnabled={splashEnabled} splashVersion={splashVersion}>
       <main className="relative z-0 bg-background text-foreground min-h-screen flex flex-col">
+        {/* ProfilePage and FAQPage belong to this URL and no other. */}
+        <StructuredData nodes={homePageNodes()} />
         <ParallaxBackground />
 
         <div className="relative z-10 flex-1">

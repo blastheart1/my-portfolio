@@ -90,13 +90,12 @@ describe('the workflow list is bounded by the frame, not by a row count', () => 
 });
 
 describe('the transcript pane leaves room on a phone', () => {
-  it('is shorter below sm, taller above it', () => {
+  it('keeps a floor so it never collapses to nothing', () => {
     const { container } = render(<TranscriptPanel transcript="x" />);
 
-    const region = container.querySelector('.overflow-y-auto')!;
-    // 20rem of transcript plus a player fills a 667px screen on its own.
-    expect(region.className).toContain('h-56');
-    expect(region.className).toContain('sm:h-80');
+    // Its height now comes from the row the drafted email sets; stacked on a
+    // phone there is no such row, so a minimum keeps the card usable.
+    expect(container.querySelector('section')!.className).toMatch(/min-h-\[/);
   });
 });
 

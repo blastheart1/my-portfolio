@@ -295,10 +295,11 @@ export default function RelayDemo() {
           </p>
         )}
 
-        {/* Voice note beside the draft, as in the reference. The review panels
-            sit underneath both, spanning the full width, because they describe
-            the relationship between the two rather than either one. */}
-        <div className="mt-5 grid gap-5 lg:grid-cols-2 lg:items-start">
+        {/* Voice note beside the draft. Deliberately items-stretch, not
+            items-start: the draft sets the row height and the transcript
+            matches it, rather than the two panes ending at different points
+            down the page. */}
+        <div className="mt-5 grid gap-5 lg:grid-cols-2">
           {(usingCapture || selected) && (
             <TranscriptPanel
               transcript={usingCapture ? captureText : (selected?.transcript ?? '')}
@@ -313,7 +314,7 @@ export default function RelayDemo() {
           )}
 
           {result ? (
-            <DraftPanel result={result} />
+            <DraftEmailPanel result={result} />
           ) : (
             <div className="flex min-h-[12rem] items-center justify-center rounded-lg border border-dashed border-gray-200 p-6 text-center text-sm text-gray-400 dark:border-gray-700">
               The drafted email, the assumptions it made, and the faithfulness
@@ -321,24 +322,25 @@ export default function RelayDemo() {
             </div>
           )}
         </div>
+
+        {result && <ReviewPanels result={result} />}
       </div>
     </>
   );
 }
 
-function DraftPanel({ result }: { result: DraftResult }) {
-  const { draft, verdict } = result;
+/**
+ * The drafted email.
+ *
+ * Height is content-driven: this pane sets the row height and the voice note
+ * beside it matches and scrolls. The other way round — a fixed email pane —
+ * would clip the thing the visitor came to read.
+ */
+function DraftEmailPanel({ result }: { result: DraftResult }) {
+  const { draft } = result;
   const [view, setView] = React.useState<'review' | 'email'>('review');
-  const audited = verdict.auditorProvider !== null;
-  const clean = audited && verdict.fabrications.length === 0;
-  // Never assume the shape of a network response: an older or partial verdict
-  // reaching .filter() takes the whole panel down, which is the failure this
-  // demo can least afford — it renders after the visitor has spent a run.
-  const changes = Array.isArray(verdict.changes) ? verdict.changes : [];
-  const needLook = changes.filter(c => c.needsLook).length;
 
   return (
-    <div className="space-y-5">
       <section className="rounded-lg border border-gray-200 dark:border-gray-700">
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-4 py-2.5 dark:border-gray-700">
           <h3 className="flex items-center gap-2 text-xs uppercase tracking-wide text-gray-400">
@@ -428,10 +430,31 @@ function DraftPanel({ result }: { result: DraftResult }) {
           </p>
         </div>
       </section>
+  );
+}
 
-      {/* What Relay changed and assumed. The count is the point: it tells the
-          sender how much of this needs a decision before it can go out. */}
-      {changes.length > 0 && (
+/**
+ * What Relay changed and assumed, and the faithfulness verdict.
+ *
+ * Below the two panes rather than stacked under the email, and side by side:
+ * both describe the *relationship* between the note and the draft, so neither
+ * belongs in either column. Stacking them under the draft was also what made
+ * the right column several times taller than the left.
+ */
+function ReviewPanels({ result }: { result: DraftResult }) {
+  const { verdict } = result;
+  const audited = verdict.auditorProvider !== null;
+  const clean = audited && verdict.fabrications.length === 0;
+  // Never assume the shape of a network response: an older or partial verdict
+  // reaching .filter() takes the whole panel down, which is the failure this
+  // demo can least afford — it renders after the visitor has spent a run.
+  const changes = Array.isArray(verdict.changes) ? verdict.changes : [];
+  const needLook = changes.filter(c => c.needsLook).length;
+
+  return (
+    <div className="mt-5 grid gap-5 lg:grid-cols-2 lg:items-start">
+      {changes.length > 0 ? (
+
         <section className="rounded-lg border border-gray-200 dark:border-gray-700">
           <header className="flex flex-wrap items-baseline gap-2 border-b border-gray-200 px-4 py-2.5 dark:border-gray-700">
             <h3 className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -469,6 +492,8 @@ function DraftPanel({ result }: { result: DraftResult }) {
             ))}
           </ul>
         </section>
+      ) : (
+        <div />
       )}
 
       {/* Faithfulness check. Never a green tick by default — an unaudited draft

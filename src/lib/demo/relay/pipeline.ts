@@ -1,4 +1,5 @@
 import { getProviderKey } from '@/lib/credentials-store';
+import { callAnthropic, callOpenAI, parseJson } from '@/lib/llm/transport';
 import { checkGuardRails } from '@/lib/chatbot/guardRails';
 
 import type { DemoNote, Draft, DraftResult, Verdict, BodySegment, Fabrication } from './types';
@@ -100,54 +101,10 @@ function splitOnFabrication(segments: BodySegment[], fabrication: Fabrication): 
   });
 }
 
-async function callOpenAI(key: string, system: string, user: string): Promise<string> {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
-    body: JSON.stringify({
-      model: DRAFT_MODEL,
-      temperature: 0.6,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-    }),
-  });
-  if (!res.ok) throw new Error(`OpenAI responded ${res.status}`);
-  const body = await res.json();
-  return body.choices?.[0]?.message?.content ?? '';
-}
-
-async function callAnthropic(key: string, system: string, user: string): Promise<string> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: AUDIT_MODEL,
-      max_tokens: 1024,
-      system,
-      messages: [{ role: 'user', content: user }],
-    }),
-  });
-  if (!res.ok) throw new Error(`Anthropic responded ${res.status}`);
-  const body = await res.json();
-  return body.content?.[0]?.text ?? '';
-}
-
-function parseJson<T>(raw: string, fallback: T): T {
-  try {
-    // Models occasionally wrap JSON in a fenced block despite instructions.
-    const cleaned = raw.replace(/^```(?:json)?\s*|\s*```$/g, '').trim();
-    return JSON.parse(cleaned) as T;
-  } catch {
-    return fallback;
-  }
-}
+// callOpenAI, callAnthropic and parseJson used to live here. They moved to
+// src/lib/llm/transport.ts when the blog publish gate needed the same three,
+// and a second copy would have been free to drift on timeout and error
+// handling. Behaviour is unchanged; this file's tests are what proves it.
 
 async function generateDraft(
   key: string,
@@ -166,7 +123,7 @@ async function generateDraft(
       ].join('\n')
     : `Transcript:\n${note.transcript}`;
 
-  const raw = await callOpenAI(key, systemPrompt(note), instruction);
+  const raw = await callOpenAI(key, DRAFT_MODEL, systemPrompt(note), instruction);
   const parsed = parseJson<{ subject?: string; body?: string }>(raw, {});
 
   return {
@@ -205,6 +162,7 @@ async function auditDraft(note: DemoNote, draft: Draft): Promise<Verdict> {
   const draftText = draft.body.map(s => s.text).join('');
   const raw = await callAnthropic(
     key,
+    AUDIT_MODEL,
     [
       'You audit a drafted email against the transcript it came from.',
       'Find claims in the draft that the transcript does not support: invented',

@@ -36,6 +36,23 @@ const nextConfig: NextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     qualities: [25, 50, 75, 90, 100],
   },
+  /**
+   * IndexNow serves its key at /{key}.txt. Declared as a rewrite rather than a
+   * route because an app/[key].txt/ segment is not parsed as dynamic, and a
+   * root-level [key] route would shadow every unknown path.
+   *
+   * Default (afterFiles) placement on purpose: real files and routes win first,
+   * so robots.txt and llms.txt are unaffected.
+   */
+  async rewrites() {
+    return [
+      {
+        source: '/:key([A-Za-z0-9-]{8,128}).txt',
+        destination: '/api/indexnow-key/:key',
+      },
+    ];
+  },
+
   async headers() {
     return [
       {

@@ -13,7 +13,16 @@ import * as path from 'path';
  *   ADMIN_PASSWORD=admin1234
  */
 
-const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000';
+/**
+ * This project's dev server runs on 3099, not Next's default 3000. The old
+ * default here meant a local run either hit nothing or, worse, hit whatever
+ * other project happened to be on 3000.
+ *
+ * Point it at a preview deployment to run the SEO specs against real
+ * infrastructure:  PLAYWRIGHT_BASE_URL=<preview-url> npm run test:e2e
+ */
+const PORT = process.env.PORT ?? '3099';
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -33,6 +42,21 @@ export default defineConfig({
     video: 'on-first-retry',
   },
   projects: [
+    /**
+     * The crawler-facing specs, run as nobody.
+     *
+     * Separate from the suite below because they must NOT be authenticated:
+     * they assert what an anonymous crawler receives, and running them with an
+     * admin session would be testing the wrong condition. It also means they
+     * do not depend on the auth setup, so they still run without an
+     * ADMIN_PASSWORD configured — which matters, because these are the checks
+     * worth pointing at a preview deployment.
+     */
+    {
+      name: 'public',
+      testMatch: /(seo|structured-data)\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
     // Auth state setup — runs once, saves the session cookie for reuse
     {
       name: 'setup',
@@ -46,12 +70,12 @@ export default defineConfig({
         storageState: path.join(__dirname, 'tests/e2e/fixtures/admin-auth.json'),
       },
       dependencies: ['setup'],
-      testIgnore: /global\.setup\.ts/,
+      testIgnore: /(global\.setup|seo\.spec|structured-data\.spec)\.ts/,
     },
   ],
   /* Start the Next.js dev server automatically when running locally */
   webServer: {
-    command: 'npm run dev',
+    command: `next dev --turbopack --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

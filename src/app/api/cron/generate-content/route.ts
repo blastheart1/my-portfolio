@@ -1,7 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateContent, getRandomTopic, shouldGenerateCaseStudy } from '@/lib/openai-service';
+import { revalidatePath } from 'next/cache';
+
+import { runContentPipeline } from '@/lib/blog/pipeline';
+import { getRandomTopic, shouldGenerateCaseStudy } from '@/lib/openai-service';
 import { timingSafeCompare } from '@/lib/admin-auth';
-import { insertBlogPost, getBlogPosts, getLatestBlogPost } from '@/lib/database';
+import { getBlogPosts, getLatestBlogPost } from '@/lib/database';
+import { submitToIndexNow } from '@/lib/indexnow';
+
+/**
+ * The scheduled content run.
+ *
+ * Nothing is written directly any more: generation goes through the publish
+ * gate in src/lib/blog/pipeline.ts, which screens, verifies every cited link,
+ * and has a model from another vendor audit the draft before it is allowed
+ * near the database. See guard rail N10.
+ *
+ * A rejection returns 200 with the reasons in the body. This route's normal
+ * state is already "success, did nothing" — it skips whenever the latest post
+ * is under two days old — so a failure status would be noise, and the reasons
+ * in the body are the only way anyone learns why a week produced no posts.
+ */
+
+/** A generation is now a draft, a source check and an audit, not one call. */
+export const maxDuration = 60;
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,8 +51,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get recent content to avoid repetition
-    const recentPosts = await getBlogPosts(5);
+    // Recent content, both to steer the prompt away from repetition and to
+    // give the gate something to compare a near-duplicate title against.
+    const recentPosts = await getBlogPosts(20);
     
     const contentRequest = {
       topic: getRandomTopic(),
@@ -39,28 +61,42 @@ export async function GET(request: NextRequest) {
       previousContent: recentPosts
     };
 
-    const generatedContent = await generateContent(contentRequest);
-    
-    // Save to database
-    const newPost = await insertBlogPost({
-      title: generatedContent.title,
-      content: generatedContent.content,
-      excerpt: generatedContent.excerpt,
-      type: contentRequest.type,
-      topic: contentRequest.topic,
-      metrics: generatedContent.metrics,
-      published: true
-    });
+    const outcome = await runContentPipeline(contentRequest);
+
+    if (!outcome.published) {
+      // Logged as well as returned. The response body of a cron run is not
+      // somewhere anyone looks until they wonder why nothing has published.
+      console.warn('[cron] draft rejected by the publish gate:', outcome.reasons);
+      return NextResponse.json({
+        success: true,
+        published: false,
+        message: 'Draft rejected by the publish gate',
+        reasons: outcome.reasons,
+        attempts: outcome.attempts,
+      });
+    }
+
+    // Invalidate before submitting. A URL pinged while it still 404s teaches
+    // the IndexNow endpoints to distrust this feed, and awaited rather than
+    // fired and forgotten because a serverless instance may freeze the moment
+    // the response returns.
+    revalidatePath('/');
+    revalidatePath('/blog');
+    revalidatePath('/sitemap.xml');
+    await submitToIndexNow([`/blog/${outcome.slug}`, '/blog']);
 
     return NextResponse.json({
       success: true,
+      published: true,
       message: 'Content generated successfully',
       post: {
-        id: newPost.id,
-        title: generatedContent.title,
+        id: outcome.id,
+        slug: outcome.slug,
         type: contentRequest.type,
-        topic: contentRequest.topic
-      }
+        topic: contentRequest.topic,
+      },
+      notes: outcome.reasons,
+      downgraded: outcome.downgraded,
     });
   } catch (error) {
     console.error('Error in cron job:', error);

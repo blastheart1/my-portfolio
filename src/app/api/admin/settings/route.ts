@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSql } from '@/lib/neon';
 import { revalidatePath } from 'next/cache';
+import { submitToIndexNow } from '@/lib/indexnow';
 import { requireAdmin } from '@/lib/require-admin';
 
 export const runtime = 'nodejs';
@@ -49,6 +50,10 @@ export async function PATCH(request: NextRequest) {
       DO UPDATE SET field_value = ${parsed.data.value}, updated_at = now()
     `;
     revalidatePath('/');
+    // Tell Bing, Yandex and Seznam directly rather than waiting to be
+    // crawled. Deliberately not awaited: a search-engine ping must never
+    // turn a successful save into an error the editor sees.
+    void submitToIndexNow(['/']);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('PATCH /api/admin/settings error:', err);
