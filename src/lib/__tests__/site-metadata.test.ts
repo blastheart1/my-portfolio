@@ -16,21 +16,14 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { SITE_URL, SITE_DOMAIN, absoluteUrl } from '../site';
+import { readCode } from './support/source';
 
 const ROOT = path.resolve(__dirname, '../../..');
 const SRC = path.resolve(__dirname, '../..');
 
-/**
- * Source with comments stripped.
- *
- * The source-level rules below look for code. Files that explain which
- * anti-pattern they avoid would otherwise fail for naming it, which is a guard
- * rail that punishes documenting the reasoning.
- */
+/** Source with comments stripped — see the helper's docblock for why. */
 function codeOf(relativePath: string): string {
-  return readFileSync(path.join(SRC, relativePath), 'utf8')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+  return readCode(path.join(SRC, relativePath));
 }
 
 function walk(dir: string): string[] {
@@ -104,10 +97,13 @@ describe('N8 — the wrong domain is gone everywhere', () => {
   });
 
   it('structured data derives its origin from SITE_URL', () => {
-    const sd = readFileSync(path.join(SRC, 'components/StructuredData.tsx'), 'utf8');
+    // The nodes moved out of the component into src/lib/structured-data.ts
+    // when they were split by route; the component is now a <script> wrapper
+    // with no URLs in it at all.
+    const sd = readFileSync(path.join(SRC, 'lib/structured-data.ts'), 'utf8');
     expect(sd).toMatch(/from ['"]@\/lib\/site['"]/);
     expect(sd).toContain('SITE_URL');
-    expect(sd, 'StructuredData still hardcodes an origin').not.toMatch(/https?:\/\/[a-z]+\.dev/);
+    expect(sd, 'structured-data still hardcodes an origin').not.toMatch(/https?:\/\/[a-z]+\.dev/);
   });
 });
 

@@ -20,6 +20,7 @@ import { render, screen } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { readCode } from '@/lib/__tests__/support/source';
 import { SITE_URL } from '@/lib/site';
 import type { BlogPost } from '@/types/blog';
 
@@ -51,18 +52,9 @@ import BlogIndexPage, { generateMetadata as indexMetadata } from '../page';
 
 const ROUTES = path.resolve(__dirname, '..');
 
-/**
- * Source with comments removed.
- *
- * The source-level assertions below look for code, and these route files
- * explain in prose exactly which anti-patterns they avoid. Scanning the raw
- * text matches the explanation and fails on a file that is correct — which is
- * a guard rail that punishes documenting the reasoning.
- */
+/** Source with comments removed — see the helper's docblock for why. */
 function code(relativePath: string): string {
-  return readFileSync(path.join(ROUTES, relativePath), 'utf8')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+  return readCode(path.join(ROUTES, relativePath));
 }
 
 function post(overrides: Partial<BlogPost> = {}): BlogPost {

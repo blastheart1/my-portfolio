@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import CalendlyScript from '@/components/CalendlyScript';
 import StructuredData from '@/components/StructuredData';
+import { siteIdentityNodes } from '@/lib/structured-data';
 import ServiceWorker from '@/components/ServiceWorker';
 import { ModalProvider } from '@/contexts/ModalContext';
 import ClientLayoutContent from '@/components/ClientLayoutContent';
@@ -100,7 +101,16 @@ export const viewport = {
 function LayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <StructuredData />
+      {/*
+        Identity nodes only: Person, ProfessionalService, WebSite. These
+        describe entities and are correct on any URL.
+
+        ProfilePage and FAQPage used to render here too, which meant every
+        route served a ProfilePage claiming to be the home page, plus a
+        duplicate of the entire FAQ. They now live on / alone, and the case
+        studies carry their own CreativeWork. See src/lib/structured-data.ts.
+      */}
+      <StructuredData nodes={siteIdentityNodes()} />
       <ServiceWorker />
       <ClientLayoutContent>
         {children}

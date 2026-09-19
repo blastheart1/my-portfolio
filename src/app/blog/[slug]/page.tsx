@@ -6,7 +6,8 @@ import MarkdownBody from '@/components/ui/MarkdownBody';
 import { normalizeContent } from '@/lib/blog/normalize-content';
 import { getBlogPostBySlug } from '@/lib/database';
 import { SITE_URL } from '@/lib/site';
-import { blogPostingNode, graph } from '@/lib/structured-data';
+import StructuredData from '@/components/StructuredData';
+import { blogPostingNode } from '@/lib/structured-data';
 import { BLOG_ROBOTS } from '@/lib/blog/visibility';
 
 /**
@@ -78,12 +79,7 @@ export default async function BlogPostPage({
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      {node && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(graph([node])) }}
-        />
-      )}
+      <StructuredData nodes={node ? [node] : []} />
 
       <article className="mx-auto max-w-3xl px-6 py-24">
         <Breadcrumbs

@@ -3,7 +3,8 @@ import type { Metadata } from 'next';
 
 import Breadcrumbs from '@/components/work/Breadcrumbs';
 import { getBlogPosts, getPublishedBlogPostCount } from '@/lib/database';
-import { blogCollectionNode, graph } from '@/lib/structured-data';
+import StructuredData from '@/components/StructuredData';
+import { blogCollectionNode } from '@/lib/structured-data';
 import { BLOG_ROBOTS } from '@/lib/blog/visibility';
 import { SITE_URL } from '@/lib/site';
 
@@ -82,10 +83,7 @@ export default async function BlogIndexPage({
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(graph([blogCollectionNode(linkable)])) }}
-      />
+      <StructuredData nodes={[blogCollectionNode(linkable)]} />
 
       <div className="mx-auto max-w-6xl px-6 py-24">
         <Breadcrumbs trail={[{ label: 'Home', href: '/' }, { label: 'Writing' }]} />
