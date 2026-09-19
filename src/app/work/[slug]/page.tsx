@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 
 import { isDemoVisible } from '@/lib/content-queries';
 import { findWorkProject, WORK_PROJECTS } from '@/lib/work-projects';
+import { ogImageUrl } from '@/lib/og-url';
 import { SITE_URL } from '@/lib/site';
 import StructuredData from '@/components/StructuredData';
 import { workProjectNodes } from '@/lib/structured-data';
@@ -38,6 +39,22 @@ export async function generateMetadata({
       url: `${SITE_URL}/work/${project.slug}`,
       title: `${project.title} — Antonio Luis Santos`,
       description: project.tagline,
+      // Declared explicitly. Setting `openGraph` at all replaces the parent's,
+      // so a route that declares it and omits images ends up with no card —
+      // which is what happened here until an end-to-end check caught it.
+      images: [
+        {
+          url: ogImageUrl({
+            title: project.title,
+            subtitle: project.tagline,
+            eyebrow: `~/work $ cat ${project.slug}`,
+            chips: project.tech,
+          }),
+          width: 1200,
+          height: 630,
+          alt: `${project.title} — Antonio Luis Santos`,
+        },
+      ],
     },
   };
 }

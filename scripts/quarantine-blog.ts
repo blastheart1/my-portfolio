@@ -11,6 +11,10 @@
  * the model to print "🔎 No relevant case study available from trusted
  * sources" into the body when it could not find one.
  *
+ * Kept after the move to Neon: the legacy Supabase rows it was written for are
+ * not here, but a sweep over published content against the current screen is
+ * worth having whenever the rules tighten.
+ *
  * It applies the same deterministic screen new posts face
  * (src/lib/blog/quality.ts) plus the same source-link verification
  * (src/lib/blog/verify-links.ts). It does NOT run the model audit: that costs
@@ -31,7 +35,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 
-import { createClient } from '@supabase/supabase-js';
+import { neon } from '@neondatabase/serverless';
 
 import { screenDraft } from '../src/lib/blog/quality.ts';
 import { verifyAll } from '../src/lib/blog/verify-links.ts';
@@ -60,38 +64,26 @@ function loadEnv(): void {
   }
 }
 
-function client() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !key) {
-    console.error('Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local.');
+function db() {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    console.error('DATABASE_URL is not set in .env.local.');
     process.exit(1);
   }
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.warn('SUPABASE_SERVICE_ROLE_KEY is not set — falling back to the anon key.\n');
-  }
-
-  return createClient(url, key, { auth: { persistSession: false } });
+  return neon(url);
 }
 
 async function main(): Promise<void> {
   loadEnv();
   const apply = process.argv.includes('--apply');
-  const db = client();
+  const sql = db();
 
-  const { data, error } = await db
-    .from('blog_posts')
-    .select('id, title, content, excerpt, type, topic, sources, case_study_link, created_at')
-    .eq('published', true)
-    .order('created_at', { ascending: true });
-
-  if (error) {
-    console.error('Could not read blog_posts:', error.message);
-    process.exit(1);
-  }
-
-  const rows = (data ?? []) as Row[];
+  const rows = (await sql`
+    SELECT id, title, content, excerpt, type, topic, sources, case_study_link, created_at
+    FROM blog_posts
+    WHERE published = true
+    ORDER BY created_at ASC
+  `) as unknown as Row[];
   if (rows.length === 0) {
     console.log('No published rows. Nothing to do.');
     return;
@@ -184,15 +176,7 @@ async function main(): Promise<void> {
 
   console.log('Unpublishing...\n');
   const ids = failures.map(failure => failure.row.id);
-  const { error: updateError } = await db
-    .from('blog_posts')
-    .update({ published: false })
-    .in('id', ids);
-
-  if (updateError) {
-    console.error('Update failed:', updateError.message);
-    process.exit(1);
-  }
+  await sql`UPDATE blog_posts SET published = false WHERE id = ANY(${ids}::uuid[])`;
 
   console.log(`Unpublished ${ids.length}.\n`);
   console.log('To reverse:');

@@ -16,6 +16,7 @@ import {
   BANNED_PATTERNS,
   countWords,
   DUPLICATE_TITLE_THRESHOLD,
+  PROFILES,
   MAX_CONTENT_WORDS,
   MIN_CONTENT_WORDS,
   screenDraft,
@@ -272,5 +273,84 @@ describe('screenDraft — reporting', () => {
 
     expect(result.pass).toBe(false);
     expect(result.reasons.length).toBeGreaterThanOrEqual(4);
+  });
+});
+
+
+/**
+ * The essay profile.
+ *
+ * Added when the first hand-written post failed the gate on length and on
+ * first person — two rules that were about a machine writing as Luis, not
+ * about quality. Everything that IS about quality applies identically, and
+ * these tests exist to prove the relaxation did not quietly become a
+ * back door.
+ */
+describe('the essay profile relaxes only authorship, never quality', () => {
+  function essay(overrides: Record<string, unknown> = {}) {
+    return draft({ content: body(2000), ...overrides });
+  }
+
+  it('accepts a length the generated profile would reject', () => {
+    const long = draft({ content: body(5000) });
+
+    expect(screenDraft(long, [], 'generated').pass).toBe(false);
+    expect(screenDraft(long, [], 'essay').pass).toBe(true);
+  });
+
+  it('accepts first person, which is the whole point of an essay', () => {
+    const personal = essay({
+      content: `${body(1900)} I have spent a decade building these systems and I think the split matters.`,
+    });
+
+    expect(screenDraft(personal, [], 'generated').reasons).toContain(
+      'written in the first person'
+    );
+    expect(screenDraft(personal, [], 'essay').pass).toBe(true);
+  });
+
+  it('still rejects an essay that is too short to be one', () => {
+    const result = screenDraft(draft({ content: body(300) }), [], 'essay');
+
+    expect(result.pass).toBe(false);
+    expect(result.reasons.join(' ')).toMatch(/too short/);
+  });
+
+  it('still rejects one past the sanity ceiling', () => {
+    const result = screenDraft(
+      draft({ content: body(PROFILES.essay.maxWords + 100) }),
+      [],
+      'essay'
+    );
+
+    expect(result.pass).toBe(false);
+    expect(result.reasons.join(' ')).toMatch(/too long/);
+  });
+
+  it.each([
+    ['the no-source disclaimer', '🔎 No relevant case study available from trusted sources.'],
+    ['a script tag', '<script>alert(1)</script>'],
+    ['an inline event handler', '<img src=x onerror="alert(1)">'],
+    ['a javascript URL', 'See javascript:alert(1).'],
+    ['an unfinished marker', 'TODO: finish this section.'],
+  ])('still rejects %s', (_label, injected) => {
+    expect(screenDraft(essay({ content: `${body(1900)} ${injected}` }), [], 'essay').pass).toBe(
+      false
+    );
+  });
+
+  it('still rejects a near-duplicate title', () => {
+    const result = screenDraft(essay(), ['Choosing Between Deterministic Rules And Model Calls'], 'essay');
+    expect(result.pass).toBe(false);
+  });
+
+  it('still enforces the schema', () => {
+    expect(screenDraft(essay({ excerpt: 'Too short.' }), [], 'essay').pass).toBe(false);
+    expect(screenDraft(essay({ type: 'newsletter' }), [], 'essay').pass).toBe(false);
+  });
+
+  it('defaults to the generated profile, so existing callers are unchanged', () => {
+    const long = draft({ content: body(5000) });
+    expect(screenDraft(long, [])).toEqual(screenDraft(long, [], 'generated'));
   });
 });

@@ -42,13 +42,45 @@ export const SOURCE_ALLOWLIST: readonly string[] = [
 ];
 
 /**
+ * Domains an essay may cite.
+ *
+ * The consultancy list above exists because the generator was told to write
+ * case studies from vendor customer stories. An essay citing research needs a
+ * different set entirely — the first hand-written post cited arXiv, OpenAI and
+ * Anthropic, every one of which the list above would have marked `dead`,
+ * rejecting a post whose sourcing was its strongest feature.
+ *
+ * Primary sources only, deliberately. A preprint server, a lab's own
+ * publication, a standards body or a university is something a reader can go
+ * and check. A news write-up of a paper is not, and citing one is how a claim
+ * drifts from what the paper actually said.
+ */
+export const RESEARCH_ALLOWLIST: readonly string[] = [
+  'arxiv.org',
+  'openai.com',
+  'anthropic.com',
+  'deepmind.google',
+  'internationalaisafetyreport.org',
+  'nist.gov',
+  'acm.org',
+  'ieee.org',
+  'nature.com',
+  'science.org',
+  'neurips.cc',
+  'aclanthology.org',
+];
+
+/**
  * Whether a URL points at an allow-listed source.
  *
  * Matches the host exactly or as a subdomain, anchored on a leading dot, so
  * `ibm.com` accepts `www.ibm.com` but not `ibm.com.attacker.test` — the
  * substring check that mistake usually looks like.
  */
-export function isAllowedSource(url: string): boolean {
+export function isAllowedSource(
+  url: string,
+  allowlist: readonly string[] = SOURCE_ALLOWLIST
+): boolean {
   let host: string;
   try {
     const parsed = new URL(url);
@@ -58,7 +90,7 @@ export function isAllowedSource(url: string): boolean {
     return false;
   }
 
-  return SOURCE_ALLOWLIST.some(domain => host === domain || host.endsWith(`.${domain}`));
+  return allowlist.some(domain => host === domain || host.endsWith(`.${domain}`));
 }
 
 /** Maps an HTTP status to a verdict. */
@@ -78,8 +110,11 @@ function verdictForStatus(status: number): LinkVerdict {
  * method outright. Never throws: a verification step that can raise would turn
  * an unreachable third party into a failed cron run.
  */
-export async function verifyUrl(url: string): Promise<LinkVerdict> {
-  if (!isAllowedSource(url)) return 'dead';
+export async function verifyUrl(
+  url: string,
+  allowlist: readonly string[] = SOURCE_ALLOWLIST
+): Promise<LinkVerdict> {
+  if (!isAllowedSource(url, allowlist)) return 'dead';
 
   const head = await request(url, 'HEAD');
   if (head !== 'method-not-allowed') return head;
@@ -124,7 +159,8 @@ async function request(
  */
 export async function verifyAll(
   urls: readonly string[],
-  concurrency = 4
+  concurrency = 4,
+  allowlist: readonly string[] = SOURCE_ALLOWLIST
 ): Promise<Map<string, LinkVerdict>> {
   const unique = [...new Set(urls)];
   const results = new Map<string, LinkVerdict>();
@@ -134,7 +170,7 @@ export async function verifyAll(
     while (cursor < unique.length) {
       const url = unique[cursor];
       cursor += 1;
-      results.set(url, await verifyUrl(url));
+      results.set(url, await verifyUrl(url, allowlist));
     }
   }
 

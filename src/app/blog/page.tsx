@@ -6,6 +6,7 @@ import { getBlogPosts, getPublishedBlogPostCount } from '@/lib/database';
 import StructuredData from '@/components/StructuredData';
 import { blogCollectionNode } from '@/lib/structured-data';
 import { BLOG_ROBOTS } from '@/lib/blog/visibility';
+import { ogImageUrl } from '@/lib/og-url';
 import { SITE_URL } from '@/lib/site';
 
 /**
@@ -59,6 +60,18 @@ export async function generateMetadata({
       type: 'website',
       url: canonicalFor(page),
       title: 'Writing — Antonio Luis Santos',
+      images: [
+        {
+          url: ogImageUrl({
+            title: 'Writing',
+            subtitle: 'Notes on integration, automation and where a model actually helps.',
+            eyebrow: '~/writing $ ls',
+          }),
+          width: 1200,
+          height: 630,
+          alt: 'Writing — Antonio Luis Santos',
+        },
+      ],
     },
   };
 }
