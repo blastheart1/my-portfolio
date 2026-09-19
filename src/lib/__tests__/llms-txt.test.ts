@@ -180,12 +180,13 @@ describe('the response headers crawlers depend on', () => {
 
 describe('N14 — it cannot contradict the JSON-LD', () => {
   it('states the same prices as the offer catalog', async () => {
-    // The whole reason this file is generated. A model reading $599 in the
-    // schema and something else here is the exact failure llms.txt exists to
-    // prevent, and the hand-maintained copy was free to introduce it.
+    // Both sides are now built from the same rows, so this asserts the
+    // single source actually holds rather than that two hand-maintained
+    // copies happen to agree. A model reading one price in the schema and
+    // another here is the exact failure llms.txt exists to prevent.
     const body = await buildLlmsTxt();
 
-    const practice = siteIdentityNodes().find(
+    const practice = siteIdentityNodes(TIERS).find(
       node => (node as { '@type'?: string })['@type'] === 'ProfessionalService'
     ) as { hasOfferCatalog?: { itemListElement?: { name: string; price: string }[] } };
 

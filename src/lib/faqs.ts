@@ -35,7 +35,7 @@ export const FAQS: Faq[] = [
   {
     question: 'What problem do you actually solve?',
     answer:
-      'Most companies lose hours every week to work that only exists because their software does not connect. Someone re-keys an order from one system into another, someone chases an approval over email, someone rebuilds the same report every Monday morning. I remove that work. Usually it is an API integration, sometimes a scheduled automation, sometimes an AI layer that reads messy input like an invoice or an inbound enquiry and routes it to the right place. The work is worth doing when it hands your team back time they can spend on something only a person can do.',
+      'I work as an AI automation and integration engineer, which in practice means this. Most companies lose hours every week to work that only exists because their software does not connect. Someone re-keys an order from one system into another, someone chases an approval over email, someone rebuilds the same report every Monday morning. I remove that work. Usually it is an API integration, sometimes a scheduled automation, sometimes an AI layer that reads messy input like an invoice or an inbound enquiry and routes it to the right place. The work is worth doing when it hands your team back time they can spend on something only a person can do.',
   },
   {
     question: 'How do you decide what to automate?',
@@ -60,7 +60,7 @@ export const FAQS: Faq[] = [
   {
     question: 'What does an engagement cost, and how is it structured?',
     answer:
-      'Packages start at $599 for a small site, $1,199 for something with e-commerce or a real back end, and $2,999 for custom systems built to scale. Those are starting points rather than quotes, because the number that matters depends on what the thing has to do. Work runs either as a scoped build with fixed milestones, where you know the total before it starts, or as a monthly retainer if you want someone maintaining and extending it. For integration and automation work a retainer usually fits better, since the useful version of that job is never finished in one pass. I quote in USD for clients outside the Philippines.',
+      'Most engagements are one of four shapes. An automation audit maps the process you want fixed and comes back with a ranked list of what to automate first, at a fixed fee credited against a build if you go ahead. An integration build connects two systems that currently need a person copying data between them. An AI feature build adds a model where it genuinely beats a rule, with guardrails and an evaluation set so the quality is measurable rather than asserted. A retainer covers the ongoing work, which is what most integration clients actually need, because automations sit between systems you do not control and an upstream API that changes its response shape on a Tuesday breaks things quietly. Each is quoted on scope rather than from a price list, and the audit is the cheapest way to find out what the rest should cost. I quote in USD for clients outside the Philippines.',
   },
   {
     question: 'How do you work with clients in other timezones?',
@@ -100,6 +100,6 @@ export const FAQS: Faq[] = [
   {
     question: 'Can you work with the team we already have?',
     answer:
-      'Working alongside an existing team is usually the better outcome. Your developers know the domain and will still be there when I am not. The arrangement that works is that I build the part that needs the specific experience, the integration layer or the AI component, alongside them rather than in isolation, and hand it over with documentation aimed at the person who inherits it. I also review code and set up the testing if that is the gap. What does not work is being handed a sealed specification and told not to talk to anybody, because the useful questions only surface in conversation with whoever does the work today.',
+      'Working alongside an existing team is usually the better outcome, and it is how most integration work goes. Your developers know the domain and will still be there when I am not. The arrangement that works is that I build the part that needs the specific experience, the integration layer or the AI component, alongside them rather than in isolation, and hand it over with documentation aimed at the person who inherits it. I also review code and set up the testing if that is the gap. What does not work is being handed a sealed specification and told not to talk to anybody, because the useful questions only surface in conversation with whoever does the work today.',
   },
 ];

@@ -5,10 +5,11 @@ import "./globals.css";
 import CalendlyScript from '@/components/CalendlyScript';
 import StructuredData from '@/components/StructuredData';
 import { siteIdentityNodes } from '@/lib/structured-data';
+import { getServiceTiers } from '@/lib/content-queries';
 import ServiceWorker from '@/components/ServiceWorker';
 import { ModalProvider } from '@/contexts/ModalContext';
 import ClientLayoutContent from '@/components/ClientLayoutContent';
-import { SITE_URL } from '@/lib/site';
+import { ROLE_TITLE, SITE_URL } from '@/lib/site';
 
 // Using Inter as a close alternative to SF Pro Display
 const inter = Inter({
@@ -21,18 +22,24 @@ const inter = Inter({
 export const metadata = {
   metadataBase: new URL(SITE_URL),
 
-  // Title leads with the role someone actually searches for, then the
-  // differentiator. The previous "Code by Luis" is a brand nobody queries.
+  // Leads with the phrase a buyer types, then the name. "AI Full-Stack
+  // Software Engineer" was accurate but is the most contested term on the
+  // list and says nothing about what is actually for sale; "AI Automation &
+  // Integration Engineer" is closer to the work, closer to how the problem
+  // gets described out loud, and far less crowded. The name stays because
+  // it is the query that converts best — someone checking you out after a
+  // call. 58 characters, so the SERP shows all of it.
   title: {
-    default: 'Antonio Luis Santos — AI Full-Stack Software Engineer',
+    default: `${ROLE_TITLE} | Antonio Luis Santos`,
     template: '%s | Antonio Luis Santos',
   },
 
-  // Kept under 160 characters so it survives the search snippet intact. The
-  // long-form outcome framing lives in the FAQ and llms.txt, where there is
-  // room for it and nothing truncates.
+  // 148 characters, so it survives the search snippet intact. Opens with the
+  // role term and then states the problem in the words a client uses, rather
+  // than listing vendors. The long-form framing lives in the FAQ and
+  // llms.txt, where there is room and nothing truncates.
   description:
-    'AI full-stack engineer: LLM integration, API and workflow automation across OpenAI, Claude and Gemini, plus IBM ODM decision automation. Remote, for hire.',
+    'AI automation and integration engineer. I connect the systems your team re-keys data between, and add AI only where it beats a deterministic rule. Remote, for hire.',
 
 
   authors: [{ name: 'Antonio Luis Santos', url: SITE_URL }],
@@ -63,18 +70,19 @@ export const metadata = {
     locale: 'en_US',
     url: SITE_URL,
     siteName: 'Antonio Luis Santos',
-    title: 'Antonio Luis Santos — AI Full-Stack Software Engineer',
+    title: `${ROLE_TITLE} | Antonio Luis Santos`,
+    // No length limit here, so this one carries the differentiator.
     description:
-      'Automating the manual work between disconnected systems so teams can focus on work that needs judgment. Agentic AI, LLM integration, and enterprise decision automation. Available for freelance and contract work.',
+      'I remove the manual work that exists only because your systems do not talk to each other: API and platform integration, workflow automation, and LLM features with guardrails. Behind the AI work sits a decade of enterprise decision automation at Bell Canada (IBM ODM / BRMS), which is what makes the judgement call about what should stay a deterministic rule.',
     firstName: 'Antonio Luis',
     lastName: 'Santos',
   },
 
   twitter: {
     card: 'summary_large_image',
-    title: 'Antonio Luis Santos — AI Full-Stack Software Engineer',
+    title: `${ROLE_TITLE} | Antonio Luis Santos`,
     description:
-      'I automate the manual work between your systems so your team can do the work that needs judgment. Agentic AI, integrations, enterprise decision automation.',
+      'I connect the systems your team re-keys data between, and add AI only where it beats a deterministic rule. Integration, automation, and LLM features built to survive production.',
     creator: '@0xlv1s_',
     site: '@0xlv1s_',
   },
@@ -100,7 +108,13 @@ export const viewport = {
   ],
 };
 
-function LayoutContent({ children }: { children: React.ReactNode }) {
+async function LayoutContent({ children }: { children: React.ReactNode }) {
+  // The offer catalog in the JSON-LD is built from these rows rather than
+  // restated, so a price edited in /edit cannot leave the structured data
+  // behind. getServiceTiers swallows its own errors and returns [], which
+  // omits the catalog rather than failing the page.
+  const tiers = await getServiceTiers();
+
   return (
     <>
       {/*
@@ -112,7 +126,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         duplicate of the entire FAQ. They now live on / alone, and the case
         studies carry their own CreativeWork. See src/lib/structured-data.ts.
       */}
-      <StructuredData nodes={siteIdentityNodes()} />
+      <StructuredData nodes={siteIdentityNodes(tiers)} />
       <ServiceWorker />
       <ClientLayoutContent>
         {children}
@@ -132,7 +146,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -159,7 +173,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${inter.variable} antialiased transition-colors duration-300`}
       >
         <ModalProvider>
-          <LayoutContent>{children}</LayoutContent>
+          {await LayoutContent({ children })}
         </ModalProvider>
       </body>
     </html>

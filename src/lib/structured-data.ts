@@ -1,4 +1,5 @@
 import { SITE_URL } from '@/lib/site';
+import type { ServiceTier } from '@/lib/content-queries';
 import { FAQS } from '@/lib/faqs';
 import { WORK_PROJECTS } from '@/lib/work-projects';
 import type { BlogPost } from '@/types/blog';
@@ -40,6 +41,34 @@ export const BLOG_ID = `${SITE_URL}/blog#blog`;
 const PERSON = PERSON_ID;
 const PRACTICE = PRACTICE_ID;
 
+/**
+ * The offer catalog, from the database.
+ *
+ * Omitted entirely when there are no visible tiers, rather than emitted
+ * empty. An OfferCatalog with nothing in it claims the practice sells
+ * nothing, which is a different statement from not saying.
+ *
+ * Prices are only asserted where the row has one. Schema that names a price
+ * a visitor cannot find anywhere is the same problem as marked-up FAQ text
+ * that is not on the page.
+ */
+function offerCatalog(tiers: readonly ServiceTier[]) {
+  if (tiers.length === 0) return {};
+
+  return {
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Engineering services',
+      itemListElement: tiers.map(tier => ({
+        '@type': 'Offer',
+        name: tier.name,
+        ...(tier.price_usd ? { price: String(tier.price_usd), priceCurrency: 'USD' } : {}),
+        description: [tier.outcome, tier.features.join(', ')].filter(Boolean).join(' '),
+      })),
+    },
+  };
+}
+
 /** An ISO date, or undefined when the value is unusable. */
 function isoDate(value: Date | string | undefined): string | undefined {
   if (!value) return undefined;
@@ -54,18 +83,25 @@ function isoDate(value: Date | string | undefined): string | undefined {
  * page. They describe the person, the practice and the site as entities; the
  * page-level node is what says "and this URL is about them".
  */
-export function siteIdentityNodes() {
+export function siteIdentityNodes(tiers: readonly ServiceTier[] = []) {
   return [
   {
     '@type': 'Person',
     '@id': PERSON,
     name: 'Antonio Luis Santos',
     alternateName: 'Luis Santos',
-    // Leads with what he wants to be found for rather than the current job
-    // title — the title is captured under hasOccupation below.
-    jobTitle: 'AI Full-Stack Software Engineer',
+    // Three titles, all true, ordered by what he wants to be hired for
+    // rather than by seniority. schema.org allows jobTitle to repeat, and a
+    // person genuinely holding several roles is exactly the case it is for.
+    // This is an entity signal, not a keyword list: every one of these
+    // appears in hasOccupation below with the skills that back it.
+    jobTitle: [
+      'AI Automation and Integration Engineer',
+      'AI Full-Stack Software Engineer',
+      'Senior IBM ODM Specialist',
+    ],
     description:
-      'AI Full-Stack Software Engineer who automates the manual work between disconnected business systems so teams can focus on work that needs judgment. Builds agentic systems and LLM-backed applications across OpenAI, Claude, Gemini, DeepSeek and self-hosted open-weight models, with a decade of enterprise decision automation (IBM ODM/BRMS) and QA leadership behind it.',
+      'AI automation and integration engineer. He removes the manual work that exists only because a company\u2019s systems do not talk to each other: re-keying data between platforms, chasing approvals, rebuilding the same report every week. That is usually an API integration, sometimes a scheduled automation, and sometimes a language model that reads unstructured input and routes it. A decade of enterprise decision automation at Bell Canada (IBM ODM / BRMS) and QA leadership sits behind the AI work, which is what lets him judge which decisions must stay deterministic and auditable and which genuinely need a model.',
     url: SITE_URL,
     image: `${SITE_URL}/profile-photo2.png`,
     email: 'mailto:antonioluis.santos1@gmail.com',
@@ -107,8 +143,22 @@ export function siteIdentityNodes() {
       'Test Strategy',
       'Workflow Automation',
       'API Integration',
+      // Added for how the work is actually searched for, not for volume.
+      // Each is something there is evidence of on the site.
+      'AI Automation',
+      'System Integration',
+      'Business Process Automation',
+      'Human-in-the-Loop Workflow Design',
+      'Model Selection and Cost Optimisation',
     ],
     hasOccupation: [
+      {
+        '@type': 'Occupation',
+        name: 'AI Automation and Integration Engineer',
+        occupationLocation: { '@type': 'Country', name: 'Philippines' },
+        skills:
+          'API and platform integration, workflow automation, LLM integration with guardrails, legacy system integration, human-in-the-loop process design',
+      },
       {
         '@type': 'Occupation',
         name: 'AI Full-Stack Software Engineer',
@@ -147,7 +197,7 @@ export function siteIdentityNodes() {
     name: 'Code by Luis',
     url: SITE_URL,
     description:
-      'Freelance software engineering: agentic AI systems, LLM integration, full-stack web applications, API and platform integration, and workflow automation.',
+      'Freelance AI automation and integration engineering: connecting disconnected business systems, automating the manual steps between them, and building LLM-backed features with guardrails. Enterprise decision automation (IBM ODM / BRMS) where a decision has to stay auditable.',
     founder: { '@id': PERSON },
     provider: { '@id': PERSON },
     image: `${SITE_URL}/profile-photo2.png`,
@@ -172,36 +222,12 @@ export function siteIdentityNodes() {
       { '@type': 'Language', name: 'English' },
       { '@type': 'Language', name: 'Filipino' },
     ],
-    hasOfferCatalog: {
-      '@type': 'OfferCatalog',
-      name: 'Engineering services',
-      itemListElement: [
-        {
-          '@type': 'Offer',
-          name: 'Starter',
-          price: '599',
-          priceCurrency: 'USD',
-          description:
-            'Up to 5 pages, responsive and mobile-first, contact form, SEO basics and analytics, 7-day post-launch support.',
-        },
-        {
-          '@type': 'Offer',
-          name: 'Professional',
-          price: '1199',
-          priceCurrency: 'USD',
-          description:
-            'Up to 15 pages, e-commerce and payment gateway integration, advanced SEO and schema, analytics dashboard, 14-day priority support.',
-        },
-        {
-          '@type': 'Offer',
-          name: 'Enterprise',
-          price: '2999',
-          priceCurrency: 'USD',
-          description:
-            'Custom systems built to scale, AI chatbot and platform integration, 30-day support.',
-        },
-      ],
-    },
+    // Built from the same rows the site and llms.txt read, never restated.
+    // These three offers used to be hardcoded here AND seeded in
+    // service_tiers AND duplicated in ServicesSection's fallback, three
+    // copies free to disagree the moment anyone edited a price in /edit.
+    // They agreed only by luck. One source removes the class of bug.
+    ...offerCatalog(tiers),
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'Sales',
