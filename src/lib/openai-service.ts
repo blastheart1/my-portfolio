@@ -1,7 +1,21 @@
 import OpenAI from 'openai';
 import { ContentGenerationRequest, ContentGenerationResponse } from '@/types/blog';
+import { parseJson } from '@/lib/llm/transport';
 
 let openai: OpenAI | null = null;
+
+/**
+ * The drafting model.
+ *
+ * Was gpt-3.5-turbo, chosen for cost when this was a decorative carousel
+ * nobody could link to. These posts are about to have indexable URLs, and the
+ * difference between the two models is visible in a paragraph of prose.
+ *
+ * Exported so a guard rail can assert what it is NOT. Which model is best is
+ * a judgement that will keep changing; that it is not the deprecated one is a
+ * fact a test can hold.
+ */
+export const BLOG_MODEL = 'gpt-4o-mini';
 
 function getOpenAI() {
   if (!openai) {
@@ -27,37 +41,58 @@ function getOpenAI() {
 }
 
 
-// Topic weights for weighted random selection - higher priority for AI, Software QA, and Software Development
+/**
+ * Topics, weighted.
+ *
+ * Narrowed from a generic technology list. "Cloud Computing", "Microservices"
+ * and "Data Science" produced posts that could have appeared on any blog on
+ * the internet, which builds topical authority for nobody and actively dilutes
+ * the entity signal the JSON-LD on this site works to establish. Every topic
+ * here is something the site claims expertise in and someone might plausibly
+ * be hiring for.
+ */
 const TOPIC_WEIGHTS = [
-  // High Priority topics (60% total)
-  { topic: 'Generative AI', weight: 15 },
-  { topic: 'Software Quality Assurance', weight: 15 },
-  { topic: 'Machine Learning', weight: 10 },
-  { topic: 'Software Development Best Practices', weight: 10 },
-  { topic: 'AI in Software Development', weight: 10 },
-  
-  // Medium Priority topics (25% total)
-  { topic: 'Test-Driven Development', weight: 8 },
-  { topic: 'Code Quality and Review', weight: 7 },
-  { topic: 'Software Architecture', weight: 5 },
-  { topic: 'DevOps', weight: 5 },
-  { topic: 'Web Development', weight: 5 },
-  { topic: 'API Development', weight: 5 },
-  { topic: 'Microservices', weight: 5 },
-  
-  // Lower Priority topics (15% total)
-  { topic: 'Cloud Computing', weight: 3 },
-  { topic: 'Data Science', weight: 3 },
-  { topic: 'Cybersecurity', weight: 2 }
+  // The differentiator: generative AI on top of auditable decisioning.
+  { topic: 'LLM Integration in Production Systems', weight: 14 },
+  { topic: 'Agentic AI Systems and Tool Use', weight: 12 },
+  { topic: 'Choosing Between Deterministic Rules and Language Models', weight: 12 },
+  { topic: 'Business Rule Management and Decision Automation', weight: 10 },
+  { topic: 'Retrieval-Augmented Generation', weight: 8 },
+
+  // The delivery work that pays for it.
+  { topic: 'Workflow Automation Between Disconnected Systems', weight: 10 },
+  { topic: 'API and Platform Integration', weight: 8 },
+  { topic: 'Legacy System Integration and Migration Risk', weight: 6 },
+
+  // The QA background, which is the reason to trust any of the above.
+  { topic: 'Quality Assurance for AI-Backed Features', weight: 8 },
+  { topic: 'Test Strategy and Release Reliability', weight: 6 },
+
+  // Practical selection criteria people actually search for.
+  { topic: 'Model Selection, Cost per Token and Latency', weight: 6 },
 ];
 
 export async function generateContent(request: ContentGenerationRequest): Promise<ContentGenerationResponse> {
   try {
-    const { topic, type, previousContent = [] } = request;
+    const { topic, type, previousContent = [], revisionNotes = [] } = request;
     
     // Create context from previous content to avoid repetition
     const contextPrompt = previousContent.length > 0 
       ? `Previous content titles: ${previousContent.map(p => p.title).join(', ')}. Avoid similar topics and approaches.`
+      : '';
+
+    // The repair pass. The publish gate hands back the specific reasons a
+    // draft failed, and a rewrite that is not told why tends to fail the same
+    // way twice.
+    const revisionPrompt = revisionNotes.length > 0
+      ? [
+          '',
+          'A previous attempt at this post was rejected for these reasons:',
+          ...revisionNotes.map(note => `- ${note}`),
+          '',
+          'Write it again and fix every one of them. Say less rather than',
+          'padding to reach a length.',
+        ].join('\n')
       : '';
 
     const systemPrompt = `You are an AI content writer generating posts for a professional blog. 
@@ -93,10 +128,10 @@ Follow the rules carefully.
   • Gartner: https://www.gartner.com/en/insights  
   • Forrester: https://www.forrester.com/research  
 
-- If you cannot fetch a credible source link due to system limitations:  
-  → Output a general blog post on the same topic instead.  
-  → At the end of the post, add:  
-    "🔎 No relevant case study available from trusted sources. This article provides a general analysis instead."  
+- If you cannot cite a credible source from that list, write a general blog
+  post on the same topic instead and set caseStudyLink to null. Do NOT add a
+  note explaining that no case study was available: the reader is owed a good
+  post, not an apology for the one you did not write.
 
 === TASK ===
 When given a topic:  
@@ -123,11 +158,12 @@ Follow these guidelines:
 - Length: 3–5 short paragraphs max
 - Always include the original source link at the end if available
 
-- If you cannot find a credible source link due to system limitations:
-  → Output a general blog post on the same topic instead
-  → At the end of the post, add: "🔎 No relevant case study available from trusted sources. This article provides a general analysis instead."
+- If you cannot cite a credible source from that list, write a general blog
+  post on the same topic instead and set caseStudyLink to null. Do not add a
+  note explaining the absence.
 
 ${contextPrompt}
+${revisionPrompt}
 
 Format the response as JSON with: title, content (as plain text, not JSON), excerpt, caseStudyLink (the actual source URL if available, or null if not).`;
     } else {
@@ -142,16 +178,20 @@ Structure:
 Write in a professional, analytical tone. Focus on industry insights and trends, not personal experiences.
 
 ${contextPrompt}
+${revisionPrompt}
 
 Format the response as JSON with: title, content (as plain text, not JSON), excerpt.`;
     }
 
-    // Use GPT-3.5-turbo for both blog posts and case studies (cost-effective)
     const client = getOpenAI();
-    const model = "gpt-3.5-turbo";
-    
+
     const completion = await client.chat.completions.create({
-      model: model,
+      model: BLOG_MODEL,
+      // Without this the model is merely asked nicely for JSON, and the
+      // JSON.parse below used to throw whenever it answered with prose or a
+      // fenced block instead. That threw inside a cron, where nothing was
+      // watching.
+      response_format: { type: 'json_object' },
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
@@ -165,22 +205,23 @@ Format the response as JSON with: title, content (as plain text, not JSON), exce
       throw new Error('No response from OpenAI');
     }
 
-    // Parse JSON response
-    const parsedResponse = JSON.parse(response);
+    // parseJson rather than JSON.parse: a malformed reply must reach the
+    // publish gate as a draft that fails validation, not as an exception.
+    const parsedResponse = parseJson<Record<string, unknown>>(response, {});
 
     // Handle caseStudyLink. The model may report "no credible source" as a
-    // missing value or the literal string "null"; both mean the UI should show
-    // the disclaimer instead of a link. Blog posts never carry one.
+    // missing value or the literal string "null"; both mean there is nothing
+    // to cite. Blog posts never carry one.
     const rawLink = parsedResponse.caseStudyLink;
     const caseStudyLink =
-      type === 'case-study' && rawLink && rawLink !== 'null' ? rawLink : null;
+      type === 'case-study' && rawLink && rawLink !== 'null' ? (rawLink as string) : null;
     
     return {
-      title: parsedResponse.title,
-      content: parsedResponse.content,
-      excerpt: parsedResponse.excerpt,
-      metrics: parsedResponse.metrics,
-      sources: parsedResponse.sources,
+      title: parsedResponse.title as string,
+      content: parsedResponse.content as string,
+      excerpt: parsedResponse.excerpt as string,
+      metrics: parsedResponse.metrics as ContentGenerationResponse['metrics'],
+      sources: parsedResponse.sources as ContentGenerationResponse['sources'],
       caseStudyLink: caseStudyLink
     };
   } catch (error) {
