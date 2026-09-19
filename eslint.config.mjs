@@ -18,7 +18,22 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // Generated reports. `npm run test:coverage` writes an HTML report here,
+      // and linting a coverage reporter's own bundled JavaScript reports
+      // problems nobody can act on — and did, the moment CI started running
+      // the two commands in sequence.
+      "coverage/**",
+      "playwright-report/**",
     ],
+  },
+  {
+    // The setup scripts are plain CommonJS run by `node scripts/x.js`, not
+    // application code. `require()` is correct there; the app-wide ban on it
+    // is about the bundled TypeScript.
+    files: ["scripts/**/*.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
   },
 ];
 
