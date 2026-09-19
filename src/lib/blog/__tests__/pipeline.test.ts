@@ -366,8 +366,15 @@ describe('failures that are not the content’s fault', () => {
 /**
  * N10. The tests above prove the gate rejects; this proves nothing can walk
  * around it.
+ *
+ * Amended when hand-written posts became possible. The rule was always
+ * "nothing reaches the table unscreened" — authorship was never the point, and
+ * reading it as "only the pipeline may write" would have meant the only way to
+ * publish an essay was to disable the gate. scripts/publish-post.ts is
+ * therefore permitted to write, and is held to proving it runs all three
+ * checks.
  */
-describe('N10 — insertBlogPost is reachable only through the gate', () => {
+describe('N10 — nothing reaches blog_posts unscreened', () => {
   function walk(dir: string): string[] {
     const out: string[] = [];
     for (const entry of readdirSync(dir)) {
@@ -395,6 +402,42 @@ describe('N10 — insertBlogPost is reachable only through the gate', () => {
         'now has an indexable URL, so an unscreened insert publishes ' +
         'unreviewed machine-written content to the live site. Route it ' +
         'through runContentPipeline():\n' + offenders.join('\n')
+    ).toEqual([]);
+  });
+
+  it('the hand-authored path runs the same three checks', () => {
+    // It writes to blog_posts directly, because Node cannot resolve the `@/`
+    // alias that database.ts is full of. That is allowed only for as long as
+    // it is demonstrably still a gate rather than a side door.
+    const script = readFileSync(
+      path.join(SRC, '..', 'scripts/publish-post.ts'),
+      'utf8'
+    );
+
+    expect(script, 'must run the deterministic screen').toContain('screenDraft(');
+    expect(script, 'must verify every cited link').toContain('verifyAll(');
+    expect(script, 'must run a cross-vendor audit').toContain('callAnthropic(');
+
+    // And must refuse to publish when any of them fails.
+    expect(script).toContain('NOT PUBLISHABLE');
+    expect(script, 'a missing auditor must block, never wave through').toContain(
+      'never published unaudited'
+    );
+  });
+
+  it('no other script writes to blog_posts', () => {
+    const scriptsDir = path.join(SRC, '..', 'scripts');
+    const offenders = readdirSync(scriptsDir)
+      .filter(name => /\.(ts|mjs|js)$/.test(name))
+      .filter(name => {
+        const src = readFileSync(path.join(scriptsDir, name), 'utf8');
+        return /\.from\(['"]blog_posts['"]\)[\s\S]{0,200}\.insert\(/.test(src);
+      })
+      .filter(name => name !== 'publish-post.ts');
+
+    expect(
+      offenders,
+      'These insert into blog_posts without going through the gate:\n' + offenders.join('\n')
     ).toEqual([]);
   });
 
