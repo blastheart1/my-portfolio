@@ -137,6 +137,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
         <link rel="dns-prefetch" href="https://calendly.com" />
+        {/* llms.txt is discoverable by convention alone otherwise. Cheap to
+            advertise, and the long form is the one an assistant ingesting the
+            whole site should take. */}
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt" />
+        <link rel="alternate" type="text/plain" href="/llms-full.txt" title="llms.txt (full)" />
       </head>
       <body
         className={`${inter.variable} antialiased transition-colors duration-300`}
