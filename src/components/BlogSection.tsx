@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { BlogPost } from '@/types/blog';
-import BlogModal from './BlogModal';
-import { useModal } from '@/contexts/ModalContext';
 
 interface BlogSectionProps {
   className?: string;
@@ -19,8 +18,6 @@ export default function BlogSection({ className = '', heading, subheading }: Blo
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
-  const { isModalOpen, setIsModalOpen } = useModal();
 
   useEffect(() => {
     fetchPosts();
@@ -59,16 +56,6 @@ export default function BlogSection({ className = '', heading, subheading }: Blo
     }, 300);
   };
 
-  const handleReadMore = (post: BlogPost) => {
-    setSelectedPost(post);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedPost(null);
-  };
-
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
@@ -95,32 +82,6 @@ export default function BlogSection({ className = '', heading, subheading }: Blo
       // Swipe right - go to previous page
       const prevPage = Math.max(0, currentPage - 1);
       handlePageChange(prevPage);
-    }
-  };
-
-  const generateNewContent = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/blog/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({}),
-      });
-      
-      const data = await response.json();
-      if (data.success) {
-        // Refresh the posts
-        await fetchPosts();
-      } else {
-        setError('Failed to generate new content');
-      }
-    } catch (err) {
-      setError('Failed to generate new content');
-      console.error('Error generating content:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -178,14 +139,7 @@ export default function BlogSection({ className = '', heading, subheading }: Blo
 
         {posts.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-neutral-400 text-lg mb-6">No content available yet.</p>
-            <button
-              onClick={generateNewContent}
-              disabled={loading}
-              className="px-6 py-2 bg-[var(--color-brand)] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Generating...' : 'Generate First Content'}
-            </button>
+            <p className="text-neutral-400 text-lg">No content available yet.</p>
           </div>
         ) : (
         <>
@@ -205,7 +159,6 @@ export default function BlogSection({ className = '', heading, subheading }: Blo
                       isTransitioning={isTransitioning}
                       transitionDelay={0}
                       roundedClass="rounded-xl"
-                      onReadMore={handleReadMore}
                     />
                   </div>
                 ))}
@@ -235,8 +188,7 @@ export default function BlogSection({ className = '', heading, subheading }: Blo
                         isTransitioning={isTransitioning}
                         transitionDelay={slotIndex * 100}
                         roundedClass={getRoundedClasses(slotIndex)}
-                        onReadMore={handleReadMore}
-                      />
+                        />
                     ) : (
                       <div className={`h-full bg-neutral-900 flex items-center justify-center ${getRoundedClasses(slotIndex)}`} style={{ minHeight: '380px', maxHeight: '380px' }}>
                         <p className="text-neutral-500 text-sm">No content</p>
@@ -353,11 +305,6 @@ export default function BlogSection({ className = '', heading, subheading }: Blo
       </div>
       
       {/* Blog Modal */}
-      <BlogModal 
-        post={selectedPost} 
-        isOpen={isModalOpen} 
-        onClose={handleCloseModal} 
-      />
     </section>
   );
 }
@@ -367,10 +314,9 @@ interface BlogCardProps {
   isTransitioning?: boolean;
   transitionDelay?: number;
   roundedClass?: string;
-  onReadMore?: (post: BlogPost) => void;
 }
 
-function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedClass = '', onReadMore }: BlogCardProps) {
+function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedClass = '' }: BlogCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [hasScrollableContent, setHasScrollableContent] = useState(false);
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
@@ -546,23 +492,21 @@ function BlogCard({ post, isTransitioning = false, transitionDelay = 0, roundedC
               transitionDelay: `${transitionDelay + 300}ms`
             }}
           >
+            {/*
+              A link to the post's own page, not a button that opened a modal.
+              A modal cannot be linked, shared, cited or crawled, which is the
+              entire reason these posts were invisible. A post without a slug
+              has no page yet (rows predating the column), so it shows nothing
+              rather than a dead link.
+            */}
             <div className="h-6 flex items-center">
-              {post.caseStudyLink ? (
-                <a
-                  href={post.caseStudyLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              {post.slug && (
+                <Link
+                  href={`/blog/${post.slug}`}
                   className="font-medium text-sm text-[var(--color-brand)] pb-1 border-b-2 border-neutral-700 group-hover:border-blue-500 group-focus:border-blue-500 transition-all duration-300 ease-in-out focus:outline-hidden hover:text-blue-400"
                 >
-                  View Case Study →
-                </a>
-              ) : (
-                <button
-                  onClick={() => onReadMore?.(post)}
-                  className="font-medium text-sm text-[var(--color-brand)] pb-1 border-b-2 border-neutral-700 hover:border-blue-500 focus:border-blue-500 transition-all duration-300 ease-in-out focus:outline-hidden hover:text-blue-400 cursor-pointer"
-                >
-                  Click to read →
-                </button>
+                  Read →
+                </Link>
               )}
             </div>
           </div>

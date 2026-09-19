@@ -6,6 +6,10 @@
  *        entry every revalidatePath('/') call depends on)
  *   N7 — no service worker may serve stale HTML or cache /api/*
  *   N8 — no canonical / OG / JSON-LD URL may reference the wrong domain
+ *   N9 — no public route may ship without an explicit alternates.canonical
+ *  N13 — no blog write path may skip revalidatePath or submitToIndexNow
+ *  N20 — the generator may not use a deprecated model or omit response_format,
+ *        and the manifest's identity may not drift from layout.tsx
  */
 
 import { describe, it, expect } from 'vitest';
@@ -15,6 +19,19 @@ import { SITE_URL, SITE_DOMAIN, absoluteUrl } from '../site';
 
 const ROOT = path.resolve(__dirname, '../../..');
 const SRC = path.resolve(__dirname, '../..');
+
+/**
+ * Source with comments stripped.
+ *
+ * The source-level rules below look for code. Files that explain which
+ * anti-pattern they avoid would otherwise fail for naming it, which is a guard
+ * rail that punishes documenting the reasoning.
+ */
+function codeOf(relativePath: string): string {
+  return readFileSync(path.join(SRC, relativePath), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+}
 
 function walk(dir: string): string[] {
   const out: string[] = [];
@@ -163,5 +180,155 @@ describe('N7 — no stale-serving service worker', () => {
     const src = readFileSync(path.join(SRC, 'components/ServiceWorker.tsx'), 'utf8');
     expect(src).toContain('unregister');
     expect(src).not.toMatch(/serviceWorker\s*\.\s*register\s*\(/);
+  });
+});
+
+
+/**
+ * N9 — the canonical trap.
+ *
+ * src/app/layout.tsx sets `alternates: { canonical: SITE_URL }`, and Next
+ * merges metadata shallowly down the segment tree. A route that does not
+ * define its own `alternates` therefore inherits the HOME PAGE's canonical and
+ * tells Google it is a duplicate of `/`.
+ *
+ * This is worse than a missing canonical, and it is invisible: the page looks
+ * perfect in a browser and in devtools. /website-workflow shipped in exactly
+ * that state. Any new route added without this line would too.
+ */
+describe('N9 — every public route declares its own canonical', () => {
+  /** Only the home page may use the root layout's canonical, because it IS it. */
+  const ALLOWED_TO_INHERIT = ['app/page.tsx'];
+
+  it('no page under app/ relies on the inherited one', () => {
+    const offenders: string[] = [];
+
+    for (const file of walk(path.join(SRC, 'app'))) {
+      const rel = path.relative(SRC, file).split(path.sep).join('/');
+
+      if (!rel.endsWith('/page.tsx')) continue;
+      if (rel.includes('__tests__')) continue;
+      // The admin area is disallowed in robots.txt and behind auth; a
+      // canonical on a page no crawler may fetch would mean nothing.
+      if (rel.startsWith('app/edit/')) continue;
+      if (ALLOWED_TO_INHERIT.includes(rel)) continue;
+
+      const src = readFileSync(file, 'utf8');
+      // Either declared inline, or returned from generateMetadata — including
+      // via a shared helper, which is why this looks for the key rather than a
+      // particular expression.
+      if (!/alternates\s*:/.test(src) && !/canonical/.test(src)) {
+        offenders.push(rel);
+      }
+    }
+
+    expect(
+      offenders,
+      'These routes inherit alternates.canonical from src/app/layout.tsx, ' +
+        'which points at the home page. Next merges metadata shallowly, so ' +
+        'each of these currently tells Google it is a duplicate of / and will ' +
+        'be collapsed into it. Set alternates.canonical to the route\u2019s own ' +
+        'URL:\n' + offenders.join('\n')
+    ).toEqual([]);
+  });
+
+  it('the root layout still sets one, which is what the rule depends on', () => {
+    const layout = readFileSync(path.join(SRC, 'app/layout.tsx'), 'utf8');
+    expect(layout).toMatch(/alternates\s*:/);
+  });
+});
+
+/**
+ * N13 — the blog write paths propagate.
+ *
+ * N6 above walks app/api/admin only, so neither blog writer is covered by it.
+ * Both publish content that appears on / and /blog and must say so.
+ */
+describe('N13 — blog writes invalidate and announce', () => {
+  const WRITE_ROUTES = [
+    'app/api/blog/generate/route.ts',
+    'app/api/cron/generate-content/route.ts',
+  ];
+
+  it('each write route revalidates and submits to IndexNow', () => {
+    for (const rel of WRITE_ROUTES) {
+      const src = readFileSync(path.join(SRC, rel), 'utf8');
+
+      expect(src, `${rel} must invalidate the pages a new post appears on`).toContain(
+        'revalidatePath'
+      );
+      expect(src, `${rel} must refresh the sitemap`).toContain("revalidatePath('/sitemap.xml')");
+      expect(src, `${rel} must tell the search engines`).toContain('submitToIndexNow');
+    }
+  });
+
+  it('submits the post\u2019s own URL, not just the home page', () => {
+    // The four existing admin callers submit '/' because that is the page
+    // their edit changes. A new post has its own URL, which is the whole
+    // point of IndexNow.
+    for (const rel of WRITE_ROUTES) {
+      const src = readFileSync(path.join(SRC, rel), 'utf8');
+      expect(src, rel).toMatch(/submitToIndexNow\(\[`\/blog\/\$\{/);
+    }
+  });
+
+  it('awaits the submission rather than firing and forgetting', () => {
+    // void submitToIndexNow(...) is right in an admin route, where a browser
+    // is waiting on the response. In a cron the instance can freeze the
+    // moment the response returns, dropping the request.
+    for (const rel of WRITE_ROUTES) {
+      const src = readFileSync(path.join(SRC, rel), 'utf8');
+      expect(src, rel).toContain('await submitToIndexNow');
+    }
+  });
+
+  it('no blog route is exempted from revalidating', () => {
+    // Stops the tempting fix if a future admin blog route trips N6.
+    const exempt = readFileSync(path.join(SRC, 'lib/__tests__/site-metadata.test.ts'), 'utf8');
+    const blogExemptions = [...exempt.matchAll(/'(app\/api\/[^']*blog[^']*)':/g)];
+    expect(blogExemptions.map(m => m[1])).toEqual([]);
+  });
+});
+
+describe('N20 — the generator and the manifest cannot drift', () => {
+  it('does not use the deprecated drafting model', () => {
+    // Which model is best keeps changing and is not a testable judgement.
+    // That it is not the one that has been superseded twice is a fact.
+    expect(codeOf('lib/openai-service.ts')).not.toContain('gpt-3.5-turbo');
+  });
+
+  it('asks the provider for JSON rather than hoping', () => {
+    const src = readFileSync(path.join(SRC, 'lib/openai-service.ts'), 'utf8');
+    expect(src).toContain("response_format: { type: 'json_object' }");
+  });
+
+  it('no longer instructs the model to print a no-source disclaimer', () => {
+    // That string used to be written into post bodies, where it read as an
+    // apology for the absence of research.
+    expect(codeOf('lib/openai-service.ts')).not.toContain('No relevant case study available');
+  });
+
+  it('the manifest describes the same person as the layout metadata', () => {
+    const manifest = JSON.parse(readFileSync(path.join(ROOT, 'public/site.webmanifest'), 'utf8'));
+    const layout = readFileSync(path.join(SRC, 'app/layout.tsx'), 'utf8');
+
+    expect(manifest.name).toContain('Antonio Luis Santos');
+    expect(manifest.name).toMatch(/AI Full-Stack Software Engineer/i);
+    expect(layout).toContain('AI Full-Stack Software Engineer');
+
+    // The description is prose and the site writes the role in lower case
+    // there, so this pins what must NOT be said rather than the exact wording.
+    expect(manifest.description).toMatch(/AI full-stack engineer/i);
+    expect(
+      manifest.description,
+      'the pre-repositioning description'
+    ).not.toMatch(/Full-Stack Developer & QA Specialist/i);
+
+    // The old brand, which survived every other rename.
+    expect(JSON.stringify(manifest)).not.toMatch(/Luis\.dev/);
+
+    // themeColor in layout.tsx is #ffffff / #1a1a1a; the manifest carried an
+    // unrelated blue that no longer appears anywhere on the site.
+    expect(manifest.theme_color).toBe('#1a1a1a');
   });
 });
